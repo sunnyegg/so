@@ -7,16 +7,13 @@ export default async function handler(
 ) {
   try {
     const { token }: any = req.headers;
-    const { from, to }: any = JSON.parse(req.body);
-    const body = JSON.stringify({
-      broadcaster_id: from,
-      sender_id: from,
-      message: `!so @${to}`,
-    });
+    const { from, to, by }: any = JSON.parse(req.body);
 
-    const response = await fetchHelix(token, "chat/messages", "POST", body, {
-      "Content-Type": "application/json",
-    });
+    const response = await fetchHelix(
+      token,
+      `chat/shoutouts?from_broadcaster_id=${from}&to_broadcaster_id=${to}&moderator_id=${by}`,
+      "POST"
+    );
     if (!response.ok) {
       throw response.error;
     }

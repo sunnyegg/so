@@ -6,12 +6,13 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { token, id }: any = req.query;
+    const { token }: any = req.headers;
+    const { id }: any = req.query;
 
     // id diisi = &id=1234&id=5678
     const response = await fetchHelix(
       token,
-      id ? `users${id}` : "users",
+      id ? `users?id=${id}` : "users",
       "GET"
     );
     if (!response.ok) {

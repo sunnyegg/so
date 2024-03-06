@@ -6,7 +6,8 @@ export default async function handler(
   res: NextApiResponse
 ) {
   try {
-    const { token, broadcasterId }: any = req.query;
+    const { token }: any = req.headers;
+    const { broadcasterId }: any = req.query;
 
     const response = await fetchHelix(
       token,

@@ -1,33 +1,145 @@
 'use client'
 
+import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { UserSession } from "./types";
+import { Chatters, UserSession } from "./types";
 
 export default function Home() {
-  const scopes = 'user:read:email moderator:manage:shoutouts user:read:chat user:write:chat moderator:read:followers'
+  const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
+
+  const [token, setToken] = useState("")
   const [session, setSession] = useState<UserSession>({
     id: "",
-    type: "",
     name: "",
     image: "",
-    username: "",
-    description: "",
-    followers: 0,
-    lastStreamed: "",
   });
 
+  const [chatters, setChatters] = useState<Chatters[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
       setSession(JSON.parse(localStorage.getItem("userSession") || ""))
     }
+    setToken(accessToken || "")
   }, [])
 
-  const logout = () => {
+  useEffect(() => {
+    if (!session.name) {
+      return
+    }
+
+    const client = new tmi.Client({
+      options: { debug: true },
+      identity: {
+        username: session.name,
+        password: `oauth:${token}`,
+      },
+      channels: [session.name],
+    });
+
+    client.connect();
+
+    client.on("message", async (channel, tags, message, self) => {
+      if (self) return;
+
+      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}`, {
+        headers: { token }
+      })
+      if (!resUser.ok) {
+        const errUser = await resUser.json()
+        setErrors([...errors, errUser.error])
+      }
+
+      const resChannel = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
+        headers: { token }
+      })
+      if (!resChannel.ok) {
+        const errChannel = await resChannel.json()
+        setErrors([...errors, errChannel.error])
+      }
+
+      const resFollower = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
+        headers: { token }
+      })
+      if (!resFollower.ok) {
+        const errFollower = await resFollower.json()
+        setErrors([...errors, errFollower.error])
+      }
+
+      const { data: userData } = await resUser.json()
+      const { data: channelData } = await resChannel.json()
+      const { data: followerData } = await resFollower.json()
+
+      setChatters([...chatters, {
+        id: tags["user-id"] || "",
+        type: "",
+        name: tags["display-name"] || "",
+        image: userData.data[0].profile_image_url,
+        username: tags.username || "",
+        followers: followerData.total,
+        description: "",
+        lastStreamed: channelData.data[0].game_name,
+      }])
+    });
+
+    return () => {
+      client.disconnect()
+    }
+  }, [token])
+
+  const logout = async () => {
     localStorage.clear()
     location.reload()
+  }
+
+  const shoutout = async (id: string, name: string, idx: number) => {
+    const btn = document.getElementById(`shoutout_btn_${idx}`)
+    if (btn) {
+      btn.innerHTML = ''
+      const loading = document.createElement('div')
+      loading.className = "loading loading-spinner loading-sm"
+      btn.appendChild(loading)
+    }
+
+    try {
+      const resShoutout = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/shoutout`, {
+        headers: {
+          token
+        },
+        body: JSON.stringify({
+          from: session.id,
+          to: id,
+          by: session.id
+        }),
+        method: "POST"
+      })
+      if (!resShoutout.ok) {
+        const resShoutoutJson = await resShoutout.json()
+        throw new Error(resShoutoutJson.error)
+      }
+
+      const resChat = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
+        headers: {
+          token
+        },
+        body: JSON.stringify({
+          from: session.id,
+          to: name,
+        }),
+        method: "POST",
+      })
+      if (!resChat.ok) {
+        const resChatJson = await resChat.json()
+        throw new Error(resChatJson.error)
+      }
+    } catch (error: any) {
+      setErrors([...errors, error.message])
+    } finally {
+      if (btn) btn.innerHTML = "Shoutout"
+    }
   }
 
   return (
@@ -55,40 +167,89 @@ export default function Home() {
           </div>
         ) : (
           <div className="flex justify-end items-center space-x-3">
-            <a className="btn" href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=http://localhost:3000/api/auth/callback/twitch&scope=${scopes}`}>Login With Twitch</a>
+            <a className="btn"
+              href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=http://localhost:3000/api/auth/callback/twitch&scope=${scopes}`}
+            >Login With Twitch</a>
           </div>
         )}
       </section>
 
       <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 h-[75vh]">
-        {session.name ? <div className="rounded-lg p-4 bg-slate-100 animate__animated animate__fadeInDown">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="avatar">
-                <div className="rounded-lg border-2 border-lime-300 w-20 h-20">
-                  <Image
-                    src={session.image || ""}
-                    width={100}
-                    height={100}
-                    alt="Profile"
-                    priority
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="text-slate-700 font-bold">{session.name}</p>
-                <p className="text-slate-700 text-xs mb-2">{session.followers} Followers</p>
-                <p className="text-slate-700 text-xs">Last Streamed: <b>{session.lastStreamed}</b></p>
-              </div>
-            </div>
+        {chatters.length > 0 ?
+          <>
+            {chatters.map((chat, idx) => {
+              setTimeout(() => {
+                const chatterCard = document.getElementById(`chatter_${idx}`)
+                if (chatterCard) {
+                  chatterCard.classList.remove('animate__fadeInDown')
+                  chatterCard.classList.add('animate__fadeOut')
+                  setTimeout(() => {
+                    const removedChatter = chatters.splice(idx, 1)
+                    setChatters(removedChatter)
+                  }, 1000);
+                }
+              }, 5000);
 
-            <div className="text-center">
-              <button className="btn hover:bg-lime-200 hover:border-lime-200 bg-lime-300 border-lime-300 text-slate-700">
-                Shoutout
-              </button>
-            </div>
-          </div>
-        </div> : ''}
+              return (
+                <div className="rounded-lg p-4 bg-slate-100 animate__animated animate__fadeInDown flex justify-between items-center"
+                  key={idx} id={`chatter_${idx}`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="avatar">
+                      <div className="rounded-lg border-2 border-lime-300 w-20 h-20">
+                        <Image
+                          src={chat.image || ""}
+                          width={100}
+                          height={100}
+                          alt="Profile"
+                          priority
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-slate-700 font-bold">{chat.name}</p>
+                      <p className="text-slate-700 text-xs mb-2">{chat.followers} Followers</p>
+                      <p className="text-slate-700 text-xs">Last Streamed: <b>{chat.lastStreamed}</b></p>
+                    </div>
+                  </div>
+
+                  <button className="btn text-center hover:bg-lime-200 hover:border-lime-200 bg-lime-300 border-lime-300 text-slate-700"
+                    id={`shoutout_btn_${idx}`}
+                    onClick={() => shoutout(chat.id, chat.name, idx)}
+                  >
+                    Shoutout
+                  </button>
+                </div>
+              )
+            })
+            }
+          </>
+          : <>
+            {token ? <div className="justify-center items-center flex space-x-2 pt-2 animate__animated animate__fadeIn">
+              <p>Waiting for someone to chat</p>
+              <span className="loading loading-dots loading-sm"></span>
+            </div> : ""}
+          </>}
+
+        <div className="toast">
+          {errors.map((err, idx) => {
+            setTimeout(() => {
+              const errAlert = document.getElementById(`err_${idx}`)
+              if (errAlert) {
+                errAlert.classList.add('animate')
+                errAlert.classList.add('animate__fadeOut')
+                setTimeout(() => {
+                  const removedErr = errors.splice(idx, 1)
+                  setErrors(removedErr)
+                }, 100);
+              }
+            }, 3000);
+            return (
+              <div id={`err_${idx}`} key={`err_${idx}`} className="alert alert-error">
+                <span>{err}</span>
+              </div>
+            )
+          })}
+        </div>
       </section>
 
       <section className="text-center mt-4">

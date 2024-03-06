@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect } from "react";
-import { useRouter } from 'next/navigation'
 import { UserSession } from "@/app/types";
+import { useRouter } from "next/navigation";
 
 export default function Twitch() {
   const router = useRouter()
@@ -13,29 +13,29 @@ export default function Twitch() {
     let accessToken = parsedHash.get('access_token');
     localStorage.setItem("accessToken", accessToken || "")
 
-    getUserData(accessToken || '')
+    fetchAPIs(accessToken || '')
   }, [])
 
-  const getUserData = async (token: string) => {
+  const fetchAPIs = async (token: string) => {
     try {
-      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?token=${token}`)
+
+      // get user data
+      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users`, {
+        headers: {
+          token
+        }
+      })
+      if (!resUser.ok) {
+        const errUser = await resUser.json()
+        throw new Error(errUser.error)
+      }
+
       const { data: userData } = await resUser.json()
-
-      const resChannel = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/channels?token=${token}&broadcasterId=broadcaster_id=${userData.data[0].id}`)
-      const { data: channelData } = await resChannel.json()
-
-      const resFollower = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/followers?token=${token}&broadcasterId=broadcaster_id=${userData.data[0].id}`)
-      const { data: followerData } = await resFollower.json()
 
       const userSession: UserSession = {
         id: userData.data[0].id,
-        type: userData.data[0].broadcaster_type,
         name: userData.data[0].display_name,
         image: userData.data[0].profile_image_url,
-        username: userData.data[0].login,
-        description: userData.data[0].description,
-        followers: followerData.total,
-        lastStreamed: channelData.data[0].game_name,
       }
 
       localStorage.setItem("userSession", JSON.stringify(userSession))

@@ -14,3 +14,10 @@ export interface Chatters {
   description: string;
   lastStreamed: string;
 }
+
+export interface ChattersPresent {
+  [key: string]: {
+    name: string;
+    shoutout: boolean;
+  };
+}

@@ -3,7 +3,7 @@
 import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Chatters, UserSession } from "./types";
+import { Chatters, ChattersPresent, UserSession } from "./types";
 
 export default function Home() {
   const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
@@ -16,6 +16,7 @@ export default function Home() {
   });
 
   const [chatters, setChatters] = useState<Chatters[]>([]);
+  const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -24,6 +25,9 @@ export default function Home() {
       setSession(JSON.parse(localStorage.getItem("userSession") || ""))
     }
     setToken(accessToken || "")
+
+    const savedChatters = localStorage.getItem('chatters') ? JSON.parse(localStorage.getItem('chatters') || '') : {};
+    setChattersPresent(savedChatters)
   }, [])
 
   useEffect(() => {
@@ -44,6 +48,15 @@ export default function Home() {
 
     client.on("message", async (channel, tags, message, self) => {
       if (self) return;
+
+      // skip yg sudah hadir
+      if (Object.keys(chattersPresent).length > 0) {
+        if (tags["display-name"]) {
+          if (chattersPresent[tags["display-name"]]) {
+            return;
+          }
+        }
+      }
 
       const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}`, {
         headers: { token }
@@ -83,6 +96,16 @@ export default function Home() {
         description: "",
         lastStreamed: channelData.data[0].game_name,
       }])
+
+      // save yg udah hadir
+      if (tags["display-name"]) {
+        chattersPresent[tags["display-name"]] = {
+          name: tags["display-name"],
+          shoutout: false
+        }
+      }
+
+      localStorage.setItem('chatters', JSON.stringify(chattersPresent))
     });
 
     return () => {
@@ -92,6 +115,11 @@ export default function Home() {
 
   const logout = async () => {
     localStorage.clear()
+    location.reload()
+  }
+
+  const reset = async () => {
+    localStorage.removeItem('chatters')
     location.reload()
   }
 
@@ -135,6 +163,11 @@ export default function Home() {
         const resChatJson = await resChat.json()
         throw new Error(resChatJson.error)
       }
+
+      chattersPresent[name] = {
+        name,
+        shoutout: true
+      }
     } catch (error: any) {
       setErrors([...errors, error.message])
     } finally {
@@ -161,9 +194,15 @@ export default function Home() {
               <p><b>{session.name}</b></p>
             </div>
 
-            <button className="btn hover:btn-error" onClick={() => logout()}>
-              Logout
-            </button>
+            <div className="space-x-2">
+              <button className="btn btn-error" onClick={() => reset()}>
+                Reset
+              </button>
+
+              <button className="btn hover:btn-error" onClick={() => logout()}>
+                Logout
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex justify-end items-center space-x-3">
@@ -174,7 +213,7 @@ export default function Home() {
         )}
       </section>
 
-      <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 h-[75vh]">
+      <section className="rounded-lg p-3 border-2 border-slate-500 mb-5 space-y-5 min-h-[60vh]">
         {chatters.length > 0 ?
           <>
             {chatters.map((chat, idx) => {
@@ -251,6 +290,17 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 animate__animated animate__fadeIn">
+        {Object.entries(chattersPresent).map(chatter => {
+          return (
+            <div>
+              <p>Yang sudah hadir:</p>
+              <div>- {chatter[1].name} ({chatter[1].shoutout ? 'shouted' : 'not shouted'})</div>
+            </div>
+          )
+        })}
+      </section> : ''}
 
       <section className="text-center mt-4">
         <p>Have feedbacks? Slide me <a href="https://twitter.com/_sunnyegg" className="link" target="_blank">DM</a></p>

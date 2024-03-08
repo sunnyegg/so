@@ -4,6 +4,7 @@ import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Chatters, ChattersPresent, UserSession } from "./types";
+import Card from "@/components/card";
 
 export default function Home() {
   const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
@@ -26,7 +27,7 @@ export default function Home() {
     }
     setToken(accessToken || "")
 
-    const savedChatters = localStorage.getItem('chatters') ? JSON.parse(localStorage.getItem('chatters') || '') : {};
+    const savedChatters = localStorage.getItem('chattersPresent') ? JSON.parse(localStorage.getItem('chattersPresent') || '') : {};
     setChattersPresent(savedChatters)
   }, [])
 
@@ -86,16 +87,7 @@ export default function Home() {
       const { data: channelData } = await resChannel.json()
       const { data: followerData } = await resFollower.json()
 
-      setChatters([...chatters, {
-        id: tags["user-id"] || "",
-        type: "",
-        name: tags["display-name"] || "",
-        image: userData.data[0].profile_image_url,
-        username: tags.username || "",
-        followers: followerData.total,
-        description: "",
-        lastStreamed: channelData.data[0].game_name,
-      }])
+      saveChatter(tags, userData, followerData, channelData)
 
       // save yg udah hadir
       if (tags["display-name"]) {
@@ -105,7 +97,7 @@ export default function Home() {
         }
       }
 
-      localStorage.setItem('chatters', JSON.stringify(chattersPresent))
+      localStorage.setItem('chattersPresent', JSON.stringify(chattersPresent))
     });
 
     return () => {
@@ -113,13 +105,41 @@ export default function Home() {
     }
   }, [token])
 
+  const saveChatter = (tags: any, userData: any, followerData: any, channelData: any) => {
+    const chatter: Chatters = {
+      id: tags["user-id"] || "",
+      type: "",
+      name: tags["display-name"] || "",
+      image: userData.data[0].profile_image_url,
+      username: tags.username || "",
+      followers: followerData.total,
+      description: "",
+      lastStreamed: channelData.data[0].game_name,
+      shown: false
+    }
+
+    setChatters([...chatters, chatter])
+  }
+
+  const setShownChatter = (id: string, shown: boolean) => {
+    const chatter = chatters.find((c) => c.id === id)
+    if (chatter) {
+      chatter.shown = shown
+      setChatters([...chatters, chatter])
+
+      setTimeout(() => {
+        setChatters(chatters.filter(c => !c.shown))
+      }, 2000);
+    }
+  }
+
   const logout = async () => {
     localStorage.clear()
     location.reload()
   }
 
   const reset = async () => {
-    localStorage.removeItem('chatters')
+    localStorage.removeItem('chattersPresent')
     location.reload()
   }
 
@@ -168,6 +188,7 @@ export default function Home() {
         name,
         shoutout: true
       }
+      setChattersPresent(chattersPresent)
     } catch (error: any) {
       setErrors([...errors, error.message])
     } finally {
@@ -214,51 +235,10 @@ export default function Home() {
       </section>
 
       <section className="rounded-lg p-3 border-2 border-slate-500 mb-5 space-y-5 min-h-[60vh]">
-        {chatters.length > 0 ?
+        {chatters.length ?
           <>
             {chatters.map((chat, idx) => {
-              setTimeout(() => {
-                const chatterCard = document.getElementById(`chatter_${idx}`)
-                if (chatterCard) {
-                  chatterCard.classList.remove('animate__fadeInDown')
-                  chatterCard.classList.add('animate__fadeOut')
-                  setTimeout(() => {
-                    const removedChatter = chatters.splice(idx, 1)
-                    setChatters(removedChatter)
-                  }, 1000);
-                }
-              }, 5000);
-
-              return (
-                <div className="rounded-lg p-4 bg-slate-100 animate__animated animate__fadeInDown flex justify-between items-center"
-                  key={idx} id={`chatter_${idx}`}>
-                  <div className="flex items-center space-x-3">
-                    <div className="avatar">
-                      <div className="rounded-lg border-2 border-lime-300 w-20 h-20">
-                        <Image
-                          src={chat.image || ""}
-                          width={100}
-                          height={100}
-                          alt="Profile"
-                          priority
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-slate-700 font-bold">{chat.name}</p>
-                      <p className="text-slate-700 text-xs mb-2">{chat.followers} Followers</p>
-                      <p className="text-slate-700 text-xs">Last Streamed: <b>{chat.lastStreamed}</b></p>
-                    </div>
-                  </div>
-
-                  <button className="btn text-center hover:bg-lime-200 hover:border-lime-200 bg-lime-300 border-lime-300 text-slate-700"
-                    id={`shoutout_btn_${idx}`}
-                    onClick={() => shoutout(chat.id, chat.name, idx)}
-                  >
-                    Shoutout
-                  </button>
-                </div>
-              )
+              return (!chat.shown ? <Card chat={chat} idx={idx} shoutout={shoutout} key={idx} setShownChatter={setShownChatter} /> : '')
             })
             }
           </>
@@ -292,9 +272,9 @@ export default function Home() {
       </section>
 
       {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 animate__animated animate__fadeIn">
-        {Object.entries(chattersPresent).map(chatter => {
+        {Object.entries(chattersPresent).map((chatter, idx) => {
           return (
-            <div>
+            <div key={idx}>
               <p>Yang sudah hadir:</p>
               <div>- {chatter[1].name} ({chatter[1].shoutout ? 'shouted' : 'not shouted'})</div>
             </div>

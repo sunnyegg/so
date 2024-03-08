@@ -13,6 +13,7 @@ export interface Chatters {
   followers: number;
   description: string;
   lastStreamed: string;
+  shown: boolean;
 }
 
 export interface ChattersPresent {

@@ -37,7 +37,7 @@ export default function Home() {
     }
 
     const client = new tmi.Client({
-      options: { debug: true },
+      options: { debug: false },
       identity: {
         username: session.name,
         password: `oauth:${token}`,

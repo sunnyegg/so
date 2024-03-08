@@ -228,7 +228,7 @@ export default function Home() {
         ) : (
           <div className="flex justify-end items-center space-x-3">
             <a className="btn"
-              href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=http://localhost:3000/api/auth/callback/twitch&scope=${scopes}`}
+              href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/twitch&scope=${scopes}`}
             >Login With Twitch</a>
           </div>
         )}

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Chatters, ChattersPresent, UserSession } from "./types";
 import Card from "@/components/card";
 import GearIcon from '@/public/gear.svg'
+import packageJson from '@/package.json'
 
 export default function Home() {
   const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
@@ -217,7 +218,7 @@ export default function Home() {
   }
 
   const openWhitelistModal = () => {
-    const modal = document.getElementById('my_modal_1')
+    const modal = document.getElementById('whitelist_modal')
     if (modal) {
       // @ts-ignore
       modal.showModal()
@@ -231,6 +232,7 @@ export default function Home() {
   const onSaveWhitelist = () => {
     setChattersWhitelist(stateChattersWhitelist)
     localStorage.setItem('chattersWhitelist', stateChattersWhitelist)
+    location.reload()
   }
 
   const onCloseWhitelist = () => {
@@ -238,7 +240,7 @@ export default function Home() {
   }
 
   return (
-    <main className="px-5 py-5 lg:px-40 h-screen">
+    <main className="px-5 py-5 lg:px-40 h-min-screen">
       <section className="rounded-lg p-3 border-2 border-slate-500 mb-5">
         {session.name ? (
           <div className="flex justify-between">
@@ -281,7 +283,7 @@ export default function Home() {
           </div>
         )}
 
-        <dialog id="my_modal_1" className="modal">
+        <dialog id="whitelist_modal" className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg">Whitelist Chatter</h3>
             <p className="py-4">{"Whitelist your chatter so they don't show up (ex: Nightbot)"}</p>
@@ -362,6 +364,7 @@ export default function Home() {
       <section className="text-center mt-4">
         <p>Have feedbacks? Slide me <a href="https://twitter.com/_sunnyegg" className="link" target="_blank">DM</a></p>
         <p>Made with ❤️‍🩹</p>
+        <p className="text-xs">App Version: {packageJson.version}</p>
       </section>
     </main>
   );

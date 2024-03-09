@@ -7,8 +7,9 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
 
   useEffect(() => {
     const interval = setInterval(() => {
+      //8 detik
       setCountdown(countdown - 0.5)
-    }, 200);
+    }, 30);
 
     if (countdown <= 0) {
       clearInterval(interval);
@@ -33,7 +34,7 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
       id={`chatter_${idx}`}>
       <div className="flex items-center space-x-3">
         <div className="avatar">
-          <div className="rounded-lg border-2 border-lime-300 w-20 h-20">
+          <div className="rounded-lg border-2 border-lime-300 w-10 h-10 md:w-20 md:h-20">
             <Image
               src={chat?.image || ""}
               width={100}
@@ -44,9 +45,9 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
           </div>
         </div>
         <div>
-          <p className="text-slate-700 font-bold">{chat?.name}</p>
-          <p className="text-slate-700 text-xs mb-2">{chat?.followers} Followers</p>
-          <p className="text-slate-700 text-xs">Last Streamed: <b>{chat?.lastStreamed}</b></p>
+          <p className="text-slate-700 font-bold text-xs md:text-lg">{chat?.name}</p>
+          <p className="text-slate-700 text-[0.5rem] md:text-xs mb-2">{chat?.followers} Followers</p>
+          <p className="text-slate-700 text-[0.5rem] md:text-xs">Last Streamed: <b>{chat?.lastStreamed}</b></p>
         </div>
       </div>
 
@@ -54,7 +55,7 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
         id={`shoutout_btn_${idx}`}
         onClick={() => shoutout(chat?.id, chat?.name, idx)}
       >
-        Shoutout
+        <svg width="20" height="20" viewBox="0 0 20 20"><path fill-rule="evenodd" d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z" clip-rule="evenodd"></path></svg>
       </button>
 
       <progress className="progress progress-success w-full absolute left-0 bottom-0 rounded-none" value={countdown} max="100"></progress>

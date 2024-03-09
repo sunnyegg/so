@@ -7,14 +7,27 @@ export default async function handler(
 ) {
   try {
     const { token }: any = req.headers;
-    const { id }: any = req.query;
+    const { id, multiple }: any = req.query;
+    let queryFetch = `users`;
+
+    if (multiple) {
+      queryFetch = `users?`;
+      // id = 1234,5678,91011
+      const multipleId = id.split(",");
+
+      multipleId.forEach((val: string, idx: number) => {
+        // users? id=
+        queryFetch += `id=${val}`;
+        if (idx !== multipleId.length - 1) {
+          queryFetch += "&";
+        }
+      });
+    }
+
+    console.log(queryFetch);
 
     // id diisi = &id=1234&id=5678
-    const response = await fetchHelix(
-      token,
-      id ? `users?id=${id}` : "users",
-      "GET"
-    );
+    const response = await fetchHelix(token, queryFetch, "GET");
     if (!response.ok) {
       throw response.error;
     }

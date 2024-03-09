@@ -3,16 +3,21 @@
 import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { Chatters, ChattersPresent, UserSession } from "./types";
+import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
 import Card from "@/components/card";
 import GearIcon from '@/public/gear.svg'
 import packageJson from '@/package.json'
 
 export default function Home() {
-  const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
+  const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels'
 
   const [token, setToken] = useState("")
   const [session, setSession] = useState<UserSession>({
+    id: "",
+    name: "",
+    image: "",
+  });
+  const [mySession, setMySession] = useState<UserSession>({
     id: "",
     name: "",
     image: "",
@@ -23,6 +28,8 @@ export default function Home() {
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
   const [chattersWhitelist, setChattersWhitelist] = useState<string>('');
 
+  const [channels, setChannels] = useState<Channel[]>([]);
+
   const [stateChattersWhitelist, setStateChattersWhitelist] = useState<string>('');
 
   const [errors, setErrors] = useState<string[]>([]);
@@ -31,6 +38,7 @@ export default function Home() {
     const accessToken = localStorage.getItem('accessToken')
     if (accessToken) {
       setSession(JSON.parse(localStorage.getItem("userSession") || ""))
+      setMySession(JSON.parse(localStorage.getItem("mySession") || ""))
     }
     setToken(accessToken || "")
 
@@ -40,9 +48,18 @@ export default function Home() {
     const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
     setChattersWhitelist(whitelistedChatters)
     setStateChattersWhitelist(whitelistedChatters)
+
+    const savedChannels = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [];
+    setChannels(savedChannels)
+
+    localStorage.setItem('appVersion', packageJson.version)
   }, [])
 
   useEffect(() => {
+    if (!token) {
+      return
+    }
+
     if (!session.name) {
       return
     }
@@ -123,7 +140,7 @@ export default function Home() {
     return () => {
       client.disconnect()
     }
-  }, [token])
+  }, [session])
 
   useEffect(() => {
     if (chattersTemp) {
@@ -160,7 +177,11 @@ export default function Home() {
   }
 
   const logout = async () => {
-    localStorage.clear()
+    localStorage.removeItem('chattersPresent')
+    localStorage.removeItem('userSession')
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('appVersion')
+    localStorage.removeItem('userChannelModerated')
     location.reload()
   }
 
@@ -179,23 +200,6 @@ export default function Home() {
     }
 
     try {
-      // disabled because have 2 minutes cooldown
-      // const resShoutout = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/shoutout`, {
-      //   headers: {
-      //     token
-      //   },
-      //   body: JSON.stringify({
-      //     from: session.id,
-      //     to: id,
-      //     by: session.id
-      //   }),
-      //   method: "POST"
-      // })
-      // if (!resShoutout.ok) {
-      //   const resShoutoutJson = await resShoutout.json()
-      //   throw new Error(resShoutoutJson.error)
-      // }
-
       const resChat = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
         headers: {
           token
@@ -239,27 +243,46 @@ export default function Home() {
     setStateChattersWhitelist(chattersWhitelist)
   }
 
+  const openModalChannel = async () => {
+    const modalChannel = document.getElementById('channel_modal')
+    if (modalChannel) {
+      // @ts-ignore
+      modalChannel.showModal()
+    }
+  }
+
+  const onChooseChannel = async (ch: Channel) => {
+    const currentSession = {
+      id: ch.broadcaster_id,
+      name: ch.broadcaster_name,
+      image: ch.broadcaster_image
+    }
+    setSession(currentSession)
+    localStorage.setItem("userSession", JSON.stringify(currentSession))
+    localStorage.removeItem('chattersPresent')
+  }
+
   return (
-    <main className="px-5 py-5 lg:px-40 h-min-screen">
-      <section className="rounded-lg p-3 border-2 border-slate-500 mb-5">
+    <main className="px-4 py-4 lg:px-40 h-min-screen">
+      <section className="rounded-lg p-2 border-2 border-slate-500 mb-4">
         {session.name ? (
-          <div className="flex justify-between">
-            <div className="flex items-center space-x-3">
+          <div className="flex justify-between items-center">
+            <button className="btn flex items-center space-x-2" onClick={async () => await openModalChannel()}>
               <div className="avatar">
                 <div className="rounded-full">
                   <Image
                     src={session.image || ""}
-                    width={40}
-                    height={40}
+                    width={30}
+                    height={30}
                     alt="Profile"
                   />
                 </div>
               </div>
               <p><b>{session.name}</b></p>
-            </div>
+            </button>
 
             <details className="dropdown dropdown-bottom dropdown-end">
-              <summary className="btn m-1">
+              <summary className="btn m-2">
                 <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" />
               </summary >
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 space-y-2">
@@ -273,10 +296,79 @@ export default function Home() {
                   Logout
                 </button></li>
               </ul>
-            </details >
+            </details>
+
+            <dialog id="channel_modal" className="modal">
+              <div className="modal-box">
+                <h3 className="font-bold text-lg mb-4">Choose a Channel</h3>
+
+                <div className="mb-4 space-y-2">
+                  <h4>You:</h4>
+
+                  <form method="dialog" className="flex flex-wrap justify-between">
+                    <button className="space-x-2 mb-2" onClick={() => onChooseChannel({
+                      broadcaster_id: mySession.id,
+                      broadcaster_name: mySession.name,
+                      broadcaster_image: mySession.image,
+                      broadcaster_login: mySession.name
+                    })}>
+                      <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
+                        <div className="avatar">
+                          <div className="w-10 h-10 rounded-md">
+                            <Image
+                              src={mySession.image || ""}
+                              width={100}
+                              height={100}
+                              alt="My Channel Profile"
+                              priority
+                            />
+                          </div>
+                        </div>
+                        <div>{mySession.name}</div>
+                      </div>
+                    </button>
+                  </form>
+                </div>
+
+                <div className="mb-4 space-y-2">
+                  <h4>Channels You Moderated:</h4>
+
+                  <form method="dialog" className="flex flex-wrap justify-between">
+                    {
+                      channels.length ? channels.map((c, idx) => {
+                        return <>
+                          <button key={idx} className="mb-2" onClick={() => onChooseChannel(c)}>
+                            <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
+                              <div className="avatar">
+                                <div className="w-10 h-10 rounded-md">
+                                  <Image
+                                    src={c.broadcaster_image || ""}
+                                    width={100}
+                                    height={100}
+                                    alt="Channel Profile"
+                                    priority
+                                  />
+                                </div>
+                              </div>
+                              <div>{c.broadcaster_name}</div>
+                            </div>
+                          </button>
+                        </>
+                      }) : ''
+                    }
+                  </form>
+                </div>
+
+                <div className="modal-action">
+                  <form method="dialog">
+                    <button className="btn">Close</button>
+                  </form>
+                </div>
+              </div>
+            </dialog>
           </div>
         ) : (
-          <div className="flex justify-end items-center space-x-3">
+          <div className="flex justify-end items-center space-x-2">
             <a className="btn"
               href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/twitch&scope=${scopes}`}
             >Login With Twitch</a>
@@ -304,7 +396,7 @@ export default function Home() {
               </div>
             </form>
             <div className="modal-action">
-              <form method="dialog" className="space-x-3">
+              <form method="dialog" className="space-x-2">
                 <button type="submit" className="btn btn-success" onClick={() => onSaveWhitelist()}>Save</button>
                 <button className="btn" onClick={() => onCloseWhitelist()}>Close</button>
               </form>
@@ -313,7 +405,7 @@ export default function Home() {
         </dialog>
       </section>
 
-      <section className="rounded-lg p-3 border-2 border-slate-500 mb-5 space-y-5 min-h-[60vh]">
+      <section className="rounded-lg p-2 border-2 border-slate-500 mb-4 space-y-4 min-h-[60vh]">
         {chatters.length ?
           <>
             {chatters.map((chat, idx) => {
@@ -350,7 +442,7 @@ export default function Home() {
         </div>
       </section>
 
-      {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 animate__animated animate__fadeIn">
+      {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-2 border-2 border-slate-500 space-y-4 animate__animated animate__fadeIn">
         <div>
           <p>Yang sudah hadir:</p>
           {Object.entries(chattersPresent).map((chatter, idx) => {

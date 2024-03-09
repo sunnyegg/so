@@ -24,8 +24,6 @@ export default async function handler(
       });
     }
 
-    console.log(queryFetch);
-
     // id diisi = &id=1234&id=5678
     const response = await fetchHelix(token, queryFetch, "GET");
     if (!response.ok) {

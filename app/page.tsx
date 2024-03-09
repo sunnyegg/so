@@ -96,7 +96,7 @@ export default function Home() {
         }
       }
 
-      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}`, {
+      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`, {
         headers: { token }
       })
       if (!resUser.ok) {

@@ -284,7 +284,7 @@ export default function Home() {
         <dialog id="my_modal_1" className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg">Whitelist Chatter</h3>
-            <p className="py-4">Whitelist your chatter so they don't show up (ex: Nightbot)</p>
+            <p className="py-4">{"Whitelist your chatter so they don't show up (ex: Nightbot)"}</p>
             <form action="">
               <div className="space-y-2">
                 <div className="mt-2">

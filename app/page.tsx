@@ -35,24 +35,28 @@ export default function Home() {
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken')
-    if (accessToken) {
-      setSession(JSON.parse(localStorage.getItem("userSession") || ""))
-      setMySession(JSON.parse(localStorage.getItem("mySession") || ""))
+    try {
+      const accessToken = localStorage.getItem('accessToken')
+      if (accessToken) {
+        setSession(JSON.parse(localStorage.getItem("userSession") || ""))
+        setMySession(JSON.parse(localStorage.getItem("mySession") || ""))
+      }
+      setToken(accessToken || "")
+
+      const savedChatters = localStorage.getItem('chattersPresent') ? JSON.parse(localStorage.getItem('chattersPresent') || '') : {};
+      setChattersPresent(savedChatters)
+
+      const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
+      setChattersWhitelist(whitelistedChatters)
+      setStateChattersWhitelist(whitelistedChatters)
+
+      const savedChannels = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [];
+      setChannels(savedChannels)
+
+      localStorage.setItem('appVersion', packageJson.version)
+    } catch (error) {
+      localStorage.clear()
     }
-    setToken(accessToken || "")
-
-    const savedChatters = localStorage.getItem('chattersPresent') ? JSON.parse(localStorage.getItem('chattersPresent') || '') : {};
-    setChattersPresent(savedChatters)
-
-    const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
-    setChattersWhitelist(whitelistedChatters)
-    setStateChattersWhitelist(whitelistedChatters)
-
-    const savedChannels = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [];
-    setChannels(savedChannels)
-
-    localStorage.setItem('appVersion', packageJson.version)
   }, [])
 
   useEffect(() => {

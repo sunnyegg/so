@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Chatters, ChattersPresent, UserSession } from "./types";
 import Card from "@/components/card";
+import GearIcon from '@/public/gear.svg'
 
 export default function Home() {
   const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat'
@@ -17,7 +18,12 @@ export default function Home() {
   });
 
   const [chatters, setChatters] = useState<Chatters[]>([]);
+  const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
+  const [chattersWhitelist, setChattersWhitelist] = useState<string>('');
+
+  const [stateChattersWhitelist, setStateChattersWhitelist] = useState<string>('');
+
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -29,6 +35,10 @@ export default function Home() {
 
     const savedChatters = localStorage.getItem('chattersPresent') ? JSON.parse(localStorage.getItem('chattersPresent') || '') : {};
     setChattersPresent(savedChatters)
+
+    const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
+    setChattersWhitelist(whitelistedChatters)
+    setStateChattersWhitelist(whitelistedChatters)
   }, [])
 
   useEffect(() => {
@@ -49,6 +59,15 @@ export default function Home() {
 
     client.on("message", async (channel, tags, message, self) => {
       if (self) return;
+
+      // skip yg whitelisted
+      // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
+      if (stateChattersWhitelist.length > 0) {
+        const arrayWhitelist = stateChattersWhitelist.split(',')
+        if (arrayWhitelist.find(c => c === tags["display-name"]?.toLowerCase())) {
+          return;
+        }
+      }
 
       // skip yg sudah hadir
       if (Object.keys(chattersPresent).length > 0) {
@@ -105,6 +124,12 @@ export default function Home() {
     }
   }, [token])
 
+  useEffect(() => {
+    if (chattersTemp) {
+      setChatters([...chatters, chattersTemp])
+    }
+  }, [chattersTemp])
+
   const saveChatter = (tags: any, userData: any, followerData: any, channelData: any) => {
     const chatter: Chatters = {
       id: tags["user-id"] || "",
@@ -118,7 +143,7 @@ export default function Home() {
       shown: false
     }
 
-    setChatters([...chatters, chatter])
+    setChattersTemp(chatter)
   }
 
   const setShownChatter = (id: string, shown: boolean) => {
@@ -153,21 +178,22 @@ export default function Home() {
     }
 
     try {
-      const resShoutout = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/shoutout`, {
-        headers: {
-          token
-        },
-        body: JSON.stringify({
-          from: session.id,
-          to: id,
-          by: session.id
-        }),
-        method: "POST"
-      })
-      if (!resShoutout.ok) {
-        const resShoutoutJson = await resShoutout.json()
-        throw new Error(resShoutoutJson.error)
-      }
+      // disabled because have 2 minutes cooldown
+      // const resShoutout = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/shoutout`, {
+      //   headers: {
+      //     token
+      //   },
+      //   body: JSON.stringify({
+      //     from: session.id,
+      //     to: id,
+      //     by: session.id
+      //   }),
+      //   method: "POST"
+      // })
+      // if (!resShoutout.ok) {
+      //   const resShoutoutJson = await resShoutout.json()
+      //   throw new Error(resShoutoutJson.error)
+      // }
 
       const resChat = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
         headers: {
@@ -183,12 +209,6 @@ export default function Home() {
         const resChatJson = await resChat.json()
         throw new Error(resChatJson.error)
       }
-
-      chattersPresent[name] = {
-        name,
-        shoutout: true
-      }
-      setChattersPresent(chattersPresent)
     } catch (error: any) {
       setErrors([...errors, error.message])
     } finally {
@@ -196,8 +216,29 @@ export default function Home() {
     }
   }
 
+  const openWhitelistModal = () => {
+    const modal = document.getElementById('my_modal_1')
+    if (modal) {
+      // @ts-ignore
+      modal.showModal()
+    }
+  }
+
+  const onChangeWhitelist = (e: any) => {
+    setStateChattersWhitelist(e.target.value)
+  }
+
+  const onSaveWhitelist = () => {
+    setChattersWhitelist(stateChattersWhitelist)
+    localStorage.setItem('chattersWhitelist', stateChattersWhitelist)
+  }
+
+  const onCloseWhitelist = () => {
+    setStateChattersWhitelist(chattersWhitelist)
+  }
+
   return (
-    <main className="px-5 py-5 lg:px-40 h-[100vh]">
+    <main className="px-5 py-5 lg:px-40 h-screen">
       <section className="rounded-lg p-3 border-2 border-slate-500 mb-5">
         {session.name ? (
           <div className="flex justify-between">
@@ -215,15 +256,22 @@ export default function Home() {
               <p><b>{session.name}</b></p>
             </div>
 
-            <div className="space-x-2">
-              <button className="btn btn-error" onClick={() => reset()}>
-                Reset
-              </button>
-
-              <button className="btn hover:btn-error" onClick={() => logout()}>
-                Logout
-              </button>
-            </div>
+            <details className="dropdown dropdown-bottom dropdown-end">
+              <summary className="btn m-1">
+                <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" />
+              </summary >
+              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 space-y-2">
+                <li> <button className="btn" onClick={() => openWhitelistModal()}>
+                  Whitelist
+                </button></li>
+                <li> <button className="btn btn-error" onClick={() => reset()}>
+                  Reset
+                </button></li>
+                <li><button className="btn hover:btn-error" onClick={() => logout()}>
+                  Logout
+                </button></li>
+              </ul>
+            </details >
           </div>
         ) : (
           <div className="flex justify-end items-center space-x-3">
@@ -232,6 +280,35 @@ export default function Home() {
             >Login With Twitch</a>
           </div>
         )}
+
+        <dialog id="my_modal_1" className="modal">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg">Whitelist Chatter</h3>
+            <p className="py-4">Whitelist your chatter so they don't show up (ex: Nightbot)</p>
+            <form action="">
+              <div className="space-y-2">
+                <div className="mt-2">
+                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+                    <input
+                      type="text"
+                      name="whitelist-chatter"
+                      className="block flex-1 border-0 p-2 text:white bg-transparent"
+                      placeholder="split by comma (,)"
+                      value={stateChattersWhitelist}
+                      onChange={(val) => onChangeWhitelist(val)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div className="modal-action">
+              <form method="dialog" className="space-x-3">
+                <button type="submit" className="btn btn-success" onClick={() => onSaveWhitelist()}>Save</button>
+                <button className="btn" onClick={() => onCloseWhitelist()}>Close</button>
+              </form>
+            </div>
+          </div>
+        </dialog>
       </section>
 
       <section className="rounded-lg p-3 border-2 border-slate-500 mb-5 space-y-5 min-h-[60vh]">
@@ -272,14 +349,14 @@ export default function Home() {
       </section>
 
       {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-3 border-2 border-slate-500 space-y-5 animate__animated animate__fadeIn">
-        {Object.entries(chattersPresent).map((chatter, idx) => {
-          return (
-            <div key={idx}>
-              <p>Yang sudah hadir:</p>
-              <div>- {chatter[1].name} ({chatter[1].shoutout ? 'shouted' : 'not shouted'})</div>
-            </div>
-          )
-        })}
+        <div>
+          <p>Yang sudah hadir:</p>
+          {Object.entries(chattersPresent).map((chatter, idx) => {
+            return (
+              <p key={idx}>- {chatter[1].name}</p>
+            )
+          })}
+        </div>
       </section> : ''}
 
       <section className="text-center mt-4">

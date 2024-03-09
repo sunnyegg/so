@@ -8,7 +8,7 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
   useEffect(() => {
     const interval = setInterval(() => {
       setCountdown(countdown - 0.5)
-    }, 20);
+    }, 200);
 
     if (countdown <= 0) {
       clearInterval(interval);

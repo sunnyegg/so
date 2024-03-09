@@ -23,7 +23,7 @@ export default async function handler(
 
     const json = await response.response?.json();
 
-    if (json.status === 400) {
+    if (json.status !== 200) {
       throw new Error(json.message);
     }
 

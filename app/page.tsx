@@ -69,7 +69,7 @@ export default function Home() {
     }
 
     const client = new tmi.Client({
-      options: { debug: false },
+      options: { debug: false, skipUpdatingEmotesets: true },
       identity: {
         username: session.name,
         password: `oauth:${token}`,
@@ -342,8 +342,8 @@ export default function Home() {
                   <form method="dialog" className="flex flex-wrap justify-between">
                     {
                       channels.length ? channels.map((c, idx) => {
-                        return <>
-                          <button key={idx} className="mb-2" onClick={() => onChooseChannel(c)}>
+                        return <div key={idx}>
+                          <button className="mb-2" onClick={() => onChooseChannel(c)}>
                             <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
                               <div className="avatar">
                                 <div className="w-10 h-10 rounded-md">
@@ -359,7 +359,7 @@ export default function Home() {
                               <div>{c.broadcaster_name}</div>
                             </div>
                           </button>
-                        </>
+                        </div>
                       }) : ''
                     }
                   </form>

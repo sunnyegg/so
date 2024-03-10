@@ -196,6 +196,7 @@ export default function Home() {
 
   const shoutout = async (id: string, name: string, idx: number) => {
     const btn = document.getElementById(`shoutout_btn_${idx}`)
+    const btnCopy = btn?.innerHTML;
     if (btn) {
       btn.innerHTML = ''
       const loading = document.createElement('div')
@@ -211,6 +212,7 @@ export default function Home() {
         body: JSON.stringify({
           from: session.id,
           to: name,
+          by: mySession.id
         }),
         method: "POST",
       })
@@ -221,7 +223,7 @@ export default function Home() {
     } catch (error: any) {
       setErrors([...errors, error.message])
     } finally {
-      if (btn) btn.innerHTML = "Shoutout"
+      if (btn) btn.innerHTML = btnCopy || ''
     }
   }
 

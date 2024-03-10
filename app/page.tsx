@@ -33,6 +33,7 @@ export default function Home() {
   const [stateChattersWhitelist, setStateChattersWhitelist] = useState<string>('');
 
   const [errors, setErrors] = useState<string[]>([]);
+  const [success, setSuccess] = useState<string[]>([]);
 
   useEffect(() => {
     try {
@@ -68,81 +69,87 @@ export default function Home() {
       return
     }
 
-    const client = new tmi.Client({
-      options: { debug: false, skipUpdatingEmotesets: true },
-      identity: {
-        username: session.name,
-        password: `oauth:${token}`,
-      },
-      channels: [session.name],
-    });
+    try {
+      const client = new tmi.Client({
+        options: { debug: false, skipUpdatingEmotesets: true },
+        identity: {
+          username: session.name,
+          password: `oauth:${token}`,
+        },
+        channels: [session.name],
+      });
 
-    client.connect();
+      client.connect();
 
-    client.on("message", async (channel, tags, message, self) => {
-      if (self) return;
+      client.on("message", async (channel, tags, message, self) => {
+        if (self) return;
 
-      // skip yg whitelisted
-      // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
-      if (stateChattersWhitelist.length > 0) {
-        const arrayWhitelist = stateChattersWhitelist.split(',')
-        if (arrayWhitelist.find(c => c === tags["display-name"]?.toLowerCase())) {
-          return;
-        }
-      }
-
-      // skip yg sudah hadir
-      if (Object.keys(chattersPresent).length > 0) {
-        if (tags["display-name"]) {
-          if (chattersPresent[tags["display-name"]]) {
+        // skip yg whitelisted
+        // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
+        if (stateChattersWhitelist.length > 0) {
+          const arrayWhitelist = stateChattersWhitelist.split(',')
+          if (arrayWhitelist.find(c => c === tags["display-name"]?.toLowerCase())) {
             return;
           }
         }
-      }
 
-      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`, {
-        headers: { token }
-      })
-      if (!resUser.ok) {
-        const errUser = await resUser.json()
-        setErrors([...errors, errUser.error])
-      }
-
-      const resChannel = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
-        headers: { token }
-      })
-      if (!resChannel.ok) {
-        const errChannel = await resChannel.json()
-        setErrors([...errors, errChannel.error])
-      }
-
-      const resFollower = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
-        headers: { token }
-      })
-      if (!resFollower.ok) {
-        const errFollower = await resFollower.json()
-        setErrors([...errors, errFollower.error])
-      }
-
-      const { data: userData } = await resUser.json()
-      const { data: channelData } = await resChannel.json()
-      const { data: followerData } = await resFollower.json()
-
-      saveChatter(tags, userData, followerData, channelData)
-
-      // save yg udah hadir
-      if (tags["display-name"]) {
-        chattersPresent[tags["display-name"]] = {
-          name: tags["display-name"],
-          shoutout: false
+        // skip yg sudah hadir
+        if (Object.keys(chattersPresent).length > 0) {
+          if (tags["display-name"]) {
+            if (chattersPresent[tags["display-name"]]) {
+              return;
+            }
+          }
         }
+
+        const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`, {
+          headers: { token }
+        })
+        if (!resUser.ok) {
+          const errUser = await resUser.json()
+          setErrors([...errors, errUser.error])
+        }
+
+        const resChannel = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
+          headers: { token }
+        })
+        if (!resChannel.ok) {
+          const errChannel = await resChannel.json()
+          setErrors([...errors, errChannel.error])
+        }
+
+        const resFollower = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
+          headers: { token }
+        })
+        if (!resFollower.ok) {
+          const errFollower = await resFollower.json()
+          setErrors([...errors, errFollower.error])
+        }
+
+        const { data: userData } = await resUser.json()
+        const { data: channelData } = await resChannel.json()
+        const { data: followerData } = await resFollower.json()
+
+        saveChatter(tags, userData, followerData, channelData)
+
+        // save yg udah hadir
+        if (tags["display-name"]) {
+          chattersPresent[tags["display-name"]] = {
+            name: tags["display-name"],
+            shoutout: false
+          }
+        }
+
+        localStorage.setItem('chattersPresent', JSON.stringify(chattersPresent))
+      });
+
+      setSuccess([...success, `Connected to: #${session.name}`])
+
+      return () => {
+        client.disconnect()
       }
-
-      localStorage.setItem('chattersPresent', JSON.stringify(chattersPresent))
-    });
-
-    return () => {
-      client.disconnect()
+    } catch (error: any) {
+      setErrors([...errors, error.message])
     }
   }, [session])
 
@@ -173,10 +180,6 @@ export default function Home() {
     if (chatter) {
       chatter.shown = shown
       setChatters([...chatters, chatter])
-
-      setTimeout(() => {
-        setChatters(chatters.filter(c => !c.shown))
-      }, 2000);
     }
   }
 
@@ -186,15 +189,17 @@ export default function Home() {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('appVersion')
     localStorage.removeItem('userChannelModerated')
+    setSuccess([...success, `Logging out...`])
     location.reload()
   }
 
   const reset = async () => {
     localStorage.removeItem('chattersPresent')
+    setSuccess([...success, `Reset attendance success`])
     location.reload()
   }
 
-  const shoutout = async (id: string, name: string, idx: number) => {
+  const shoutout = async (name: string, idx: number) => {
     const btn = document.getElementById(`shoutout_btn_${idx}`)
     const btnCopy = btn?.innerHTML;
     if (btn) {
@@ -224,6 +229,7 @@ export default function Home() {
       setErrors([...errors, error.message])
     } finally {
       if (btn) btn.innerHTML = btnCopy || ''
+      setSuccess([...success, `Shouted: ${name}`])
     }
   }
 
@@ -242,6 +248,7 @@ export default function Home() {
   const onSaveWhitelist = () => {
     setChattersWhitelist(stateChattersWhitelist)
     localStorage.setItem('chattersWhitelist', stateChattersWhitelist)
+    setSuccess([...success, `Blacklist saved`])
     location.reload()
   }
 
@@ -265,6 +272,7 @@ export default function Home() {
     }
     setSession(currentSession)
     localStorage.setItem("userSession", JSON.stringify(currentSession))
+    setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`])
     localStorage.removeItem('chattersPresent')
   }
 
@@ -292,11 +300,11 @@ export default function Home() {
                 <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" />
               </summary >
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 space-y-2">
-                <li> <button className="btn" onClick={() => openWhitelistModal()}>
-                  Whitelist
+                <li> <button className="btn hover" onClick={() => openWhitelistModal()}>
+                  Blacklist
                 </button></li>
                 <li> <button className="btn btn-error" onClick={() => reset()}>
-                  Reset
+                  Reset Attendance
                 </button></li>
                 <li><button className="btn hover:btn-error" onClick={() => logout()}>
                   Logout
@@ -425,27 +433,6 @@ export default function Home() {
               <span className="loading loading-dots loading-sm"></span>
             </div> : ""}
           </>}
-
-        <div className="toast">
-          {errors.map((err, idx) => {
-            setTimeout(() => {
-              const errAlert = document.getElementById(`err_${idx}`)
-              if (errAlert) {
-                errAlert.classList.add('animate')
-                errAlert.classList.add('animate__fadeOut')
-                setTimeout(() => {
-                  const removedErr = errors.splice(idx, 1)
-                  setErrors(removedErr)
-                }, 100);
-              }
-            }, 3000);
-            return (
-              <div id={`err_${idx}`} key={`err_${idx}`} className="alert alert-error">
-                <span>{err}</span>
-              </div>
-            )
-          })}
-        </div>
       </section>
 
       {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-2 border-2 border-slate-500 space-y-4 animate__animated animate__fadeIn">
@@ -464,6 +451,47 @@ export default function Home() {
         <p>Made with ❤️‍🩹</p>
         <p className="text-xs">App Version: {packageJson.version}</p>
       </section>
+
+      {/* toast */}
+      <div className="toast">
+        {errors.map((err, idx) => {
+          setTimeout(() => {
+            const errAlert = document.getElementById(`err_${idx}`)
+            if (errAlert) {
+              errAlert.classList.add('animate')
+              errAlert.classList.add('animate__fadeOut')
+              setTimeout(() => {
+                const removedErr = errors.splice(idx, 1)
+                setErrors(removedErr)
+              }, 100);
+            }
+          }, 3000);
+          return (
+            <div id={`err_${idx}`} key={idx} className="alert alert-error">
+              <span>{err}</span>
+            </div>
+          )
+        })}
+        {success.map((s, idx) => {
+          setTimeout(() => {
+            const successAlert = document.getElementById(`success_${idx}`)
+            if (successAlert) {
+              successAlert.classList.add('animate')
+              successAlert.classList.add('animate__fadeOut')
+              setTimeout(() => {
+                const removedSuccess = success.splice(idx, 1)
+                setErrors(removedSuccess)
+              }, 100);
+            }
+          }, 3000);
+          return (
+            <div id={`success_${idx}`} key={idx} className="alert alert-success">
+              <span>{s}</span>
+            </div>
+          )
+        })}
+      </div>
+      {/* toast */}
     </main>
   );
 }

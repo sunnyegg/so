@@ -56,7 +56,7 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
 
       <button className="btn text-center hover:bg-lime-200 hover:border-lime-200 bg-lime-300 border-lime-300 text-slate-700"
         id={`shoutout_btn_${idx}`}
-        onClick={() => shoutout(chat?.id, chat?.name, idx)}
+        onClick={() => shoutout(chat?.name, idx)}
       >
         <svg width="20" height="20" viewBox="0 0 20 20"><path fill-rule="evenodd" d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z" clip-rule="evenodd"></path></svg>
       </button>

@@ -20,7 +20,7 @@ export default async function handler(
 
     const json = await response.response?.json();
 
-    if (json.status !== 200) {
+    if (response.response?.status !== 200) {
       throw new Error(json.message);
     }
 
@@ -28,6 +28,7 @@ export default async function handler(
       data: json,
     });
   } catch (error: any) {
+    console.log(error);
     res.status(400).json({
       error: error.message,
     });

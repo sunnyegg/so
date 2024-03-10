@@ -7,9 +7,14 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
 
   useEffect(() => {
     const interval = setInterval(() => {
-      //8 detik
+      // 70 = 18 detik
+      // 60 = 15 detik
+      // 50 = 12 detik
+      // 40 = 9 detik
+      // 30 = 6 detik
+      // 20 = 3 detik
       setCountdown(countdown - 0.5)
-    }, 30);
+    }, 60);
 
     if (countdown <= 0) {
       clearInterval(interval);
@@ -26,8 +31,6 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
 
     return () => clearInterval(interval);
   }, [countdown]);
-
-
 
   return (
     <div className="rounded-lg p-4 bg-slate-100 animate__animated animate__fadeInDown flex justify-between items-center"

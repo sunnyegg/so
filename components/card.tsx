@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function Card({
   chat,
@@ -30,8 +30,8 @@ export default function Card({
       clearInterval(interval);
 
       if (chatterCard) {
-        chatterCard.classList.remove('animate__fadeInDown');
-        chatterCard.classList.add('animate__fadeOut');
+        chatterCard.classList.remove("animate__fadeInDown");
+        chatterCard.classList.add("animate__fadeOut");
 
         setTimeout(() => {
           setShownChatter(chat.id, true);
@@ -50,11 +50,19 @@ export default function Card({
       <div className="flex items-center space-x-3">
         <div className="avatar">
           <div className="h-10 w-10 rounded-lg border-2 border-lime-300 md:h-20 md:w-20">
-            <Image src={chat?.image || ''} width={100} height={100} alt="Profile" priority />
+            <Image
+              src={chat?.image || ""}
+              width={100}
+              height={100}
+              alt="Profile"
+              priority
+            />
           </div>
         </div>
         <div>
-          <p className="text-xs font-bold text-slate-700 md:text-lg">{chat?.name}</p>
+          <p className="text-xs font-bold text-slate-700 md:text-lg">
+            {chat?.name}
+          </p>
           <p className="mb-2 text-[0.5rem] text-slate-700 md:text-xs">
             {chat?.followers} Followers
           </p>

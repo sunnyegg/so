@@ -1,64 +1,66 @@
-'use client';
+"use client";
 
-import tmi from 'tmi.js';
-import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { Channel, Chatters, ChattersPresent, UserSession } from './types';
-import Card from '@/components/card';
-import GearIcon from '@/public/gear.svg';
-import packageJson from '@/package.json';
+import tmi from "tmi.js";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
+import Card from "@/components/card";
+import GearIcon from "@/public/gear.svg";
+import packageJson from "@/package.json";
 
 export default function Home() {
   const scopes =
-    'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels';
+    "user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels";
 
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState("");
   const [session, setSession] = useState<UserSession>({
-    id: '',
-    name: '',
-    image: '',
+    id: "",
+    name: "",
+    image: "",
   });
   const [mySession, setMySession] = useState<UserSession>({
-    id: '',
-    name: '',
-    image: '',
+    id: "",
+    name: "",
+    image: "",
   });
 
   const [chatters, setChatters] = useState<Chatters[]>([]);
   const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
-  const [chattersWhitelist, setChattersWhitelist] = useState<string>('');
+  const [chattersWhitelist, setChattersWhitelist] = useState<string>("");
 
   const [channels, setChannels] = useState<Channel[]>([]);
 
-  const [stateChattersWhitelist, setStateChattersWhitelist] = useState<string>('');
+  const [stateChattersWhitelist, setStateChattersWhitelist] =
+    useState<string>("");
 
   const [errors, setErrors] = useState<string[]>([]);
 
   useEffect(() => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
+      const accessToken = localStorage.getItem("accessToken");
       if (accessToken) {
-        setSession(JSON.parse(localStorage.getItem('userSession') || ''));
-        setMySession(JSON.parse(localStorage.getItem('mySession') || ''));
+        setSession(JSON.parse(localStorage.getItem("userSession") || ""));
+        setMySession(JSON.parse(localStorage.getItem("mySession") || ""));
       }
-      setToken(accessToken || '');
+      setToken(accessToken || "");
 
-      const savedChatters = localStorage.getItem('chattersPresent')
-        ? JSON.parse(localStorage.getItem('chattersPresent') || '')
+      const savedChatters = localStorage.getItem("chattersPresent")
+        ? JSON.parse(localStorage.getItem("chattersPresent") || "")
         : {};
       setChattersPresent(savedChatters);
 
-      const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
+      const whitelistedChatters =
+        localStorage.getItem("chattersWhitelist") || "";
       setChattersWhitelist(whitelistedChatters);
       setStateChattersWhitelist(whitelistedChatters);
 
-      const savedChannels = localStorage.getItem('userChannelModerated')
-        ? JSON.parse(localStorage.getItem('userChannelModerated') || '')
+      const savedChannels = localStorage.getItem("userChannelModerated")
+        ? JSON.parse(localStorage.getItem("userChannelModerated") || "")
         : [];
       setChannels(savedChannels);
 
-      localStorage.setItem('appVersion', packageJson.version);
+      localStorage.setItem("appVersion", packageJson.version);
     } catch (error) {
       localStorage.clear();
     }
@@ -84,29 +86,31 @@ export default function Home() {
 
     client.connect();
 
-    client.on('message', async (channel, tags, message, self) => {
+    client.on("message", async (channel, tags, message, self) => {
       if (self) return;
 
       // skip yg whitelisted
       // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
       if (stateChattersWhitelist.length > 0) {
-        const arrayWhitelist = stateChattersWhitelist.split(',');
-        if (arrayWhitelist.find((c) => c === tags['display-name']?.toLowerCase())) {
+        const arrayWhitelist = stateChattersWhitelist.split(",");
+        if (
+          arrayWhitelist.find((c) => c === tags["display-name"]?.toLowerCase())
+        ) {
           return;
         }
       }
 
       // skip yg sudah hadir
       if (Object.keys(chattersPresent).length > 0) {
-        if (tags['display-name']) {
-          if (chattersPresent[tags['display-name']]) {
+        if (tags["display-name"]) {
+          if (chattersPresent[tags["display-name"]]) {
             return;
           }
         }
       }
 
       const resUser = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags['user-id']}&multiple=true`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`,
         {
           headers: { token },
         }
@@ -117,7 +121,7 @@ export default function Home() {
       }
 
       const resChannel = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags['user-id']}`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`,
         {
           headers: { token },
         }
@@ -128,7 +132,7 @@ export default function Home() {
       }
 
       const resFollower = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags['user-id']}`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`,
         {
           headers: { token },
         }
@@ -145,14 +149,14 @@ export default function Home() {
       saveChatter(tags, userData, followerData, channelData);
 
       // save yg udah hadir
-      if (tags['display-name']) {
-        chattersPresent[tags['display-name']] = {
-          name: tags['display-name'],
+      if (tags["display-name"]) {
+        chattersPresent[tags["display-name"]] = {
+          name: tags["display-name"],
           shoutout: false,
         };
       }
 
-      localStorage.setItem('chattersPresent', JSON.stringify(chattersPresent));
+      localStorage.setItem("chattersPresent", JSON.stringify(chattersPresent));
     });
 
     return () => {
@@ -166,15 +170,20 @@ export default function Home() {
     }
   }, [chattersTemp]);
 
-  const saveChatter = (tags: any, userData: any, followerData: any, channelData: any) => {
+  const saveChatter = (
+    tags: any,
+    userData: any,
+    followerData: any,
+    channelData: any
+  ) => {
     const chatter: Chatters = {
-      id: tags['user-id'] || '',
-      type: '',
-      name: tags['display-name'] || '',
+      id: tags["user-id"] || "",
+      type: "",
+      name: tags["display-name"] || "",
       image: userData.data[0].profile_image_url,
-      username: tags.username || '',
+      username: tags.username || "",
       followers: followerData.total,
-      description: '',
+      description: "",
       lastStreamed: channelData.data[0].game_name,
       shown: false,
     };
@@ -195,16 +204,16 @@ export default function Home() {
   };
 
   const logout = async () => {
-    localStorage.removeItem('chattersPresent');
-    localStorage.removeItem('userSession');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('appVersion');
-    localStorage.removeItem('userChannelModerated');
+    localStorage.removeItem("chattersPresent");
+    localStorage.removeItem("userSession");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("appVersion");
+    localStorage.removeItem("userChannelModerated");
     location.reload();
   };
 
   const reset = async () => {
-    localStorage.removeItem('chattersPresent');
+    localStorage.removeItem("chattersPresent");
     location.reload();
   };
 
@@ -212,24 +221,27 @@ export default function Home() {
     const btn = document.getElementById(`shoutout_btn_${idx}`);
     const btnCopy = btn?.innerHTML;
     if (btn) {
-      btn.innerHTML = '';
-      const loading = document.createElement('div');
-      loading.className = 'loading loading-spinner loading-sm';
+      btn.innerHTML = "";
+      const loading = document.createElement("div");
+      loading.className = "loading loading-spinner loading-sm";
       btn.appendChild(loading);
     }
 
     try {
-      const resChat = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
-        headers: {
-          token,
-        },
-        body: JSON.stringify({
-          from: session.id,
-          to: name,
-          by: mySession.id,
-        }),
-        method: 'POST',
-      });
+      const resChat = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/chat`,
+        {
+          headers: {
+            token,
+          },
+          body: JSON.stringify({
+            from: session.id,
+            to: name,
+            by: mySession.id,
+          }),
+          method: "POST",
+        }
+      );
       if (!resChat.ok) {
         const resChatJson = await resChat.json();
         throw new Error(resChatJson.error);
@@ -237,12 +249,12 @@ export default function Home() {
     } catch (error: any) {
       setErrors([...errors, error.message]);
     } finally {
-      if (btn) btn.innerHTML = btnCopy || '';
+      if (btn) btn.innerHTML = btnCopy || "";
     }
   };
 
   const openWhitelistModal = () => {
-    const modal = document.getElementById('whitelist_modal');
+    const modal = document.getElementById("whitelist_modal");
     if (modal) {
       // @ts-ignore
       modal.showModal();
@@ -255,7 +267,7 @@ export default function Home() {
 
   const onSaveWhitelist = () => {
     setChattersWhitelist(stateChattersWhitelist);
-    localStorage.setItem('chattersWhitelist', stateChattersWhitelist);
+    localStorage.setItem("chattersWhitelist", stateChattersWhitelist);
     location.reload();
   };
 
@@ -264,7 +276,7 @@ export default function Home() {
   };
 
   const openModalChannel = async () => {
-    const modalChannel = document.getElementById('channel_modal');
+    const modalChannel = document.getElementById("channel_modal");
     if (modalChannel) {
       // @ts-ignore
       modalChannel.showModal();
@@ -278,8 +290,8 @@ export default function Home() {
       image: ch.broadcaster_image,
     };
     setSession(currentSession);
-    localStorage.setItem('userSession', JSON.stringify(currentSession));
-    localStorage.removeItem('chattersPresent');
+    localStorage.setItem("userSession", JSON.stringify(currentSession));
+    localStorage.removeItem("chattersPresent");
   };
 
   return (
@@ -293,7 +305,12 @@ export default function Home() {
             >
               <div className="avatar">
                 <div className="rounded-full">
-                  <Image src={session.image || ''} width={30} height={30} alt="Profile" />
+                  <Image
+                    src={session.image || ""}
+                    width={30}
+                    height={30}
+                    alt="Profile"
+                  />
                 </div>
               </div>
               <p>
@@ -316,19 +333,22 @@ export default function Home() {
                 className="menu dropdown-content z-[1] w-32 space-y-2 rounded-box bg-base-100 p-2 shadow"
               >
                 <li>
-                  {' '}
+                  {" "}
                   <button className="btn" onClick={() => openWhitelistModal()}>
                     Whitelist
                   </button>
                 </li>
                 <li>
-                  {' '}
+                  {" "}
                   <button className="btn btn-error" onClick={() => reset()}>
                     Reset
                   </button>
                 </li>
                 <li>
-                  <button className="btn hover:btn-error" onClick={() => logout()}>
+                  <button
+                    className="btn hover:btn-error"
+                    onClick={() => logout()}
+                  >
                     Logout
                   </button>
                 </li>
@@ -342,7 +362,10 @@ export default function Home() {
                 <div className="mb-4 space-y-2">
                   <h4>You:</h4>
 
-                  <form method="dialog" className="flex flex-wrap justify-between">
+                  <form
+                    method="dialog"
+                    className="flex flex-wrap justify-between"
+                  >
                     <button
                       className="mb-2 space-x-2"
                       onClick={() =>
@@ -358,7 +381,7 @@ export default function Home() {
                         <div className="avatar">
                           <div className="h-10 w-10 rounded-md">
                             <Image
-                              src={mySession.image || ''}
+                              src={mySession.image || ""}
                               width={100}
                               height={100}
                               alt="My Channel Profile"
@@ -375,17 +398,23 @@ export default function Home() {
                 <div className="mb-4 space-y-2">
                   <h4>Channels You Moderated:</h4>
 
-                  <form method="dialog" className="flex flex-wrap justify-between">
+                  <form
+                    method="dialog"
+                    className="flex flex-wrap justify-between"
+                  >
                     {channels.length
                       ? channels.map((c, idx) => {
                           return (
                             <div key={idx}>
-                              <button className="mb-2" onClick={() => onChooseChannel(c)}>
+                              <button
+                                className="mb-2"
+                                onClick={() => onChooseChannel(c)}
+                              >
                                 <div className="flex items-center space-x-2 rounded-md border-2 border-slate-500 p-2">
                                   <div className="avatar">
                                     <div className="h-10 w-10 rounded-md">
                                       <Image
-                                        src={c.broadcaster_image || ''}
+                                        src={c.broadcaster_image || ""}
                                         width={100}
                                         height={100}
                                         alt="Channel Profile"
@@ -399,7 +428,7 @@ export default function Home() {
                             </div>
                           );
                         })
-                      : ''}
+                      : ""}
                   </form>
                 </div>
 
@@ -425,7 +454,9 @@ export default function Home() {
         <dialog id="whitelist_modal" className="modal">
           <div className="modal-box">
             <h3 className="text-lg font-bold">Whitelist Chatter</h3>
-            <p className="py-4">{"Whitelist your chatter so they don't show up (ex: Nightbot)"}</p>
+            <p className="py-4">
+              {"Whitelist your chatter so they don't show up (ex: Nightbot)"}
+            </p>
             <form action="">
               <div className="space-y-2">
                 <div className="mt-2">
@@ -444,7 +475,11 @@ export default function Home() {
             </form>
             <div className="modal-action">
               <form method="dialog" className="space-x-2">
-                <button type="submit" className="btn btn-success" onClick={() => onSaveWhitelist()}>
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                  onClick={() => onSaveWhitelist()}
+                >
                   Save
                 </button>
                 <button className="btn" onClick={() => onCloseWhitelist()}>
@@ -469,7 +504,7 @@ export default function Home() {
                   setShownChatter={setShownChatter}
                 />
               ) : (
-                ''
+                ""
               );
             })}
           </>
@@ -481,7 +516,7 @@ export default function Home() {
                 <span className="loading loading-dots loading-sm"></span>
               </div>
             ) : (
-              ''
+              ""
             )}
           </>
         )}
@@ -491,8 +526,8 @@ export default function Home() {
             setTimeout(() => {
               const errAlert = document.getElementById(`err_${idx}`);
               if (errAlert) {
-                errAlert.classList.add('animate');
-                errAlert.classList.add('animate__fadeOut');
+                errAlert.classList.add("animate");
+                errAlert.classList.add("animate__fadeOut");
                 setTimeout(() => {
                   const removedErr = errors.splice(idx, 1);
                   setErrors(removedErr);
@@ -500,7 +535,11 @@ export default function Home() {
               }
             }, 3000);
             return (
-              <div id={`err_${idx}`} key={`err_${idx}`} className="alert alert-error">
+              <div
+                id={`err_${idx}`}
+                key={`err_${idx}`}
+                className="alert alert-error"
+              >
                 <span>{err}</span>
               </div>
             );
@@ -518,13 +557,17 @@ export default function Home() {
           </div>
         </section>
       ) : (
-        ''
+        ""
       )}
 
       <section className="mt-4 text-center">
         <p>
-          Have feedbacks? Slide me{' '}
-          <a href="https://twitter.com/_sunnyegg" className="link" target="_blank">
+          Have feedbacks? Slide me{" "}
+          <a
+            href="https://twitter.com/_sunnyegg"
+            className="link"
+            target="_blank"
+          >
             DM
           </a>
         </p>

@@ -1,7 +1,10 @@
-import fetchHelix from '@/utils/helix';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import fetchHelix from "@/utils/helix";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const { token }: any = req.headers;
     const { from, to, by }: any = JSON.parse(req.body);
@@ -11,8 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       message: `!so @${to}`,
     });
 
-    const response = await fetchHelix(token, 'chat/messages', 'POST', body, {
-      'Content-Type': 'application/json',
+    const response = await fetchHelix(token, "chat/messages", "POST", body, {
+      "Content-Type": "application/json",
     });
     if (!response.ok) {
       throw response.error;

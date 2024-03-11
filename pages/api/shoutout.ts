@@ -1,7 +1,10 @@
-import fetchHelix from '@/utils/helix';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import fetchHelix from "@/utils/helix";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const { token }: any = req.headers;
     const { from, to, by }: any = JSON.parse(req.body);
@@ -9,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await fetchHelix(
       token,
       `chat/shoutouts?from_broadcaster_id=${from}&to_broadcaster_id=${to}&moderator_id=${by}`,
-      'POST'
+      "POST"
     );
     if (!response.ok) {
       throw response.error;

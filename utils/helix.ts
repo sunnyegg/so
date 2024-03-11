@@ -12,10 +12,10 @@ export default async function fetchHelix(
   headers?: any
 ): Promise<FetchHelix> {
   try {
-    const url = 'https://api.twitch.tv/helix/' + endpoint;
+    const url = "https://api.twitch.tv/helix/" + endpoint;
     const headersOptions = {
-      Authorization: 'Bearer ' + token,
-      'Client-Id': process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || '',
+      Authorization: "Bearer " + token,
+      "Client-Id": process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID || "",
       ...headers,
     };
 

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { UserSession } from '@/app/types';
-import { useRouter } from 'next/navigation';
+import { useEffect } from "react";
+import { UserSession } from "@/app/types";
+import { useRouter } from "next/navigation";
 
 export default function Twitch() {
   const router = useRouter();
@@ -10,20 +10,23 @@ export default function Twitch() {
   useEffect(() => {
     // ambil #access_token di url callback
     let parsedHash = new URLSearchParams(window.location.hash.slice(1));
-    let accessToken = parsedHash.get('access_token');
-    localStorage.setItem('accessToken', accessToken || '');
+    let accessToken = parsedHash.get("access_token");
+    localStorage.setItem("accessToken", accessToken || "");
 
-    fetchAPIs(accessToken || '');
+    fetchAPIs(accessToken || "");
   }, []);
 
   const fetchAPIs = async (token: string) => {
     try {
       // get user data
-      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users`, {
-        headers: {
-          token,
-        },
-      });
+      const resUser = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/users`,
+        {
+          headers: {
+            token,
+          },
+        }
+      );
       if (!resUser.ok) {
         const errUser = await resUser.json();
         throw new Error(errUser.error);
@@ -58,7 +61,7 @@ export default function Twitch() {
 
       // get channel image
       const eachUserData = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(',')}&multiple=true`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(",")}&multiple=true`,
         {
           headers: {
             token,
@@ -73,7 +76,9 @@ export default function Twitch() {
       const { data: eachUserDataJson } = await eachUserData.json();
 
       const remapChannelsData = channelsData.data.map((c: any) => {
-        const u = eachUserDataJson.data.find((d: any) => c.broadcaster_id === d.id);
+        const u = eachUserDataJson.data.find(
+          (d: any) => c.broadcaster_id === d.id
+        );
 
         return {
           broadcaster_id: c.broadcaster_id,
@@ -83,10 +88,13 @@ export default function Twitch() {
         };
       });
 
-      localStorage.setItem('userSession', JSON.stringify(userSession));
-      localStorage.setItem('mySession', JSON.stringify(userSession));
-      localStorage.setItem('userChannelModerated', JSON.stringify(remapChannelsData));
-      router.push('/');
+      localStorage.setItem("userSession", JSON.stringify(userSession));
+      localStorage.setItem("mySession", JSON.stringify(userSession));
+      localStorage.setItem(
+        "userChannelModerated",
+        JSON.stringify(remapChannelsData)
+      );
+      router.push("/");
     } catch (error) {
       console.log(error);
     }

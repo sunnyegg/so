@@ -1,12 +1,19 @@
-import fetchHelix from '@/utils/helix';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import fetchHelix from "@/utils/helix";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const { token }: any = req.headers;
     const { broadcasterId }: any = req.query;
 
-    const response = await fetchHelix(token, `channels/followers?${broadcasterId}`, 'GET');
+    const response = await fetchHelix(
+      token,
+      `channels/followers?${broadcasterId}`,
+      "GET"
+    );
     if (!response.ok) {
       throw response.error;
     }

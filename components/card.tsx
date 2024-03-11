@@ -38,13 +38,15 @@ export default function Card({ chat, idx, shoutout, setShownChatter }: { chat: a
       <div className="flex items-center space-x-3">
         <div className="avatar">
           <div className="rounded-lg border-2 border-lime-300 w-10 h-10 md:w-20 md:h-20">
-            <Image
-              src={chat?.image || ""}
-              width={100}
-              height={100}
-              alt="Profile"
-              priority
-            />
+            {chat?.image === '' ? '' :
+              <Image
+                src={chat.image}
+                width={100}
+                height={100}
+                alt="Profile"
+                priority
+              />
+            }
           </div>
         </div>
         <div>

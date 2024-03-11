@@ -7,6 +7,8 @@ import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
 import Card from "@/components/card";
 import GearIcon from '@/public/gear.svg'
 import packageJson from '@/package.json'
+import ModalBlacklist from "@/components/modalBlacklist";
+import ModalChannel from "@/components/modalChannel";
 
 export default function Home() {
   const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels'
@@ -26,39 +28,69 @@ export default function Home() {
   const [chatters, setChatters] = useState<Chatters[]>([]);
   const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
-  const [chattersWhitelist, setChattersWhitelist] = useState<string>('');
+  const [chattersBlacklist, setChattersBlacklist] = useState<string>('');
 
   const [channels, setChannels] = useState<Channel[]>([]);
 
-  const [stateChattersWhitelist, setStateChattersWhitelist] = useState<string>('');
+  const [stateChattersBlacklist, setStateChattersBlacklist] = useState<string>(chattersBlacklist);
 
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState<string[]>([]);
 
   useEffect(() => {
     try {
-      const accessToken = localStorage.getItem('accessToken')
+      const accessToken = localStorage.getItem('accessToken') || '';
+
       if (accessToken) {
-        setSession(JSON.parse(localStorage.getItem("userSession") || ""))
-        setMySession(JSON.parse(localStorage.getItem("mySession") || ""))
+        const savedUserSession: UserSession = localStorage.getItem('userSession') ? JSON.parse(localStorage.getItem('userSession') || '') : {
+          id: "",
+          image: "",
+          name: ""
+        };
+        setSession(savedUserSession)
+
+        const savedMySession: UserSession = localStorage.getItem('mySession') ? JSON.parse(localStorage.getItem('mySession') || '') : {
+          id: "",
+          image: "",
+          name: ""
+        };
+        setMySession(savedMySession)
+
+        const savedChannels: Channel[] = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [{ broadcaster_id: '', broadcaster_image: '', broadcaster_login: '', broadcaster_name: '' }];
+        setChannels(savedChannels)
       }
-      setToken(accessToken || "")
-
-      const savedChatters = localStorage.getItem('chattersPresent') ? JSON.parse(localStorage.getItem('chattersPresent') || '') : {};
-      setChattersPresent(savedChatters)
-
-      const whitelistedChatters = localStorage.getItem('chattersWhitelist') || '';
-      setChattersWhitelist(whitelistedChatters)
-      setStateChattersWhitelist(whitelistedChatters)
-
-      const savedChannels = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [];
-      setChannels(savedChannels)
+      setToken(accessToken)
 
       localStorage.setItem('appVersion', packageJson.version)
     } catch (error) {
       localStorage.clear()
     }
   }, [])
+
+  useEffect(() => {
+    // kehadiran per channel
+    // delete after update
+    const savedChatters = localStorage.getItem('chattersPresent');
+    if (savedChatters) {
+      localStorage.setItem(`chattersPresent-${session.id}`, savedChatters)
+      localStorage.removeItem('chattersPresent')
+    }
+
+    const savedChattersPerChannel: ChattersPresent = localStorage.getItem(`chattersPresent-${session.id}`) ? JSON.parse(localStorage.getItem(`chattersPresent-${session.id}`) || '') : {};
+    setChattersPresent(savedChattersPerChannel)
+
+    // handle client lama yg pakai key whitelist
+    // delete after update
+    const whitelist = localStorage.getItem('chattersWhitelist')
+    if (whitelist) {
+      localStorage.setItem(`chattersBlacklist-${session.id}`, whitelist)
+      localStorage.removeItem('chattersWhitelist')
+    }
+
+    const blacklistedChatters = localStorage.getItem(`chattersBlacklist-${session.id}`) || '';
+    setChattersBlacklist(blacklistedChatters)
+    setStateChattersBlacklist(blacklistedChatters)
+  }, [session])
 
   useEffect(() => {
     if (!token) {
@@ -84,11 +116,11 @@ export default function Home() {
       client.on("message", async (channel, tags, message, self) => {
         if (self) return;
 
-        // skip yg whitelisted
+        // skip yg Blacklisted
         // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
-        if (stateChattersWhitelist.length > 0) {
-          const arrayWhitelist = stateChattersWhitelist.split(',')
-          if (arrayWhitelist.find(c => c === tags["display-name"]?.toLowerCase())) {
+        if (chattersBlacklist.length > 0) {
+          const arrayBlacklist = chattersBlacklist.split(',')
+          if (arrayBlacklist.find(c => c === tags["display-name"]?.toLowerCase())) {
             return;
           }
         }
@@ -140,7 +172,8 @@ export default function Home() {
           }
         }
 
-        localStorage.setItem('chattersPresent', JSON.stringify(chattersPresent))
+        localStorage.setItem(`chattersPresent-${session.id}`, JSON.stringify(chattersPresent))
+        setChattersPresent(chattersPresent)
       });
 
       setSuccess([...success, `Connected to: #${session.name}`])
@@ -184,9 +217,10 @@ export default function Home() {
   }
 
   const logout = async () => {
-    localStorage.removeItem('chattersPresent')
-    localStorage.removeItem('userSession')
+    localStorage.removeItem(`chattersPresent-${session.id}`)
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('userSession')
+    localStorage.removeItem('mySession')
     localStorage.removeItem('appVersion')
     localStorage.removeItem('userChannelModerated')
     setSuccess([...success, `Logging out...`])
@@ -194,8 +228,8 @@ export default function Home() {
   }
 
   const reset = async () => {
-    localStorage.removeItem('chattersPresent')
-    setSuccess([...success, `Reset attendance success`])
+    localStorage.removeItem(`chattersPresent-${session.id}`)
+    setSuccess([...success, `Reset attendance success. Channel: ${session.name}`])
     location.reload()
   }
 
@@ -233,27 +267,26 @@ export default function Home() {
     }
   }
 
-  const openWhitelistModal = () => {
-    const modal = document.getElementById('whitelist_modal')
+  const openBlacklistModal = () => {
+    const modal = document.getElementById('blacklist_modal')
     if (modal) {
       // @ts-ignore
       modal.showModal()
     }
   }
 
-  const onChangeWhitelist = (e: any) => {
-    setStateChattersWhitelist(e.target.value)
-  }
-
-  const onSaveWhitelist = () => {
-    setChattersWhitelist(stateChattersWhitelist)
-    localStorage.setItem('chattersWhitelist', stateChattersWhitelist)
+  const onSaveBlacklist = (blacklist: string) => {
+    localStorage.setItem(`chattersBlacklist-${session.id}`, blacklist)
     setSuccess([...success, `Blacklist saved`])
     location.reload()
   }
 
-  const onCloseWhitelist = () => {
-    setStateChattersWhitelist(chattersWhitelist)
+  const onCloseBlacklist = () => {
+    setStateChattersBlacklist(chattersBlacklist)
+  }
+
+  const onChangeBlacklist = (e: any) => {
+    setStateChattersBlacklist(e.target.value)
   }
 
   const openModalChannel = async () => {
@@ -284,12 +317,13 @@ export default function Home() {
             <button className="btn flex items-center space-x-2" onClick={async () => await openModalChannel()}>
               <div className="avatar">
                 <div className="rounded-full">
-                  <Image
-                    src={session.image || ""}
-                    width={30}
-                    height={30}
-                    alt="Profile"
-                  />
+                  {session.image === '' ? '' :
+                    <Image
+                      src={session.image}
+                      width={30}
+                      height={30}
+                      alt="Profile"
+                    />}
                 </div>
               </div>
               <p><b>{session.name}</b></p>
@@ -297,10 +331,10 @@ export default function Home() {
 
             <details className="dropdown dropdown-bottom dropdown-end">
               <summary className="btn m-2">
-                <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" />
+                {GearIcon ? <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" /> : ''}
               </summary >
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 space-y-2">
-                <li> <button className="btn hover" onClick={() => openWhitelistModal()}>
+                <li> <button className="btn hover" onClick={() => openBlacklistModal()}>
                   Blacklist
                 </button></li>
                 <li> <button className="btn btn-error" onClick={() => reset()}>
@@ -312,74 +346,7 @@ export default function Home() {
               </ul>
             </details>
 
-            <dialog id="channel_modal" className="modal">
-              <div className="modal-box">
-                <h3 className="font-bold text-lg mb-4">Choose a Channel</h3>
-
-                <div className="mb-4 space-y-2">
-                  <h4>You:</h4>
-
-                  <form method="dialog" className="flex flex-wrap justify-between">
-                    <button className="space-x-2 mb-2" onClick={() => onChooseChannel({
-                      broadcaster_id: mySession.id,
-                      broadcaster_name: mySession.name,
-                      broadcaster_image: mySession.image,
-                      broadcaster_login: mySession.name
-                    })}>
-                      <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
-                        <div className="avatar">
-                          <div className="w-10 h-10 rounded-md">
-                            <Image
-                              src={mySession.image || ""}
-                              width={100}
-                              height={100}
-                              alt="My Channel Profile"
-                              priority
-                            />
-                          </div>
-                        </div>
-                        <div>{mySession.name}</div>
-                      </div>
-                    </button>
-                  </form>
-                </div>
-
-                <div className="mb-4 space-y-2">
-                  <h4>Channels You Moderated:</h4>
-
-                  <form method="dialog" className="flex flex-wrap justify-between">
-                    {
-                      channels.length ? channels.map((c, idx) => {
-                        return <div key={idx}>
-                          <button className="mb-2" onClick={() => onChooseChannel(c)}>
-                            <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
-                              <div className="avatar">
-                                <div className="w-10 h-10 rounded-md">
-                                  <Image
-                                    src={c.broadcaster_image || ""}
-                                    width={100}
-                                    height={100}
-                                    alt="Channel Profile"
-                                    priority
-                                  />
-                                </div>
-                              </div>
-                              <div>{c.broadcaster_name}</div>
-                            </div>
-                          </button>
-                        </div>
-                      }) : ''
-                    }
-                  </form>
-                </div>
-
-                <div className="modal-action">
-                  <form method="dialog">
-                    <button className="btn">Close</button>
-                  </form>
-                </div>
-              </div>
-            </dialog>
+            <ModalChannel channels={channels} mySession={mySession} onChooseChannel={onChooseChannel} />
           </div>
         ) : (
           <div className="flex justify-end items-center space-x-2">
@@ -389,34 +356,7 @@ export default function Home() {
           </div>
         )}
 
-        <dialog id="whitelist_modal" className="modal">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Whitelist Chatter</h3>
-            <p className="py-4">{"Whitelist your chatter so they don't show up (ex: Nightbot)"}</p>
-            <form action="">
-              <div className="space-y-2">
-                <div className="mt-2">
-                  <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                    <input
-                      type="text"
-                      name="whitelist-chatter"
-                      className="block flex-1 border-0 p-2 text:white bg-transparent"
-                      placeholder="split by comma (,)"
-                      value={stateChattersWhitelist}
-                      onChange={(val) => onChangeWhitelist(val)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </form>
-            <div className="modal-action">
-              <form method="dialog" className="space-x-2">
-                <button type="submit" className="btn btn-success" onClick={() => onSaveWhitelist()}>Save</button>
-                <button className="btn" onClick={() => onCloseWhitelist()}>Close</button>
-              </form>
-            </div>
-          </div>
-        </dialog>
+        <ModalBlacklist chattersBlacklist={chattersBlacklist} onSaveBlacklist={onSaveBlacklist} stateChattersBlacklist={stateChattersBlacklist} onChangeBlacklist={onChangeBlacklist} onCloseBlacklist={onCloseBlacklist} />
       </section>
 
       <section className="rounded-lg p-2 border-2 border-slate-500 mb-4 space-y-4 min-h-[60vh]">

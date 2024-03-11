@@ -1,19 +1,20 @@
-'use client'
+"use client";
 
 import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
 import Card from "@/components/card";
-import GearIcon from '@/public/gear.svg'
-import packageJson from '@/package.json'
+import GearIcon from "@/public/gear.svg";
+import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
 import ModalChannel from "@/components/modalChannel";
 
 export default function Home() {
-  const scopes = 'user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels'
+  const scopes =
+    "user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels";
 
-  const [token, setToken] = useState("")
+  const [token, setToken] = useState("");
   const [session, setSession] = useState<UserSession>({
     id: "",
     name: "",
@@ -28,77 +29,100 @@ export default function Home() {
   const [chatters, setChatters] = useState<Chatters[]>([]);
   const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
-  const [chattersBlacklist, setChattersBlacklist] = useState<string>('');
+  const [chattersBlacklist, setChattersBlacklist] = useState<string>("");
 
   const [channels, setChannels] = useState<Channel[]>([]);
 
-  const [stateChattersBlacklist, setStateChattersBlacklist] = useState<string>(chattersBlacklist);
+  const [stateChattersBlacklist, setStateChattersBlacklist] =
+    useState<string>(chattersBlacklist);
 
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState<string[]>([]);
 
   useEffect(() => {
     try {
-      const accessToken = localStorage.getItem('accessToken') || '';
+      const accessToken = localStorage.getItem("accessToken") || "";
 
       if (accessToken) {
-        const savedUserSession: UserSession = localStorage.getItem('userSession') ? JSON.parse(localStorage.getItem('userSession') || '') : {
-          id: "",
-          image: "",
-          name: ""
-        };
-        setSession(savedUserSession)
+        const savedUserSession: UserSession = localStorage.getItem(
+          "userSession"
+        )
+          ? JSON.parse(localStorage.getItem("userSession") || "")
+          : {
+              id: "",
+              image: "",
+              name: "",
+            };
+        setSession(savedUserSession);
 
-        const savedMySession: UserSession = localStorage.getItem('mySession') ? JSON.parse(localStorage.getItem('mySession') || '') : {
-          id: "",
-          image: "",
-          name: ""
-        };
-        setMySession(savedMySession)
+        const savedMySession: UserSession = localStorage.getItem("mySession")
+          ? JSON.parse(localStorage.getItem("mySession") || "")
+          : {
+              id: "",
+              image: "",
+              name: "",
+            };
+        setMySession(savedMySession);
 
-        const savedChannels: Channel[] = localStorage.getItem('userChannelModerated') ? JSON.parse(localStorage.getItem('userChannelModerated') || '') : [{ broadcaster_id: '', broadcaster_image: '', broadcaster_login: '', broadcaster_name: '' }];
-        setChannels(savedChannels)
+        const savedChannels: Channel[] = localStorage.getItem(
+          "userChannelModerated"
+        )
+          ? JSON.parse(localStorage.getItem("userChannelModerated") || "")
+          : [
+              {
+                broadcaster_id: "",
+                broadcaster_image: "",
+                broadcaster_login: "",
+                broadcaster_name: "",
+              },
+            ];
+        setChannels(savedChannels);
       }
-      setToken(accessToken)
+      setToken(accessToken);
 
-      localStorage.setItem('appVersion', packageJson.version)
+      localStorage.setItem("appVersion", packageJson.version);
     } catch (error) {
-      localStorage.clear()
+      localStorage.clear();
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
     // kehadiran per channel
     // delete after update
-    const savedChatters = localStorage.getItem('chattersPresent');
+    const savedChatters = localStorage.getItem("chattersPresent");
     if (savedChatters) {
-      localStorage.setItem(`chattersPresent-${session.id}`, savedChatters)
-      localStorage.removeItem('chattersPresent')
+      localStorage.setItem(`chattersPresent-${session.id}`, savedChatters);
+      localStorage.removeItem("chattersPresent");
     }
 
-    const savedChattersPerChannel: ChattersPresent = localStorage.getItem(`chattersPresent-${session.id}`) ? JSON.parse(localStorage.getItem(`chattersPresent-${session.id}`) || '') : {};
-    setChattersPresent(savedChattersPerChannel)
+    const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
+      `chattersPresent-${session.id}`
+    )
+      ? JSON.parse(localStorage.getItem(`chattersPresent-${session.id}`) || "")
+      : {};
+    setChattersPresent(savedChattersPerChannel);
 
     // handle client lama yg pakai key whitelist
     // delete after update
-    const whitelist = localStorage.getItem('chattersWhitelist')
+    const whitelist = localStorage.getItem("chattersWhitelist");
     if (whitelist) {
-      localStorage.setItem(`chattersBlacklist-${session.id}`, whitelist)
-      localStorage.removeItem('chattersWhitelist')
+      localStorage.setItem(`chattersBlacklist-${session.id}`, whitelist);
+      localStorage.removeItem("chattersWhitelist");
     }
 
-    const blacklistedChatters = localStorage.getItem(`chattersBlacklist-${session.id}`) || '';
-    setChattersBlacklist(blacklistedChatters)
-    setStateChattersBlacklist(blacklistedChatters)
-  }, [session])
+    const blacklistedChatters =
+      localStorage.getItem(`chattersBlacklist-${session.id}`) || "";
+    setChattersBlacklist(blacklistedChatters);
+    setStateChattersBlacklist(blacklistedChatters);
+  }, [session]);
 
   useEffect(() => {
     if (!token) {
-      return
+      return;
     }
 
     if (!session.name) {
-      return
+      return;
     }
 
     try {
@@ -119,8 +143,12 @@ export default function Home() {
         // skip yg Blacklisted
         // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
         if (chattersBlacklist.length > 0) {
-          const arrayBlacklist = chattersBlacklist.split(',')
-          if (arrayBlacklist.find(c => c === tags["display-name"]?.toLowerCase())) {
+          const arrayBlacklist = chattersBlacklist.split(",");
+          if (
+            arrayBlacklist.find(
+              (c) => c === tags["display-name"]?.toLowerCase()
+            )
+          ) {
             return;
           }
         }
@@ -134,65 +162,82 @@ export default function Home() {
           }
         }
 
-        const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`, {
-          headers: { token }
-        })
+        const resUser = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`,
+          {
+            headers: { token },
+          }
+        );
         if (!resUser.ok) {
-          const errUser = await resUser.json()
-          setErrors([...errors, errUser.error])
+          const errUser = await resUser.json();
+          setErrors([...errors, errUser.error]);
         }
 
-        const resChannel = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
-          headers: { token }
-        })
+        const resChannel = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`,
+          {
+            headers: { token },
+          }
+        );
         if (!resChannel.ok) {
-          const errChannel = await resChannel.json()
-          setErrors([...errors, errChannel.error])
+          const errChannel = await resChannel.json();
+          setErrors([...errors, errChannel.error]);
         }
 
-        const resFollower = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`, {
-          headers: { token }
-        })
+        const resFollower = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`,
+          {
+            headers: { token },
+          }
+        );
         if (!resFollower.ok) {
-          const errFollower = await resFollower.json()
-          setErrors([...errors, errFollower.error])
+          const errFollower = await resFollower.json();
+          setErrors([...errors, errFollower.error]);
         }
 
-        const { data: userData } = await resUser.json()
-        const { data: channelData } = await resChannel.json()
-        const { data: followerData } = await resFollower.json()
+        const { data: userData } = await resUser.json();
+        const { data: channelData } = await resChannel.json();
+        const { data: followerData } = await resFollower.json();
 
-        saveChatter(tags, userData, followerData, channelData)
+        saveChatter(tags, userData, followerData, channelData);
 
         // save yg udah hadir
         if (tags["display-name"]) {
           chattersPresent[tags["display-name"]] = {
             name: tags["display-name"],
-            shoutout: false
-          }
+            shoutout: false,
+          };
         }
 
-        localStorage.setItem(`chattersPresent-${session.id}`, JSON.stringify(chattersPresent))
-        setChattersPresent(chattersPresent)
+        localStorage.setItem(
+          `chattersPresent-${session.id}`,
+          JSON.stringify(chattersPresent)
+        );
+        setChattersPresent(chattersPresent);
       });
 
-      setSuccess([...success, `Connected to: #${session.name}`])
+      setSuccess([...success, `Connected to: #${session.name}`]);
 
       return () => {
-        client.disconnect()
-      }
+        client.disconnect();
+      };
     } catch (error: any) {
-      setErrors([...errors, error.message])
+      setErrors([...errors, error.message]);
     }
-  }, [session])
+  }, [session]);
 
   useEffect(() => {
     if (chattersTemp) {
-      setChatters([...chatters, chattersTemp])
+      setChatters([...chatters, chattersTemp]);
     }
-  }, [chattersTemp])
+  }, [chattersTemp]);
 
-  const saveChatter = (tags: any, userData: any, followerData: any, channelData: any) => {
+  const saveChatter = (
+    tags: any,
+    userData: any,
+    followerData: any,
+    channelData: any
+  ) => {
     const chatter: Chatters = {
       id: tags["user-id"] || "",
       type: "",
@@ -202,192 +247,272 @@ export default function Home() {
       followers: followerData.total,
       description: "",
       lastStreamed: channelData.data[0].game_name,
-      shown: false
-    }
+      shown: false,
+    };
 
-    setChattersTemp(chatter)
-  }
+    setChattersTemp(chatter);
+  };
 
   const setShownChatter = (id: string, shown: boolean) => {
-    const chatter = chatters.find((c) => c.id === id)
+    const chatter = chatters.find((c) => c.id === id);
     if (chatter) {
-      chatter.shown = shown
-      setChatters([...chatters, chatter])
+      chatter.shown = shown;
+      setChatters([...chatters, chatter]);
     }
-  }
+  };
 
   const logout = async () => {
-    localStorage.removeItem(`chattersPresent-${session.id}`)
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('userSession')
-    localStorage.removeItem('mySession')
-    localStorage.removeItem('appVersion')
-    localStorage.removeItem('userChannelModerated')
-    setSuccess([...success, `Logging out...`])
-    location.reload()
-  }
+    localStorage.removeItem(`chattersPresent-${session.id}`);
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("userSession");
+    localStorage.removeItem("mySession");
+    localStorage.removeItem("appVersion");
+    localStorage.removeItem("userChannelModerated");
+    setSuccess([...success, `Logging out...`]);
+    location.reload();
+  };
 
   const reset = async () => {
-    localStorage.removeItem(`chattersPresent-${session.id}`)
-    setSuccess([...success, `Reset attendance success. Channel: ${session.name}`])
-    location.reload()
-  }
+    localStorage.removeItem(`chattersPresent-${session.id}`);
+    setSuccess([
+      ...success,
+      `Reset attendance success. Channel: ${session.name}`,
+    ]);
+    location.reload();
+  };
 
   const shoutout = async (name: string, idx: number) => {
-    const btn = document.getElementById(`shoutout_btn_${idx}`)
+    const btn = document.getElementById(`shoutout_btn_${idx}`);
     const btnCopy = btn?.innerHTML;
     if (btn) {
-      btn.innerHTML = ''
-      const loading = document.createElement('div')
-      loading.className = "loading loading-spinner loading-sm"
-      btn.appendChild(loading)
+      btn.innerHTML = "";
+      const loading = document.createElement("div");
+      loading.className = "loading loading-spinner loading-sm";
+      btn.appendChild(loading);
     }
 
     try {
-      const resChat = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
-        headers: {
-          token
-        },
-        body: JSON.stringify({
-          from: session.id,
-          to: name,
-          by: mySession.id
-        }),
-        method: "POST",
-      })
+      const resChat = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/chat`,
+        {
+          headers: {
+            token,
+          },
+          body: JSON.stringify({
+            from: session.id,
+            to: name,
+            by: mySession.id,
+          }),
+          method: "POST",
+        }
+      );
       if (!resChat.ok) {
-        const resChatJson = await resChat.json()
-        throw new Error(resChatJson.error)
+        const resChatJson = await resChat.json();
+        throw new Error(resChatJson.error);
       }
     } catch (error: any) {
-      setErrors([...errors, error.message])
+      setErrors([...errors, error.message]);
     } finally {
-      if (btn) btn.innerHTML = btnCopy || ''
-      setSuccess([...success, `Shouted: ${name}`])
+      if (btn) btn.innerHTML = btnCopy || "";
+      setSuccess([...success, `Shouted: ${name}`]);
     }
-  }
+  };
 
   const openBlacklistModal = () => {
-    const modal = document.getElementById('blacklist_modal')
+    const modal = document.getElementById("blacklist_modal");
     if (modal) {
       // @ts-ignore
-      modal.showModal()
+      modal.showModal();
     }
-  }
+  };
 
   const onSaveBlacklist = (blacklist: string) => {
-    localStorage.setItem(`chattersBlacklist-${session.id}`, blacklist)
-    setSuccess([...success, `Blacklist saved`])
-    location.reload()
-  }
+    localStorage.setItem(`chattersBlacklist-${session.id}`, blacklist);
+    setSuccess([...success, `Blacklist saved`]);
+    location.reload();
+  };
 
   const onCloseBlacklist = () => {
-    setStateChattersBlacklist(chattersBlacklist)
-  }
+    setStateChattersBlacklist(chattersBlacklist);
+  };
 
   const onChangeBlacklist = (e: any) => {
-    setStateChattersBlacklist(e.target.value)
-  }
+    setStateChattersBlacklist(e.target.value);
+  };
 
   const openModalChannel = async () => {
-    const modalChannel = document.getElementById('channel_modal')
+    const modalChannel = document.getElementById("channel_modal");
     if (modalChannel) {
       // @ts-ignore
-      modalChannel.showModal()
+      modalChannel.showModal();
     }
-  }
+  };
 
   const onChooseChannel = async (ch: Channel) => {
     const currentSession = {
       id: ch.broadcaster_id,
       name: ch.broadcaster_name,
-      image: ch.broadcaster_image
-    }
-    setSession(currentSession)
-    localStorage.setItem("userSession", JSON.stringify(currentSession))
-    setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`])
-    localStorage.removeItem('chattersPresent')
-  }
+      image: ch.broadcaster_image,
+    };
+    setSession(currentSession);
+    localStorage.setItem("userSession", JSON.stringify(currentSession));
+    setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`]);
+    localStorage.removeItem("chattersPresent");
+  };
 
   return (
-    <main className="px-4 py-4 lg:px-40 h-min-screen">
-      <section className="rounded-lg p-2 border-2 border-slate-500 mb-4">
+    <main className="h-min-screen px-4 py-4 lg:px-40">
+      <section className="mb-4 rounded-lg border-2 border-slate-500 p-2">
         {session.name ? (
-          <div className="flex justify-between items-center">
-            <button className="btn flex items-center space-x-2" onClick={async () => await openModalChannel()}>
+          <div className="flex items-center justify-between">
+            <button
+              className="btn flex items-center space-x-2"
+              onClick={async () => await openModalChannel()}
+            >
               <div className="avatar">
                 <div className="rounded-full">
-                  {session.image === '' ? '' :
+                  {session.image === "" ? (
+                    ""
+                  ) : (
                     <Image
                       src={session.image}
                       width={30}
                       height={30}
                       alt="Profile"
-                    />}
+                    />
+                  )}
                 </div>
               </div>
-              <p><b>{session.name}</b></p>
+              <p>
+                <b>{session.name}</b>
+              </p>
             </button>
 
-            <details className="dropdown dropdown-bottom dropdown-end">
+            <details className="dropdown dropdown-end dropdown-bottom">
               <summary className="btn m-2">
-                {GearIcon ? <Image alt="gear icon" src={GearIcon} width={25} height={25} className="dark:invert" /> : ''}
-              </summary >
-              <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32 space-y-2">
-                <li> <button className="btn hover" onClick={() => openBlacklistModal()}>
-                  Blacklist
-                </button></li>
-                <li> <button className="btn btn-error" onClick={() => reset()}>
-                  Reset Attendance
-                </button></li>
-                <li><button className="btn hover:btn-error" onClick={() => logout()}>
-                  Logout
-                </button></li>
+                {GearIcon ? (
+                  <Image
+                    alt="gear icon"
+                    src={GearIcon}
+                    width={25}
+                    height={25}
+                    className="dark:invert"
+                  />
+                ) : (
+                  ""
+                )}
+              </summary>
+              <ul
+                tabIndex={0}
+                className="menu dropdown-content z-[1] w-32 space-y-2 rounded-box bg-base-100 p-2 shadow"
+              >
+                <li>
+                  {" "}
+                  <button
+                    className="hover btn"
+                    onClick={() => openBlacklistModal()}
+                  >
+                    Blacklist
+                  </button>
+                </li>
+                <li>
+                  {" "}
+                  <button className="btn btn-error" onClick={() => reset()}>
+                    Reset Attendance
+                  </button>
+                </li>
+                <li>
+                  <button
+                    className="btn hover:btn-error"
+                    onClick={() => logout()}
+                  >
+                    Logout
+                  </button>
+                </li>
               </ul>
             </details>
 
-            <ModalChannel channels={channels} mySession={mySession} onChooseChannel={onChooseChannel} />
+            <ModalChannel
+              channels={channels}
+              mySession={mySession}
+              onChooseChannel={onChooseChannel}
+            />
           </div>
         ) : (
-          <div className="flex justify-end items-center space-x-2">
-            <a className="btn"
+          <div className="flex items-center justify-end space-x-2">
+            <a
+              className="btn"
               href={`https://id.twitch.tv/oauth2/authorize?response_type=token&client_id=${process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_APP_URL}/api/auth/callback/twitch&scope=${scopes}`}
-            >Login With Twitch</a>
+            >
+              Login With Twitch
+            </a>
           </div>
         )}
 
-        <ModalBlacklist chattersBlacklist={chattersBlacklist} onSaveBlacklist={onSaveBlacklist} stateChattersBlacklist={stateChattersBlacklist} onChangeBlacklist={onChangeBlacklist} onCloseBlacklist={onCloseBlacklist} />
+        <ModalBlacklist
+          chattersBlacklist={chattersBlacklist}
+          onSaveBlacklist={onSaveBlacklist}
+          stateChattersBlacklist={stateChattersBlacklist}
+          onChangeBlacklist={onChangeBlacklist}
+          onCloseBlacklist={onCloseBlacklist}
+        />
       </section>
 
-      <section className="rounded-lg p-2 border-2 border-slate-500 mb-4 space-y-4 min-h-[60vh]">
-        {chatters.length ?
+      <section className="mb-4 min-h-[60vh] space-y-4 rounded-lg border-2 border-slate-500 p-2">
+        {chatters.length ? (
           <>
             {chatters.map((chat, idx) => {
-              return (!chat.shown ? <Card chat={chat} idx={idx} shoutout={shoutout} key={idx} setShownChatter={setShownChatter} /> : '')
-            })
-            }
+              return !chat.shown ? (
+                <Card
+                  chat={chat}
+                  idx={idx}
+                  shoutout={shoutout}
+                  key={idx}
+                  setShownChatter={setShownChatter}
+                />
+              ) : (
+                ""
+              );
+            })}
           </>
-          : <>
-            {token ? <div className="justify-center items-center flex space-x-2 pt-2 animate__animated animate__fadeIn">
-              <p>Waiting for someone to chat</p>
-              <span className="loading loading-dots loading-sm"></span>
-            </div> : ""}
-          </>}
+        ) : (
+          <>
+            {token ? (
+              <div className="animate__animated animate__fadeIn flex items-center justify-center space-x-2 pt-2">
+                <p>Waiting for someone to chat</p>
+                <span className="loading loading-dots loading-sm"></span>
+              </div>
+            ) : (
+              ""
+            )}
+          </>
+        )}
       </section>
 
-      {Object.keys(chattersPresent).length > 0 ? <section className="rounded-lg p-2 border-2 border-slate-500 space-y-4 animate__animated animate__fadeIn">
-        <div>
-          <p>Yang sudah hadir:</p>
-          {Object.entries(chattersPresent).map((chatter, idx) => {
-            return (
-              <p key={idx}>- {chatter[1].name}</p>
-            )
-          })}
-        </div>
-      </section> : ''}
+      {Object.keys(chattersPresent).length > 0 ? (
+        <section className="animate__animated animate__fadeIn space-y-4 rounded-lg border-2 border-slate-500 p-2">
+          <div>
+            <p>Yang sudah hadir:</p>
+            {Object.entries(chattersPresent).map((chatter, idx) => {
+              return <p key={idx}>- {chatter[1].name}</p>;
+            })}
+          </div>
+        </section>
+      ) : (
+        ""
+      )}
 
-      <section className="text-center mt-4">
-        <p>Have feedbacks? Slide me <a href="https://twitter.com/_sunnyegg" className="link" target="_blank">DM</a></p>
+      <section className="mt-4 text-center">
+        <p>
+          Have feedbacks? Slide me{" "}
+          <a
+            href="https://twitter.com/_sunnyegg"
+            className="link"
+            target="_blank"
+          >
+            DM
+          </a>
+        </p>
         <p>Made with ❤️‍🩹</p>
         <p className="text-xs">App Version: {packageJson.version}</p>
       </section>
@@ -396,13 +521,13 @@ export default function Home() {
       <div className="toast">
         {errors.map((err, idx) => {
           setTimeout(() => {
-            const errAlert = document.getElementById(`err_${idx}`)
+            const errAlert = document.getElementById(`err_${idx}`);
             if (errAlert) {
-              errAlert.classList.add('animate')
-              errAlert.classList.add('animate__fadeOut')
+              errAlert.classList.add("animate");
+              errAlert.classList.add("animate__fadeOut");
               setTimeout(() => {
-                const removedErr = errors.splice(idx, 1)
-                setErrors(removedErr)
+                const removedErr = errors.splice(idx, 1);
+                setErrors(removedErr);
               }, 100);
             }
           }, 3000);
@@ -410,25 +535,29 @@ export default function Home() {
             <div id={`err_${idx}`} key={idx} className="alert alert-error">
               <span>{err}</span>
             </div>
-          )
+          );
         })}
         {success.map((s, idx) => {
           setTimeout(() => {
-            const successAlert = document.getElementById(`success_${idx}`)
+            const successAlert = document.getElementById(`success_${idx}`);
             if (successAlert) {
-              successAlert.classList.add('animate')
-              successAlert.classList.add('animate__fadeOut')
+              successAlert.classList.add("animate");
+              successAlert.classList.add("animate__fadeOut");
               setTimeout(() => {
-                const removedSuccess = success.splice(idx, 1)
-                setErrors(removedSuccess)
+                const removedSuccess = success.splice(idx, 1);
+                setErrors(removedSuccess);
               }, 100);
             }
           }, 3000);
           return (
-            <div id={`success_${idx}`} key={idx} className="alert alert-success">
+            <div
+              id={`success_${idx}`}
+              key={idx}
+              className="alert alert-success"
+            >
               <span>{s}</span>
             </div>
-          )
+          );
         })}
       </div>
       {/* toast */}

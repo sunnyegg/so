@@ -1,33 +1,49 @@
 import { Channel } from "@/app/types";
 import Image from "next/image";
 
-export default function modalChannel({ mySession, onChooseChannel, channels }: { mySession: any, onChooseChannel: any, channels: any }) {
+export default function modalChannel({
+  mySession,
+  onChooseChannel,
+  channels,
+}: {
+  mySession: any;
+  onChooseChannel: any;
+  channels: any;
+}) {
   return (
     <dialog id="channel_modal" className="modal">
       <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">Choose a Channel</h3>
+        <h3 className="mb-4 text-lg font-bold">Choose a Channel</h3>
 
         <div className="mb-4 space-y-2">
           <h4>You:</h4>
 
           <form method="dialog" className="flex flex-wrap justify-between">
-            <button className="space-x-2 mb-2" onClick={() => onChooseChannel({
-              broadcaster_id: mySession.id,
-              broadcaster_name: mySession.name,
-              broadcaster_image: mySession.image,
-              broadcaster_login: mySession.name
-            })}>
-              <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
+            <button
+              className="mb-2 space-x-2"
+              onClick={() =>
+                onChooseChannel({
+                  broadcaster_id: mySession.id,
+                  broadcaster_name: mySession.name,
+                  broadcaster_image: mySession.image,
+                  broadcaster_login: mySession.name,
+                })
+              }
+            >
+              <div className="flex items-center space-x-2 rounded-md border-2 border-slate-500 p-2">
                 <div className="avatar">
-                  <div className="w-10 h-10 rounded-md">
-                    {mySession.image === '' ? '' :
+                  <div className="h-10 w-10 rounded-md">
+                    {mySession.image === "" ? (
+                      ""
+                    ) : (
                       <Image
                         src={mySession.image}
                         width={100}
                         height={100}
                         alt="My Channel Profile"
                         priority
-                      />}
+                      />
+                    )}
                   </div>
                 </div>
                 <div>{mySession.name}</div>
@@ -40,30 +56,37 @@ export default function modalChannel({ mySession, onChooseChannel, channels }: {
           <h4>Channels You Moderated:</h4>
 
           <form method="dialog" className="flex flex-wrap justify-between">
-            {
-              channels.length ? channels.map((c: Channel, idx: number) => {
-                return <div key={idx}>
-                  <button className="mb-2" onClick={() => onChooseChannel(c)}>
-                    <div className="flex border-2 border-slate-500 rounded-md p-2 space-x-2 items-center">
-                      <div className="avatar">
-                        <div className="w-10 h-10 rounded-md">
-                          {c.broadcaster_image === '' ? '' :
-                            <Image
-                              src={c.broadcaster_image || ""}
-                              width={100}
-                              height={100}
-                              alt="Channel Profile"
-                              priority
-                            />}
-
+            {channels.length
+              ? channels.map((c: Channel, idx: number) => {
+                  return (
+                    <div key={idx}>
+                      <button
+                        className="mb-2"
+                        onClick={() => onChooseChannel(c)}
+                      >
+                        <div className="flex items-center space-x-2 rounded-md border-2 border-slate-500 p-2">
+                          <div className="avatar">
+                            <div className="h-10 w-10 rounded-md">
+                              {c.broadcaster_image === "" ? (
+                                ""
+                              ) : (
+                                <Image
+                                  src={c.broadcaster_image || ""}
+                                  width={100}
+                                  height={100}
+                                  alt="Channel Profile"
+                                  priority
+                                />
+                              )}
+                            </div>
+                          </div>
+                          <div>{c.broadcaster_name}</div>
                         </div>
-                      </div>
-                      <div>{c.broadcaster_name}</div>
+                      </button>
                     </div>
-                  </button>
-                </div>
-              }) : ''
-            }
+                  );
+                })
+              : ""}
           </form>
         </div>
 
@@ -74,5 +97,5 @@ export default function modalChannel({ mySession, onChooseChannel, channels }: {
         </div>
       </div>
     </dialog>
-  )
+  );
 }

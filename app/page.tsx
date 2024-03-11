@@ -9,6 +9,7 @@ import GearIcon from "@/public/gear.svg";
 import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
 import ModalChannel from "@/components/modalChannel";
+import ModalShoutout from "@/components/modalShoutout";
 
 export default function Home() {
   const scopes =
@@ -206,6 +207,7 @@ export default function Home() {
           chattersPresent[tags["display-name"]] = {
             name: tags["display-name"],
             shoutout: false,
+            image: userData.data[0].profile_image_url,
           };
         }
 
@@ -281,8 +283,8 @@ export default function Home() {
     location.reload();
   };
 
-  const shoutout = async (name: string, idx: number) => {
-    const btn = document.getElementById(`shoutout_btn_${idx}`);
+  const shoutout = async (name: string, idModal: string) => {
+    const btn = document.getElementById(idModal);
     const btnCopy = btn?.innerHTML;
     if (btn) {
       btn.innerHTML = "";
@@ -360,6 +362,14 @@ export default function Home() {
     localStorage.removeItem("chattersPresent");
   };
 
+  const openShoutoutModal = () => {
+    const modal = document.getElementById("shoutout_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
   return (
     <main className="h-min-screen px-4 py-4 lg:px-40">
       <section className="mb-4 rounded-lg border-2 border-slate-500 p-2">
@@ -402,40 +412,36 @@ export default function Home() {
                   ""
                 )}
               </summary>
-              <ul
-                tabIndex={0}
-                className="menu dropdown-content z-[1] w-32 space-y-2 rounded-box bg-base-100 p-2 shadow"
-              >
-                <li>
-                  {" "}
-                  <button
-                    className="hover btn"
-                    onClick={() => openBlacklistModal()}
-                  >
-                    Blacklist
-                  </button>
-                </li>
-                <li>
-                  {" "}
-                  <button className="btn btn-error" onClick={() => reset()}>
-                    Reset Attendance
-                  </button>
-                </li>
-                <li>
-                  <button
-                    className="btn hover:btn-error"
-                    onClick={() => logout()}
-                  >
-                    Logout
-                  </button>
-                </li>
-              </ul>
+              <div className="menu dropdown-content z-[1] grid w-56 grid-cols-2 rounded-box bg-base-100 p-2 shadow">
+                <button className="btn m-1" onClick={() => openShoutoutModal()}>
+                  Shoutout
+                </button>
+                <button
+                  className="btn m-1"
+                  onClick={() => openBlacklistModal()}
+                >
+                  Blacklist
+                </button>
+                <button className="btn btn-error m-1" onClick={() => reset()}>
+                  Reset Attendance
+                </button>
+                <button
+                  className="btn m-1 hover:btn-error"
+                  onClick={() => logout()}
+                >
+                  Logout
+                </button>
+              </div>
             </details>
 
             <ModalChannel
               channels={channels}
               mySession={mySession}
               onChooseChannel={onChooseChannel}
+            />
+            <ModalShoutout
+              chattersPresent={chattersPresent}
+              shoutout={shoutout}
             />
           </div>
         ) : (

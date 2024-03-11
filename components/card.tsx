@@ -79,7 +79,7 @@ export default function Card({
       <button
         className="btn border-lime-300 bg-lime-300 text-center text-slate-700 hover:border-lime-200 hover:bg-lime-200"
         id={`shoutout_btn_${idx}`}
-        onClick={() => shoutout(chat?.name, idx)}
+        onClick={() => shoutout(chat?.name, `shoutout_btn_${idx}`)}
       >
         <svg width="20" height="20" viewBox="0 0 20 20">
           <path

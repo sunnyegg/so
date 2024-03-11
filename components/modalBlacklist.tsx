@@ -1,4 +1,4 @@
-export default function modalBlacklist({
+export default function ModalBlacklist({
   onSaveBlacklist,
   onChangeBlacklist,
   onCloseBlacklist,

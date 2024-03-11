@@ -1,7 +1,7 @@
 import { Channel } from "@/app/types";
 import Image from "next/image";
 
-export default function modalChannel({
+export default function ModalChannel({
   mySession,
   onChooseChannel,
   channels,

@@ -234,6 +234,17 @@ export default function Home() {
     }
   }, [chattersTemp]);
 
+  // check every 2s for card that already timed out
+  // idk about the impact in performance, let's see after release
+  useEffect(() => {
+    const filterOutShownChatter = chatters.filter((c) => !c.shown);
+    const interval = setInterval(() => {
+      setChatters(filterOutShownChatter);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [chatters]);
+
   const saveChatter = (
     tags: any,
     userData: any,
@@ -283,16 +294,8 @@ export default function Home() {
     location.reload();
   };
 
-  const shoutout = async (name: string, idModal: string) => {
-    const btn = document.getElementById(idModal);
-    const btnCopy = btn?.innerHTML;
-    if (btn) {
-      btn.innerHTML = "";
-      const loading = document.createElement("div");
-      loading.className = "loading loading-spinner loading-sm";
-      btn.appendChild(loading);
-    }
-
+  const shoutout = async (name: string, setStateLoading: any) => {
+    setStateLoading(true);
     try {
       const resChat = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/chat`,
@@ -315,7 +318,7 @@ export default function Home() {
     } catch (error: any) {
       setErrors([...errors, error.message]);
     } finally {
-      if (btn) btn.innerHTML = btnCopy || "";
+      setStateLoading(false);
       setSuccess([...success, `Shouted: ${name}`]);
     }
   };
@@ -371,7 +374,7 @@ export default function Home() {
   };
 
   return (
-    <main className="h-min-screen px-4 py-4 lg:px-40">
+    <main className="h-screen px-4 py-4 lg:px-40">
       <section className="mb-4 rounded-lg border-2 border-slate-500 p-2">
         {session.name ? (
           <div className="flex items-center justify-between">
@@ -456,7 +459,6 @@ export default function Home() {
         )}
 
         <ModalBlacklist
-          chattersBlacklist={chattersBlacklist}
           onSaveBlacklist={onSaveBlacklist}
           stateChattersBlacklist={stateChattersBlacklist}
           onChangeBlacklist={onChangeBlacklist}
@@ -498,7 +500,7 @@ export default function Home() {
       {Object.keys(chattersPresent).length > 0 ? (
         <section className="animate__animated animate__fadeIn space-y-4 rounded-lg border-2 border-slate-500 p-2">
           <div>
-            <p>Yang sudah hadir:</p>
+            <p>Attendance:</p>
             {Object.entries(chattersPresent).map((chatter, idx) => {
               return <p key={idx}>- {chatter[1].name}</p>;
             })}
@@ -521,6 +523,7 @@ export default function Home() {
         </p>
         <p>Made with ❤️‍🩹</p>
         <p className="text-xs">App Version: {packageJson.version}</p>
+        <br />
       </section>
 
       {/* toast */}

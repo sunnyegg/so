@@ -1,12 +1,10 @@
 export default function modalBlacklist({
   onSaveBlacklist,
-  chattersBlacklist,
   onChangeBlacklist,
   onCloseBlacklist,
   stateChattersBlacklist,
 }: {
   onSaveBlacklist: any;
-  chattersBlacklist: any;
   onChangeBlacklist: any;
   onCloseBlacklist: any;
   stateChattersBlacklist: any;
@@ -21,11 +19,10 @@ export default function modalBlacklist({
         <form action="">
           <div className="space-y-2">
             <div className="mt-2">
-              <div className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
+              <div className="flex rounded-md">
                 <input
                   type="text"
-                  name="Blacklist-chatter"
-                  className="text:white block flex-1 border-0 bg-transparent p-2"
+                  className="input input-bordered w-full"
                   placeholder="split by comma (,)"
                   value={stateChattersBlacklist}
                   onChange={(val) => onChangeBlacklist(val)}

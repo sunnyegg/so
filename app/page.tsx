@@ -50,19 +50,19 @@ export default function Home() {
         )
           ? JSON.parse(localStorage.getItem("userSession") || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setSession(savedUserSession);
 
         const savedMySession: UserSession = localStorage.getItem("mySession")
           ? JSON.parse(localStorage.getItem("mySession") || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setMySession(savedMySession);
 
         const savedChannels: Channel[] = localStorage.getItem(
@@ -70,13 +70,13 @@ export default function Home() {
         )
           ? JSON.parse(localStorage.getItem("userChannelModerated") || "")
           : [
-              {
-                broadcaster_id: "",
-                broadcaster_image: "",
-                broadcaster_login: "",
-                broadcaster_name: "",
-              },
-            ];
+            {
+              broadcaster_id: "",
+              broadcaster_image: "",
+              broadcaster_login: "",
+              broadcaster_name: "",
+            },
+          ];
         setChannels(savedChannels);
       }
       setToken(accessToken);

@@ -2,10 +2,8 @@
 
 import { useEffect } from "react";
 import { UserSession } from "@/app/types";
-import { useRouter } from "next/navigation";
 
 export default function Twitch() {
-  const router = useRouter();
 
   useEffect(() => {
     // ambil #access_token di url callback
@@ -94,7 +92,7 @@ export default function Twitch() {
         "userChannelModerated",
         JSON.stringify(remapChannelsData)
       );
-      router.push("/");
+      location.replace("/");
     } catch (error) {
       console.log(error);
     }

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { UserSession } from "@/app/types";
 
 export default function Twitch() {
-
   useEffect(() => {
     // ambil #access_token di url callback
     let parsedHash = new URLSearchParams(window.location.hash.slice(1));

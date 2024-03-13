@@ -20,6 +20,7 @@ export interface ChattersPresent {
   [key: string]: {
     name: string;
     shoutout: boolean;
+    image: string;
   };
 }
 

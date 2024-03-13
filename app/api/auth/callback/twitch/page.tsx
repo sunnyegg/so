@@ -1,95 +1,110 @@
-'use client'
+"use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { UserSession } from "@/app/types";
-import { useRouter } from "next/navigation";
 
 export default function Twitch() {
-  const router = useRouter()
+  const [token, setToken] = useState("");
 
   useEffect(() => {
     // ambil #access_token di url callback
     let parsedHash = new URLSearchParams(window.location.hash.slice(1));
-    let accessToken = parsedHash.get('access_token');
-    localStorage.setItem("accessToken", accessToken || "")
+    let accessToken = parsedHash.get("access_token") || "";
+    localStorage.setItem("accessToken", accessToken);
+    setToken(accessToken);
+  }, []);
 
-    fetchAPIs(accessToken || '')
-  }, [])
-
-  const fetchAPIs = async (token: string) => {
-    try {
-
-      // get user data
-      const resUser = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users`, {
-        headers: {
-          token
-        }
-      })
-      if (!resUser.ok) {
-        const errUser = await resUser.json()
-        throw new Error(errUser.error)
+  useEffect(() => {
+    const fetchAPIs = async (token: string) => {
+      if (!token) {
+        return;
       }
 
-      const { data: userData } = await resUser.json()
-
-      const userSession: UserSession = {
-        id: userData.data[0].id,
-        name: userData.data[0].display_name,
-        image: userData.data[0].profile_image_url,
-      }
-
-      // get channel data
-      const resChannels = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/moderator?id=${userSession.id}`, {
-        headers: {
-          token
+      try {
+        // get user data
+        const resUser = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/users`,
+          {
+            headers: {
+              token,
+            },
+          }
+        );
+        if (!resUser.ok) {
+          const errUser = await resUser.json();
+          throw new Error(errUser.error);
         }
-      })
 
-      if (!resChannels.ok) {
-        const errUser = await resChannels.json()
-        throw new Error(errUser.error)
-      }
+        const { data: userData } = await resUser.json();
 
-      const { data: channelsData } = await resChannels.json()
+        const userSession: UserSession = {
+          id: userData.data[0].id,
+          name: userData.data[0].display_name,
+          image: userData.data[0].profile_image_url,
+        };
 
-      const remapId = channelsData.data.map((c: any) => c.broadcaster_id)
+        // get channel data
+        const resChannels = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/moderator?id=${userSession.id}`,
+          {
+            headers: {
+              token,
+            },
+          }
+        );
 
-      // get channel image
-      const eachUserData = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(',')}&multiple=true`, {
-        headers: {
-          token
+        if (!resChannels.ok) {
+          const errUser = await resChannels.json();
+          throw new Error(errUser.error);
         }
-      })
-      if (!eachUserData.ok) {
-        const errUser = await eachUserData.json()
-        throw new Error(errUser.error)
-      }
 
-      const { data: eachUserDataJson } = await eachUserData.json()
+        const { data: channelsData } = await resChannels.json();
 
-      const remapChannelsData = channelsData.data.map((c: any) => {
-        const u = eachUserDataJson.data.find((d: any) => c.broadcaster_id === d.id)
+        const remapId = channelsData.data.map((c: any) => c.broadcaster_id);
 
-        return {
-          broadcaster_id: c.broadcaster_id,
-          broadcaster_login: c.broadcaster_login,
-          broadcaster_name: c.broadcaster_name,
-          broadcaster_image: u.profile_image_url,
+        // get channel image
+        const eachUserData = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(",")}&multiple=true`,
+          {
+            headers: {
+              token,
+            },
+          }
+        );
+        if (!eachUserData.ok) {
+          const errUser = await eachUserData.json();
+          throw new Error(errUser.error);
         }
-      })
 
-      localStorage.setItem("userSession", JSON.stringify(userSession))
-      localStorage.setItem("mySession", JSON.stringify(userSession))
-      localStorage.setItem("userChannelModerated", JSON.stringify(remapChannelsData))
-      router.push('/')
-    } catch (error) {
-      console.log(error)
-    }
-  }
+        const { data: eachUserDataJson } = await eachUserData.json();
 
-  return (
-    <main className="px-4 py-4 lg:px-40 h-[100vh]">
-      Success
-    </main>
-  );
+        const remapChannelsData = channelsData.data.map((c: any) => {
+          const u = eachUserDataJson.data.find(
+            (d: any) => c.broadcaster_id === d.id
+          );
+
+          return {
+            broadcaster_id: c.broadcaster_id,
+            broadcaster_login: c.broadcaster_login,
+            broadcaster_name: c.broadcaster_name,
+            broadcaster_image: u.profile_image_url,
+          };
+        });
+
+        localStorage.setItem("userSession", JSON.stringify(userSession));
+        localStorage.setItem("mySession", JSON.stringify(userSession));
+        localStorage.setItem(
+          "userChannelModerated",
+          JSON.stringify(remapChannelsData)
+        );
+        location.replace("/");
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchAPIs(token);
+  }, [token]);
+
+  return <main className="h-[100vh] px-4 py-4 lg:px-40">Success</main>;
 }

@@ -10,6 +10,7 @@ import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
 import ModalChannel from "@/components/modalChannel";
 import ModalShoutout from "@/components/modalShoutout";
+import ModalConfirmation from "@/components/modalConfirmation";
 
 export default function Home() {
   const scopes =
@@ -50,19 +51,19 @@ export default function Home() {
         )
           ? JSON.parse(localStorage.getItem("userSession") || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setSession(savedUserSession);
 
         const savedMySession: UserSession = localStorage.getItem("mySession")
           ? JSON.parse(localStorage.getItem("mySession") || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setMySession(savedMySession);
 
         const savedChannels: Channel[] = localStorage.getItem(
@@ -70,13 +71,13 @@ export default function Home() {
         )
           ? JSON.parse(localStorage.getItem("userChannelModerated") || "")
           : [
-              {
-                broadcaster_id: "",
-                broadcaster_image: "",
-                broadcaster_login: "",
-                broadcaster_name: "",
-              },
-            ];
+            {
+              broadcaster_id: "",
+              broadcaster_image: "",
+              broadcaster_login: "",
+              broadcaster_name: "",
+            },
+          ];
         setChannels(savedChannels);
       }
       setToken(accessToken);
@@ -373,6 +374,22 @@ export default function Home() {
     }
   };
 
+  const openConfirmationResetModal = () => {
+    const modal = document.getElementById("confirmation_reset_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
+  const openConfirmationLogoutModal = () => {
+    const modal = document.getElementById("confirmation_logout_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
   return (
     <main className="h-screen px-4 py-4 lg:px-40">
       <section className="mb-4 rounded-lg border-2 border-slate-500 p-2">
@@ -425,12 +442,15 @@ export default function Home() {
                 >
                   Blacklist
                 </button>
-                <button className="btn btn-error m-1" onClick={() => reset()}>
+                <button
+                  className="btn btn-error m-1"
+                  onClick={() => openConfirmationResetModal()}
+                >
                   Reset Attendance
                 </button>
                 <button
                   className="btn m-1 hover:btn-error"
-                  onClick={() => logout()}
+                  onClick={() => openConfirmationLogoutModal()}
                 >
                   Logout
                 </button>
@@ -445,6 +465,18 @@ export default function Home() {
             <ModalShoutout
               chattersPresent={chattersPresent}
               shoutout={shoutout}
+            />
+
+            <ModalConfirmation
+              id="confirmation_reset_modal"
+              action={reset}
+              content="Reset Attendance"
+            />
+
+            <ModalConfirmation
+              id="confirmation_logout_modal"
+              action={logout}
+              content="Logout"
             />
           </div>
         ) : (

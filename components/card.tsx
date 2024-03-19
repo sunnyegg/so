@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { TIMER_CARD } from "@/const/keys";
 
 export default function Card({
   chat,
@@ -14,35 +15,50 @@ export default function Card({
 }) {
   const [countdown, setCountdown] = useState<number>(100);
   const [loading, setLoading] = useState<boolean>(false);
+  const [timerCard, setTimerCard] = useState<string>('0');
 
   const chatterCard = document.getElementById(`chatter_${idx}`);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      // 70 = 18 detik
-      // 60 = 15 detik
-      // 50 = 12 detik
-      // 40 = 9 detik
-      // 30 = 6 detik
-      // 20 = 3 detik
-      setCountdown(countdown - 0.5);
-    }, 60);
+    const currentTimer = localStorage.getItem(TIMER_CARD) || "60";
+    setTimerCard(currentTimer)
 
-    if (countdown <= 0) {
-      clearInterval(interval);
+    if (currentTimer !== "0") {
+      const interval = setInterval(() => {
+        // 70 = 18 detik
+        // 60 = 15 detik
+        // 50 = 12 detik
+        // 40 = 9 detik
+        // 30 = 6 detik
+        // 20 = 3 detik
+        setCountdown(countdown - 0.5);
+      }, Number(currentTimer));
 
-      if (chatterCard) {
-        chatterCard.classList.remove("animate__fadeInDown");
-        chatterCard.classList.add("animate__fadeOut");
+      if (countdown <= 0) {
+        clearInterval(interval);
 
-        setTimeout(() => {
-          setShownChatter(chat.id, true);
-        }, 1000);
+        if (chatterCard) {
+          chatterCard.classList.add("animate__fadeOut");
+
+          setTimeout(() => {
+            setShownChatter(chat.id, true);
+          }, 1000);
+        }
       }
-    }
 
-    return () => clearInterval(interval);
+      return () => clearInterval(interval);
+    }
   }, [countdown]);
+
+  const closeCard = () => {
+    if (chatterCard) {
+      chatterCard.classList.add("animate__fadeOut");
+
+      setTimeout(() => {
+        setShownChatter(chat.id, true);
+      }, 1000);
+    }
+  }
 
   return (
     <div
@@ -78,28 +94,39 @@ export default function Card({
         </div>
       </div>
 
-      <button
-        className="btn border-lime-300 bg-lime-300 text-center text-slate-700 hover:border-lime-200 hover:bg-lime-200"
-        onClick={() => shoutout(chat?.name, setLoading)}
-      >
-        {loading ? (
-          <div className="loading loading-spinner loading-sm"></div>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z"
-              clip-rule="evenodd"
-            ></path>
-          </svg>
-        )}
-      </button>
+      <div className="flex space-x-2">
+        <button
+          className="btn border-lime-300 bg-lime-300 text-center text-slate-700 hover:border-lime-200 hover:bg-lime-200"
+          onClick={() =>
+            shoutout(chat?.name, setLoading, chatterCard, chat?.id)
+          }
+        >
+          {loading ? (
+            <div className="loading loading-spinner loading-sm"></div>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z"
+                clipRule="evenodd"
+              ></path>
+            </svg>
+          )}
+        </button>
 
-      <progress
+        {timerCard === '0' ? <button
+          className="btn border-red-400 bg-red-400 text-center text-slate-700 hover:border-red-200 hover:bg-red-200"
+          onClick={() => closeCard()}
+        >
+          x
+        </button> : ''}
+      </div>
+
+      {timerCard === '0' ? '' : <progress
         className="progress progress-success absolute bottom-0 left-0 w-full rounded-none"
         value={countdown}
         max="100"
-      ></progress>
+      ></progress>}
     </div>
   );
 }

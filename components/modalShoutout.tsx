@@ -42,9 +42,9 @@ export default function ModalShoutout({
               ) : (
                 <svg width="20" height="20" viewBox="0 0 20 20">
                   <path
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                   ></path>
                 </svg>
               )}
@@ -58,43 +58,43 @@ export default function ModalShoutout({
           <div className="flex flex-wrap justify-between">
             {Object.entries(chattersPresent).length
               ? Object.entries(chattersPresent).map((c: any, idx: number) => {
-                  return (
-                    <div key={idx}>
-                      <button
-                        className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
-                        id={`channel_shoutout_${idx}`}
-                        onClick={() =>
-                          shoutout(c[1].name, setLoadingFromAttendance)
-                        }
-                      >
-                        <div className="flex items-center space-x-2 p-2">
-                          <div className="avatar">
-                            <div className="h-10 w-10 rounded-md">
-                              {c.image === "" ? (
-                                ""
-                              ) : (
-                                <Image
-                                  src={c[1].image || ""}
-                                  width={100}
-                                  height={100}
-                                  alt="Channel Profile"
-                                  priority
-                                />
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            {loadingFromAttendance ? (
-                              <div className="loading loading-spinner loading-sm"></div>
+                return (
+                  <div key={idx}>
+                    <button
+                      className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
+                      id={`channel_shoutout_${idx}`}
+                      onClick={() =>
+                        shoutout(c[1].name, setLoadingFromAttendance)
+                      }
+                    >
+                      <div className="flex items-center space-x-2 p-2">
+                        <div className="avatar">
+                          <div className="h-10 w-10 rounded-md">
+                            {c.image === "" ? (
+                              ""
                             ) : (
-                              c[1].name
+                              <Image
+                                src={c[1].image || ""}
+                                width={100}
+                                height={100}
+                                alt="Channel Profile"
+                                priority
+                              />
                             )}
                           </div>
                         </div>
-                      </button>
-                    </div>
-                  );
-                })
+                        <div>
+                          {loadingFromAttendance ? (
+                            <div className="loading loading-spinner loading-sm"></div>
+                          ) : (
+                            c[1].name
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                );
+              })
               : ""}
           </div>
         </div>

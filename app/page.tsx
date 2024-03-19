@@ -10,6 +10,18 @@ import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
 import ModalChannel from "@/components/modalChannel";
 import ModalShoutout from "@/components/modalShoutout";
+import ModalConfirmation from "@/components/modalConfirmation";
+import ModalTimerCard from "@/components/modalTimerCard";
+import {
+  ACCESS_TOKEN,
+  APP_VERSION,
+  CHATTERS_BLACKLIST,
+  CHATTERS_PRESENT,
+  MY_SESSION,
+  TIMER_CARD,
+  USER_CHANNEL_MODERATED,
+  USER_SESSION,
+} from "@/const/keys";
 
 export default function Home() {
   const scopes =
@@ -31,6 +43,7 @@ export default function Home() {
   const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
   const [chattersBlacklist, setChattersBlacklist] = useState<string>("");
+  const [timerValue, setTimerValue] = useState<string>("60");
 
   const [channels, setChannels] = useState<Channel[]>([]);
 
@@ -42,46 +55,47 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      const accessToken = localStorage.getItem("accessToken") || "";
+      const accessToken = localStorage.getItem(ACCESS_TOKEN) || "";
 
       if (accessToken) {
-        const savedUserSession: UserSession = localStorage.getItem(
-          "userSession"
-        )
-          ? JSON.parse(localStorage.getItem("userSession") || "")
+        const savedUserSession: UserSession = localStorage.getItem(USER_SESSION)
+          ? JSON.parse(localStorage.getItem(USER_SESSION) || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setSession(savedUserSession);
 
-        const savedMySession: UserSession = localStorage.getItem("mySession")
-          ? JSON.parse(localStorage.getItem("mySession") || "")
+        const savedMySession: UserSession = localStorage.getItem(MY_SESSION)
+          ? JSON.parse(localStorage.getItem(MY_SESSION) || "")
           : {
-              id: "",
-              image: "",
-              name: "",
-            };
+            id: "",
+            image: "",
+            name: "",
+          };
         setMySession(savedMySession);
 
         const savedChannels: Channel[] = localStorage.getItem(
-          "userChannelModerated"
+          USER_CHANNEL_MODERATED
         )
-          ? JSON.parse(localStorage.getItem("userChannelModerated") || "")
+          ? JSON.parse(localStorage.getItem(USER_CHANNEL_MODERATED) || "")
           : [
-              {
-                broadcaster_id: "",
-                broadcaster_image: "",
-                broadcaster_login: "",
-                broadcaster_name: "",
-              },
-            ];
+            {
+              broadcaster_id: "",
+              broadcaster_image: "",
+              broadcaster_login: "",
+              broadcaster_name: "",
+            },
+          ];
         setChannels(savedChannels);
       }
       setToken(accessToken);
 
-      localStorage.setItem("appVersion", packageJson.version);
+      const currentTimer = localStorage.getItem(TIMER_CARD) || "60";
+      setTimerValue(currentTimer);
+
+      localStorage.setItem(APP_VERSION, packageJson.version);
     } catch (error) {
       localStorage.clear();
     }
@@ -90,16 +104,18 @@ export default function Home() {
   useEffect(() => {
     // kehadiran per channel
     // delete after update
-    const savedChatters = localStorage.getItem("chattersPresent");
+    const savedChatters = localStorage.getItem(CHATTERS_PRESENT);
     if (savedChatters) {
-      localStorage.setItem(`chattersPresent-${session.id}`, savedChatters);
-      localStorage.removeItem("chattersPresent");
+      localStorage.setItem(`${CHATTERS_PRESENT}-${session.id}`, savedChatters);
+      localStorage.removeItem(CHATTERS_PRESENT);
     }
 
     const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
-      `chattersPresent-${session.id}`
+      `${CHATTERS_PRESENT}-${session.id}`
     )
-      ? JSON.parse(localStorage.getItem(`chattersPresent-${session.id}`) || "")
+      ? JSON.parse(
+        localStorage.getItem(`${CHATTERS_PRESENT}-${session.id}`) || ""
+      )
       : {};
     setChattersPresent(savedChattersPerChannel);
 
@@ -107,12 +123,12 @@ export default function Home() {
     // delete after update
     const whitelist = localStorage.getItem("chattersWhitelist");
     if (whitelist) {
-      localStorage.setItem(`chattersBlacklist-${session.id}`, whitelist);
+      localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, whitelist);
       localStorage.removeItem("chattersWhitelist");
     }
 
     const blacklistedChatters =
-      localStorage.getItem(`chattersBlacklist-${session.id}`) || "";
+      localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
     setChattersBlacklist(blacklistedChatters);
     setStateChattersBlacklist(blacklistedChatters);
   }, [session]);
@@ -141,10 +157,21 @@ export default function Home() {
       client.on("message", async (channel, tags, message, self) => {
         if (self) return;
 
+        const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
+          `${CHATTERS_PRESENT}-${session.id}`
+        )
+          ? JSON.parse(
+            localStorage.getItem(`${CHATTERS_PRESENT}-${session.id}`) || ""
+          )
+          : {};
+
+        const blacklistedChatters =
+          localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
+
         // skip yg Blacklisted
         // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
-        if (chattersBlacklist.length > 0) {
-          const arrayBlacklist = chattersBlacklist.split(",");
+        if (blacklistedChatters.length > 0) {
+          const arrayBlacklist = blacklistedChatters.split(",");
           if (
             arrayBlacklist.find(
               (c) => c === tags["display-name"]?.toLowerCase()
@@ -155,9 +182,9 @@ export default function Home() {
         }
 
         // skip yg sudah hadir
-        if (Object.keys(chattersPresent).length > 0) {
+        if (Object.keys(savedChattersPerChannel).length > 0) {
           if (tags["display-name"]) {
-            if (chattersPresent[tags["display-name"]]) {
+            if (savedChattersPerChannel[tags["display-name"]]) {
               return;
             }
           }
@@ -212,7 +239,7 @@ export default function Home() {
         }
 
         localStorage.setItem(
-          `chattersPresent-${session.id}`,
+          `${CHATTERS_PRESENT}-${session.id}`,
           JSON.stringify(chattersPresent)
         );
         setChattersPresent(chattersPresent);
@@ -267,26 +294,30 @@ export default function Home() {
   };
 
   const setShownChatter = (id: string, shown: boolean) => {
-    const chatter = chatters.find((c) => c.id === id);
+    const chatter = chatters.map((c) => {
+      if (c.id === id) {
+        c.shown = shown;
+      }
+      return c;
+    });
     if (chatter) {
-      chatter.shown = shown;
-      setChatters([...chatters, chatter]);
+      setChatters(chatter);
     }
   };
 
   const logout = async () => {
-    localStorage.removeItem(`chattersPresent-${session.id}`);
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("userSession");
-    localStorage.removeItem("mySession");
-    localStorage.removeItem("appVersion");
-    localStorage.removeItem("userChannelModerated");
+    localStorage.removeItem(`${CHATTERS_PRESENT}-${session.id}`);
+    localStorage.removeItem(ACCESS_TOKEN);
+    localStorage.removeItem(USER_SESSION);
+    localStorage.removeItem(MY_SESSION);
+    localStorage.removeItem(APP_VERSION);
+    localStorage.removeItem(USER_CHANNEL_MODERATED);
     setSuccess([...success, `Logging out...`]);
     location.reload();
   };
 
   const reset = async () => {
-    localStorage.removeItem(`chattersPresent-${session.id}`);
+    localStorage.removeItem(`${CHATTERS_PRESENT}-${session.id}`);
     setSuccess([
       ...success,
       `Reset attendance success. Channel: ${session.name}`,
@@ -294,7 +325,12 @@ export default function Home() {
     location.reload();
   };
 
-  const shoutout = async (name: string, setStateLoading: any) => {
+  const shoutout = async (
+    name: string,
+    setStateLoading: any,
+    card?: any,
+    id?: string
+  ) => {
     setStateLoading(true);
     try {
       const resChat = await fetch(
@@ -315,11 +351,19 @@ export default function Home() {
         const resChatJson = await resChat.json();
         throw new Error(resChatJson.error);
       }
-    } catch (error: any) {
-      setErrors([...errors, error.message]);
-    } finally {
+
       setStateLoading(false);
       setSuccess([...success, `Shouted: ${name}`]);
+      if (card && id) {
+        card.classList.add("animate__fadeOut");
+
+        setTimeout(() => {
+          setShownChatter(id, true);
+        }, 1000);
+      }
+    } catch (error: any) {
+      setStateLoading(false);
+      setErrors([...errors, error.message]);
     }
   };
 
@@ -332,7 +376,7 @@ export default function Home() {
   };
 
   const onSaveBlacklist = (blacklist: string) => {
-    localStorage.setItem(`chattersBlacklist-${session.id}`, blacklist);
+    localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, blacklist);
     setSuccess([...success, `Blacklist saved`]);
     location.reload();
   };
@@ -360,13 +404,36 @@ export default function Home() {
       image: ch.broadcaster_image,
     };
     setSession(currentSession);
-    localStorage.setItem("userSession", JSON.stringify(currentSession));
+    localStorage.setItem(USER_SESSION, JSON.stringify(currentSession));
     setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`]);
-    localStorage.removeItem("chattersPresent");
   };
 
   const openShoutoutModal = () => {
     const modal = document.getElementById("shoutout_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
+  const openConfirmationResetModal = () => {
+    const modal = document.getElementById("confirmation_reset_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
+  const openConfirmationLogoutModal = () => {
+    const modal = document.getElementById("confirmation_logout_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
+  const openTimerCardModal = () => {
+    const modal = document.getElementById("timer_card_modal");
     if (modal) {
       // @ts-ignore
       modal.showModal();
@@ -415,7 +482,7 @@ export default function Home() {
                   ""
                 )}
               </summary>
-              <div className="menu dropdown-content z-[1] grid w-56 grid-cols-2 rounded-box bg-base-100 p-2 shadow">
+              <div className="menu dropdown-content z-[1] grid w-56 grid-cols-1 rounded-box bg-base-100 p-2 shadow">
                 <button className="btn m-1" onClick={() => openShoutoutModal()}>
                   Shoutout
                 </button>
@@ -425,12 +492,21 @@ export default function Home() {
                 >
                   Blacklist
                 </button>
-                <button className="btn btn-error m-1" onClick={() => reset()}>
+                <button
+                  className="btn m-1"
+                  onClick={() => openTimerCardModal()}
+                >
+                  Timer Card
+                </button>
+                <button
+                  className="btn btn-error m-1"
+                  onClick={() => openConfirmationResetModal()}
+                >
                   Reset Attendance
                 </button>
                 <button
                   className="btn m-1 hover:btn-error"
-                  onClick={() => logout()}
+                  onClick={() => openConfirmationLogoutModal()}
                 >
                   Logout
                 </button>
@@ -446,6 +522,20 @@ export default function Home() {
               chattersPresent={chattersPresent}
               shoutout={shoutout}
             />
+
+            <ModalConfirmation
+              id="confirmation_reset_modal"
+              action={reset}
+              content="Reset Attendance"
+            />
+
+            <ModalConfirmation
+              id="confirmation_logout_modal"
+              action={logout}
+              content="Logout"
+            />
+
+            <ModalTimerCard currentTimer={timerValue} />
           </div>
         ) : (
           <div className="flex items-center justify-end space-x-2">

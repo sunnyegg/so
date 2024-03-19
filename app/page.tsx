@@ -80,14 +80,7 @@ export default function Home() {
           USER_CHANNEL_MODERATED
         )
           ? JSON.parse(localStorage.getItem(USER_CHANNEL_MODERATED) || "")
-          : [
-            {
-              broadcaster_id: "",
-              broadcaster_image: "",
-              broadcaster_login: "",
-              broadcaster_name: "",
-            },
-          ];
+          : [];
         setChannels(savedChannels);
       }
       setToken(accessToken);

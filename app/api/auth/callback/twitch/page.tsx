@@ -62,41 +62,44 @@ export default function Twitch() {
 
         const remapId = channelsData.data.map((c: any) => c.broadcaster_id);
 
-        // get channel image
-        const eachUserData = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(",")}&multiple=true`,
-          {
-            headers: {
-              token,
-            },
-          }
-        );
-        if (!eachUserData.ok) {
-          const errUser = await eachUserData.json();
-          throw new Error(errUser.error);
-        }
-
-        const { data: eachUserDataJson } = await eachUserData.json();
-
-        const remapChannelsData = channelsData.data.map((c: any) => {
-          const u = eachUserDataJson.data.find(
-            (d: any) => c.broadcaster_id === d.id
+        if (remapId.length) {
+          // get channel image
+          const eachUserData = await fetch(
+            `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${remapId.join(",")}&multiple=true`,
+            {
+              headers: {
+                token,
+              },
+            }
           );
+          if (!eachUserData.ok) {
+            const errUser = await eachUserData.json();
+            throw new Error(errUser.error);
+          }
 
-          return {
-            broadcaster_id: c.broadcaster_id,
-            broadcaster_login: c.broadcaster_login,
-            broadcaster_name: c.broadcaster_name,
-            broadcaster_image: u.profile_image_url,
-          };
-        });
+          const { data: eachUserDataJson } = await eachUserData.json();
+
+          const remapChannelsData = channelsData.data.map((c: any) => {
+            const u = eachUserDataJson.data.find(
+              (d: any) => c.broadcaster_id === d.id
+            );
+
+            return {
+              broadcaster_id: c.broadcaster_id,
+              broadcaster_login: c.broadcaster_login,
+              broadcaster_name: c.broadcaster_name,
+              broadcaster_image: u.profile_image_url,
+            };
+          });
+
+          localStorage.setItem(
+            "userChannelModerated",
+            JSON.stringify(remapChannelsData)
+          );
+        }
 
         localStorage.setItem("userSession", JSON.stringify(userSession));
         localStorage.setItem("mySession", JSON.stringify(userSession));
-        localStorage.setItem(
-          "userChannelModerated",
-          JSON.stringify(remapChannelsData)
-        );
         location.replace("/");
       } catch (error) {
         console.log(error);

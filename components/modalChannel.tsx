@@ -52,43 +52,41 @@ export default function ModalChannel({
           </form>
         </div>
 
-        <div className="mb-4 space-y-2">
+        {channels.length ? <div className="mb-4 space-y-2">
           <h4>Channels You Moderate:</h4>
 
           <form method="dialog" className="flex flex-wrap justify-between">
-            {channels.length
-              ? channels.map((c: Channel, idx: number) => {
-                  return (
-                    <div key={idx}>
-                      <button
-                        className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
-                        onClick={() => onChooseChannel(c)}
-                      >
-                        <div className="flex items-center space-x-2 p-2">
-                          <div className="avatar">
-                            <div className="h-10 w-10 rounded-md">
-                              {c.broadcaster_image === "" ? (
-                                ""
-                              ) : (
-                                <Image
-                                  src={c.broadcaster_image || ""}
-                                  width={100}
-                                  height={100}
-                                  alt="Channel Profile"
-                                  priority
-                                />
-                              )}
-                            </div>
-                          </div>
-                          <div>{c.broadcaster_name}</div>
+            {channels.map((c: Channel, idx: number) => {
+              return (
+                <div key={idx}>
+                  <button
+                    className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
+                    onClick={() => onChooseChannel(c)}
+                  >
+                    <div className="flex items-center space-x-2 p-2">
+                      <div className="avatar">
+                        <div className="h-10 w-10 rounded-md">
+                          {c.broadcaster_image === "" ? (
+                            ""
+                          ) : (
+                            <Image
+                              src={c.broadcaster_image || ""}
+                              width={100}
+                              height={100}
+                              alt="Channel Profile"
+                              priority
+                            />
+                          )}
                         </div>
-                      </button>
+                      </div>
+                      <div>{c.broadcaster_name}</div>
                     </div>
-                  );
-                })
-              : ""}
+                  </button>
+                </div>
+              );
+            })}
           </form>
-        </div>
+        </div> : ''}
 
         <div className="modal-action">
           <form method="dialog">

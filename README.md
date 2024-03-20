@@ -12,4 +12,4 @@ I see a lot of streamers like to shoutout people who come on their stream, to su
 
 ## Demo
 
-![](https://github.com/sunnyegg/so/blob/main/docs/demo.gif)
+![](https://github.com/sunnyegg/so/blob/development/docs/demo.gif)

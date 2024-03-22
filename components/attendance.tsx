@@ -15,9 +15,9 @@ export default function Attendance({
       </div>
 
       <div className="collapse-content space-y-2">
-        {Object.entries(chattersPresent).length ? Object.entries(chattersPresent).map((chatter) => {
+        {Object.entries(chattersPresent).length ? Object.entries(chattersPresent).map((chatter, idx) => {
           return (
-            <div className="flex items-center justify-between rounded-lg">
+            <div key={idx} className="flex items-center justify-between rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="avatar">
                   <div className="h-10 w-10 rounded-full md:h-15 md:w-15">

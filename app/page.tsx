@@ -22,6 +22,8 @@ import {
   USER_CHANNEL_MODERATED,
   USER_SESSION,
 } from "@/const/keys";
+import Attendance from "@/components/attendance";
+import Shoutout from "@/components/shoutout";
 
 export default function Home() {
   const scopes =
@@ -228,6 +230,7 @@ export default function Home() {
             name: tags["display-name"],
             shoutout: false,
             image: userData.data[0].profile_image_url,
+            time: new Date().toISOString()
           };
         }
 
@@ -434,12 +437,12 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen px-4 py-4 lg:px-40">
-      <section className="mb-4 rounded-lg border-2 border-slate-500 p-2">
+    <>
+      <section className="mb-4 rounded-lg bg-zinc-800 p-2">
         {session.name ? (
           <div className="flex items-center justify-between">
             <button
-              className="btn flex items-center space-x-2"
+              className="btn btn-ghost flex items-center space-x-2"
               onClick={() => openModalChannel()}
             >
               <div className="avatar">
@@ -462,7 +465,7 @@ export default function Home() {
             </button>
 
             <details className="dropdown dropdown-end dropdown-bottom">
-              <summary className="btn m-2">
+              <summary className="btn btn-ghost my-2">
                 {GearIcon ? (
                   <Image
                     alt="gear icon"
@@ -475,7 +478,7 @@ export default function Home() {
                   ""
                 )}
               </summary>
-              <div className="menu dropdown-content z-[1] grid w-56 grid-cols-1 rounded-box bg-base-100 p-2 shadow">
+              <div className="menu dropdown-content z-[100] grid w-56 grid-cols-1 rounded-box bg-base-100 p-2 shadow">
                 <button className="btn m-1" onClick={() => openShoutoutModal()}>
                   Shoutout
                 </button>
@@ -549,51 +552,11 @@ export default function Home() {
         />
       </section>
 
-      <section className="mb-4 min-h-[60vh] space-y-4 rounded-lg border-2 border-slate-500 p-2">
-        {chatters.length ? (
-          <>
-            {chatters.map((chat, idx) => {
-              return !chat.shown ? (
-                <Card
-                  chat={chat}
-                  idx={idx}
-                  shoutout={shoutout}
-                  key={idx}
-                  setShownChatter={setShownChatter}
-                />
-              ) : (
-                ""
-              );
-            })}
-          </>
-        ) : (
-          <>
-            {token ? (
-              <div className="animate__animated animate__fadeIn flex items-center justify-center space-x-2 pt-2">
-                <p>Waiting for someone to chat</p>
-                <span className="loading loading-dots loading-sm"></span>
-              </div>
-            ) : (
-              ""
-            )}
-          </>
-        )}
-      </section>
+      <Shoutout chatters={chatters} setShownChatter={setShownChatter} shoutout={shoutout} token={token} />
 
-      {Object.keys(chattersPresent).length > 0 ? (
-        <section className="animate__animated animate__fadeIn space-y-4 rounded-lg border-2 border-slate-500 p-2">
-          <div>
-            <p>Attendance:</p>
-            {Object.entries(chattersPresent).map((chatter, idx) => {
-              return <p key={idx}>- {chatter[1].name}</p>;
-            })}
-          </div>
-        </section>
-      ) : (
-        ""
-      )}
+      <Attendance chattersPresent={chattersPresent} />
 
-      <section className="mt-4 text-center">
+      <section className="mt-10 text-center">
         <p>
           Have feedbacks? Slide me{" "}
           <a
@@ -653,6 +616,6 @@ export default function Home() {
         })}
       </div>
       {/* toast */}
-    </main>
-  );
+    </>
+  )
 }

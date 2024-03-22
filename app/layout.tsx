@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+
 import "./globals.css";
 import "animate.css";
 
@@ -17,7 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className + " background"}>{children}</body>
-    </html>
+      <body className={inter.className}>
+        <main className="flex flex-col px-4 py-4 lg:px-40">
+          {children}
+        </main>
+      </body>
+    </html >
   );
 }

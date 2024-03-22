@@ -21,6 +21,7 @@ export interface ChattersPresent {
     name: string;
     shoutout: boolean;
     image: string;
+    time: string;
   };
 }
 

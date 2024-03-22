@@ -1,36 +1,15 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Shoutout Tool
 
-## Getting Started
+[Shoutout Tool](https://so.sunnyegg.id) is an app where you can shoutout people who came to your stream on Twitch.
 
-First, run the development server:
+I see a lot of streamers like to shoutout people who come on their stream, to support them, or just to see their clips popping out on their stream. However, they need to ALT-Tab to their OBS just to type "!so" and go back to whatever they're doing. With this app, I hope streamers can just focus on their stream and let this app handle the shoutouting activity. This app also keep track on everyone who come on the stream.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Shoutout (no shit sherlock)
+- Attendance
+- Manage another channel to shoutout (for mod)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Demo
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+![](https://github.com/sunnyegg/so/blob/development/docs/demo.gif)

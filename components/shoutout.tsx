@@ -13,7 +13,7 @@ export default function Shoutout({
   token: any;
 }) {
   return (
-    <section className="collapse collapse-arrow mb-4 rounded-lg bg-zinc-800 px-2">
+    <section className="collapse collapse-arrow mb-4 rounded-lg bg-base-200 p-2">
       <input type="checkbox" />
       <div className="collapse-title text-[1.5rem] px-2">
         Shoutout

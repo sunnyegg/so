@@ -4,7 +4,6 @@ import tmi from "tmi.js";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
-import Card from "@/components/card";
 import GearIcon from "@/public/gear.svg";
 import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
@@ -438,7 +437,7 @@ export default function Home() {
 
   return (
     <>
-      <section className="mb-4 rounded-lg bg-zinc-800 p-2">
+      <section className="mb-4 rounded-lg bg-base-200 p-2">
         {session.name ? (
           <div className="flex items-center justify-between">
             <button

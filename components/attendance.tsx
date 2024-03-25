@@ -1,6 +1,6 @@
 import { ChattersPresent } from "@/app/types";
 import dayjs from "dayjs";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
 export default function Attendance({
   chattersPresent,
@@ -20,7 +20,7 @@ export default function Attendance({
             <div key={idx} className="flex items-center justify-between rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="avatar">
-                  <div className="h-6 w-6 md:h-10 md:w-10">
+                  <div className="h-6 w-6 md:h-10 md:w-10 relative">
                     {chatter[1].image === "" ? (
                       ""
                     ) : (

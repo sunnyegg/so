@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useState } from "react";
 
 export default function ModalShoutout({
@@ -69,7 +69,7 @@ export default function ModalShoutout({
                     >
                       <div className="flex items-center space-x-2 p-2">
                         <div className="avatar">
-                          <div className="h-5 w-5 rounded-md">
+                          <div className="h-5 w-5 rounded-md relative">
                             {c.image === "" ? (
                               ""
                             ) : (

@@ -1,7 +1,7 @@
 "use client";
 
 import tmi from "tmi.js";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useEffect, useState } from "react";
 import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
 import GearIcon from "@/public/gear.svg";
@@ -445,7 +445,7 @@ export default function Home() {
               onClick={() => openModalChannel()}
             >
               <div className="avatar">
-                <div className="h-7 w-7 md:h-10 md:w-10">
+                <div className="h-7 w-7 md:h-10 md:w-10 relative">
                   {session.image === "" ? (
                     ""
                   ) : (

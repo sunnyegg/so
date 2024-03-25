@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { TIMER_CARD } from "@/const/keys";
 
 export default function Card({
@@ -67,7 +67,7 @@ export default function Card({
     >
       <div className="flex items-center space-x-2">
         <div className="avatar">
-          <div className="h-10 w-10 rounded-lg border-2 border-lime-300 md:h-16 md:w-16">
+          <div className="h-10 w-10 rounded-lg border-2 border-lime-300 md:h-16 md:w-16 relative">
             {chat?.image === "" ? (
               ""
             ) : (

@@ -13,12 +13,12 @@ export default function Shoutout({
   token: any;
 }) {
   return (
-    <section className="collapse collapse-arrow mb-4 rounded-lg bg-base-200 p-2">
+    <section className="collapse collapse-arrow mb-4 rounded-lg bg-base-200 px-2">
       <input type="checkbox" />
-      <div className="collapse-title text-[1.5rem] px-2">
+      <div className="collapse-title text-sm md:text-lg px-2">
         Shoutout
       </div>
-      <div className="collapse-content px-2 space-y-2">
+      <div className="collapse-content px-2 space-y-2 overflow-auto">
         {chatters.length ? (
           <>
             {chatters.map((chat, idx) => {
@@ -38,7 +38,7 @@ export default function Shoutout({
         ) : (
           <>
             {token ? (
-              <div className="animate__animated animate__fadeIn flex items-center justify-center space-x-2 pt-2">
+              <div className="animate__animated animate__fadeIn flex items-center justify-center space-x-2 pt-2 text-sm md:text-base">
                 <p>Waiting for someone to chat</p>
                 <span className="loading loading-dots loading-sm"></span>
               </div>

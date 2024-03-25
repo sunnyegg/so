@@ -16,22 +16,22 @@ export default function ModalShoutout({
   return (
     <dialog id="shoutout_modal" className="modal">
       <div className="modal-box">
-        <h3 className="mb-4 text-lg font-bold">Choose a Channel to Shoutout</h3>
+        <h3 className="mb-4 text-xs md:text-lg font-bold">Choose a Channel to Shoutout</h3>
 
-        <div className="mb-4 space-y-2">
+        <div className="mb-4 space-y-2 text-xs md:text-base">
           <h4>Type a username:</h4>
 
           <form className="flex justify-between space-x-2">
             <input
               type="text"
               placeholder="Type here"
-              className="input input-bordered w-full"
+              className="input input-sm md:input-md input-bordered w-full text-xs md:text-base"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
             <button
               type="submit"
-              className="btn btn-success"
+              className="btn btn-sm md:btn-md btn-success text-xs md:text-base"
               onClick={(e) => {
                 e.preventDefault();
                 shoutout(username, setLoading);
@@ -40,7 +40,7 @@ export default function ModalShoutout({
               {loading ? (
                 <div className="loading loading-spinner loading-sm"></div>
               ) : (
-                <svg width="20" height="20" viewBox="0 0 20 20">
+                <svg className="w-3 h-3 md:w-5 md:h-5" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="m11 14 7 4V2l-7 4H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2v4h2v-4h3zm1-6.268 4-2.286v9.108l-4-2.286V7.732zM10 12H4V8h6v4z"
@@ -52,7 +52,7 @@ export default function ModalShoutout({
           </form>
         </div>
 
-        <div className="mb-4 space-y-2">
+        <div className="mb-4 space-y-2 text-xs md:text-base">
           <h4>Channels from Attendance:</h4>
 
           <div className="flex flex-wrap justify-between">
@@ -69,21 +69,20 @@ export default function ModalShoutout({
                     >
                       <div className="flex items-center space-x-2 p-2">
                         <div className="avatar">
-                          <div className="h-10 w-10 rounded-md">
+                          <div className="h-5 w-5 rounded-md">
                             {c.image === "" ? (
                               ""
                             ) : (
                               <Image
                                 src={c[1].image || ""}
-                                width={100}
-                                height={100}
                                 alt="Channel Profile"
                                 priority
+                                layout="fill"
                               />
                             )}
                           </div>
                         </div>
-                        <div>
+                        <div className="text-xs md:text-base">
                           {loadingFromAttendance ? (
                             <div className="loading loading-spinner loading-sm"></div>
                           ) : (
@@ -101,7 +100,7 @@ export default function ModalShoutout({
 
         <div className="modal-action">
           <form method="dialog">
-            <button className="btn" onClick={() => setUsername("")}>
+            <button className="btn btn-sm md:btn-md text-xs md:text-base" onClick={() => setUsername("")}>
               Close
             </button>
           </form>

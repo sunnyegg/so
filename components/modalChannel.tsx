@@ -13,9 +13,9 @@ export default function ModalChannel({
   return (
     <dialog id="channel_modal" className="modal">
       <div className="modal-box">
-        <h3 className="mb-4 text-lg font-bold">Switch Channel</h3>
+        <h3 className="mb-4 text-xs md:text-lg font-bold">Switch Channel</h3>
 
-        <div className="mb-4 space-y-2">
+        <div className="mb-4 space-y-2 text-xs md:text-base">
           <h4>You:</h4>
 
           <form method="dialog" className="flex flex-wrap justify-between">
@@ -32,16 +32,16 @@ export default function ModalChannel({
             >
               <div className="flex items-center space-x-2 p-2">
                 <div className="avatar">
-                  <div className="h-10 w-10 rounded-md">
+                  <div className="h-5 w-5 md:h-10 md:w-10">
                     {mySession.image === "" ? (
                       ""
                     ) : (
                       <Image
                         src={mySession.image}
-                        width={100}
-                        height={100}
                         alt="My Channel Profile"
                         priority
+                        layout="fill"
+                        className="rounded-md"
                       />
                     )}
                   </div>
@@ -52,7 +52,7 @@ export default function ModalChannel({
           </form>
         </div>
 
-        {channels.length ? <div className="mb-4 space-y-2">
+        {channels.length ? <div className="mb-4 space-y-2 text-xs md:text-lg">
           <h4>Channels You Moderate:</h4>
 
           <form method="dialog" className="flex flex-wrap justify-between">
@@ -65,16 +65,16 @@ export default function ModalChannel({
                   >
                     <div className="flex items-center space-x-2 p-2">
                       <div className="avatar">
-                        <div className="h-10 w-10 rounded-md">
+                        <div className="h-5 w-5 md:h-10 md:w-10">
                           {c.broadcaster_image === "" ? (
                             ""
                           ) : (
                             <Image
                               src={c.broadcaster_image || ""}
-                              width={100}
-                              height={100}
                               alt="Channel Profile"
                               priority
+                              layout="fill"
+                              className="rounded-md"
                             />
                           )}
                         </div>
@@ -90,7 +90,7 @@ export default function ModalChannel({
 
         <div className="modal-action">
           <form method="dialog">
-            <button className="btn">Close</button>
+            <button className="btn btn-sm md:btn-md text-xs md:text-base">Close</button>
           </form>
         </div>
       </div>

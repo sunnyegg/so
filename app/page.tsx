@@ -441,19 +441,19 @@ export default function Home() {
         {session.name ? (
           <div className="flex items-center justify-between">
             <button
-              className="btn btn-ghost flex items-center space-x-2"
+              className="btn btn-ghost flex items-center space-x-2 text-xs md:text-base"
               onClick={() => openModalChannel()}
             >
               <div className="avatar">
-                <div className="rounded-full">
+                <div className="h-7 w-7 md:h-10 md:w-10">
                   {session.image === "" ? (
                     ""
                   ) : (
                     <Image
                       src={session.image}
-                      width={30}
-                      height={30}
                       alt="Profile"
+                      layout="fill"
+                      className="rounded-full"
                     />
                   )}
                 </div>
@@ -469,38 +469,38 @@ export default function Home() {
                   <Image
                     alt="gear icon"
                     src={GearIcon}
-                    width={25}
-                    height={25}
+                    width={20}
+                    height={20}
                     className="dark:invert"
                   />
                 ) : (
                   ""
                 )}
               </summary>
-              <div className="menu dropdown-content z-[100] grid w-56 grid-cols-1 rounded-box bg-base-100 p-2 shadow">
-                <button className="btn m-1" onClick={() => openShoutoutModal()}>
+              <div className="menu dropdown-content z-[100] grid w-48 md:w-56 grid-cols-2 md:grid-cols-1 rounded-box bg-base-100 p-2 shadow">
+                <button className="btn m-1 text-xs md:text-base" onClick={() => openShoutoutModal()}>
                   Shoutout
                 </button>
                 <button
-                  className="btn m-1"
+                  className="btn m-1 text-xs md:text-base"
                   onClick={() => openBlacklistModal()}
                 >
                   Blacklist
                 </button>
                 <button
-                  className="btn m-1"
+                  className="btn m-1 text-xs md:text-base"
                   onClick={() => openTimerCardModal()}
                 >
                   Timer Card
                 </button>
                 <button
-                  className="btn btn-error m-1"
+                  className="btn btn-error m-1 text-xs md:text-base"
                   onClick={() => openConfirmationResetModal()}
                 >
                   Reset Attendance
                 </button>
                 <button
-                  className="btn m-1 hover:btn-error"
+                  className="btn m-1 hover:btn-error text-xs md:text-base"
                   onClick={() => openConfirmationLogoutModal()}
                 >
                   Logout
@@ -555,7 +555,7 @@ export default function Home() {
 
       <Attendance chattersPresent={chattersPresent} />
 
-      <section className="mt-10 text-center">
+      <section className="mt-10 text-center text-xs md:text-base">
         <p>
           Have feedbacks? Slide me{" "}
           <a
@@ -567,12 +567,12 @@ export default function Home() {
           </a>
         </p>
         <p>Made with ❤️‍🩹</p>
-        <p className="text-xs">App Version: {packageJson.version}</p>
+        <p className="text-[0.65rem] md:text-xs">App Version: {packageJson.version}</p>
         <br />
       </section>
 
       {/* toast */}
-      <div className="toast">
+      <div className="toast text-xs md:text-base">
         {errors.map((err, idx) => {
           setTimeout(() => {
             const errAlert = document.getElementById(`err_${idx}`);

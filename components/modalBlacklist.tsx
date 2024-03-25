@@ -12,8 +12,8 @@ export default function ModalBlacklist({
   return (
     <dialog id="blacklist_modal" className="modal">
       <div className="modal-box">
-        <h3 className="text-lg font-bold">Blacklist Chatter</h3>
-        <p className="py-4">
+        <h3 className="text-xs md:text-lg font-bold">Blacklist Chatter</h3>
+        <p className="py-4 text-xs md:text-base">
           Blacklist your chatter so they do not show up (ex: Nightbot)
         </p>
         <form action="">
@@ -22,7 +22,7 @@ export default function ModalBlacklist({
               <div className="flex rounded-md">
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full text-xs md:text-base"
                   placeholder="split by comma (,)"
                   value={stateChattersBlacklist}
                   onChange={(val) => onChangeBlacklist(val)}
@@ -35,12 +35,12 @@ export default function ModalBlacklist({
           <form method="dialog" className="space-x-2">
             <button
               type="submit"
-              className="btn btn-success"
+              className="btn btn-sm md:btn-md btn-success text-xs md:text-base"
               onClick={() => onSaveBlacklist(stateChattersBlacklist)}
             >
               Save
             </button>
-            <button className="btn" onClick={() => onCloseBlacklist()}>
+            <button className="btn btn-sm md:btn-md text-xs md:text-base" onClick={() => onCloseBlacklist()}>
               Close
             </button>
           </form>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { TIMER_CARD } from "@/const/keys";
 
 export default function Card({
@@ -67,7 +67,7 @@ export default function Card({
     >
       <div className="flex items-center space-x-2">
         <div className="avatar">
-          <div className="h-10 w-10 rounded-lg border-2 border-lime-300 md:h-16 md:w-16">
+          <div className="h-10 w-10 rounded-lg border-2 border-lime-300 md:h-16 md:w-16 relative">
             {chat?.image === "" ? (
               ""
             ) : (
@@ -98,7 +98,7 @@ export default function Card({
         <button
           className="btn btn-sm md:btn-md border-lime-300 bg-lime-300 text-center text-slate-700 hover:border-lime-200 hover:bg-lime-200"
           onClick={() =>
-            shoutout(chat?.name, setLoading, chatterCard, chat?.id)
+            shoutout(chat?.username, setLoading, chatterCard, chat?.id)
           }
         >
           {loading ? (

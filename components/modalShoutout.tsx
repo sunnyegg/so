@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useState } from "react";
 
 export default function ModalShoutout({
@@ -64,12 +64,12 @@ export default function ModalShoutout({
                       className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
                       id={`channel_shoutout_${idx}`}
                       onClick={() =>
-                        shoutout(c[1].name, setLoadingFromAttendance)
+                        shoutout(c[1].username, setLoadingFromAttendance)
                       }
                     >
                       <div className="flex items-center space-x-2 p-2">
                         <div className="avatar">
-                          <div className="h-5 w-5 rounded-md">
+                          <div className="h-5 w-5 rounded-md relative">
                             {c.image === "" ? (
                               ""
                             ) : (
@@ -86,7 +86,7 @@ export default function ModalShoutout({
                           {loadingFromAttendance ? (
                             <div className="loading loading-spinner loading-sm"></div>
                           ) : (
-                            c[1].name
+                            c[1].display_name
                           )}
                         </div>
                       </div>

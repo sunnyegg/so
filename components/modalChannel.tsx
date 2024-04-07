@@ -1,5 +1,5 @@
 import { Channel } from "@/app/types";
-import Image from "next/image";
+import Image from "next/legacy/image";
 
 export default function ModalChannel({
   mySession,
@@ -32,7 +32,7 @@ export default function ModalChannel({
             >
               <div className="flex items-center space-x-2 p-2">
                 <div className="avatar">
-                  <div className="h-5 w-5 md:h-10 md:w-10">
+                  <div className="h-5 w-5 md:h-10 md:w-10 relative">
                     {mySession.image === "" ? (
                       ""
                     ) : (
@@ -65,7 +65,7 @@ export default function ModalChannel({
                   >
                     <div className="flex items-center space-x-2 p-2">
                       <div className="avatar">
-                        <div className="h-5 w-5 md:h-10 md:w-10">
+                        <div className="h-5 w-5 md:h-10 md:w-10 relative">
                           {c.broadcaster_image === "" ? (
                             ""
                           ) : (

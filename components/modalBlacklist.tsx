@@ -23,7 +23,7 @@ export default function ModalBlacklist({
                 <input
                   type="text"
                   className="input input-bordered w-full text-xs md:text-base"
-                  placeholder="split by comma (,)"
+                  placeholder="ex: sunnybot,nightbot"
                   value={stateChattersBlacklist}
                   onChange={(val) => onChangeBlacklist(val)}
                 />

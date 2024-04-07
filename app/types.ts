@@ -18,7 +18,8 @@ export interface Chatters {
 
 export interface ChattersPresent {
   [key: string]: {
-    name: string;
+    display_name: string;
+    username: string;
     shoutout: boolean;
     image: string;
     time: string;

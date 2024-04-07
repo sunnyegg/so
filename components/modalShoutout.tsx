@@ -64,7 +64,7 @@ export default function ModalShoutout({
                       className="mb-2 rounded-md border-2 border-slate-500 hover:bg-slate-600"
                       id={`channel_shoutout_${idx}`}
                       onClick={() =>
-                        shoutout(c[1].name, setLoadingFromAttendance)
+                        shoutout(c[1].username, setLoadingFromAttendance)
                       }
                     >
                       <div className="flex items-center space-x-2 p-2">
@@ -86,7 +86,7 @@ export default function ModalShoutout({
                           {loadingFromAttendance ? (
                             <div className="loading loading-spinner loading-sm"></div>
                           ) : (
-                            c[1].name
+                            c[1].display_name
                           )}
                         </div>
                       </div>

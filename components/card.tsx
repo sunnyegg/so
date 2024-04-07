@@ -83,7 +83,7 @@ export default function Card({
         </div>
         <div>
           <p className="text-xs font-bold text-slate-700 md:text-base">
-            {chat?.name}
+            {chat?.display_name}
           </p>
           <p className="text-[0.5rem] text-slate-700 md:text-xs">
             {chat?.followers} Followers
@@ -98,7 +98,7 @@ export default function Card({
         <button
           className="btn btn-sm md:btn-md border-lime-300 bg-lime-300 text-center text-slate-700 hover:border-lime-200 hover:bg-lime-200"
           onClick={() =>
-            shoutout(chat?.name, setLoading, chatterCard, chat?.id)
+            shoutout(chat?.username, setLoading, chatterCard, chat?.id)
           }
         >
           {loading ? (

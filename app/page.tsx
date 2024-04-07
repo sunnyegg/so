@@ -96,14 +96,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // kehadiran per channel
-    // delete after update
-    const savedChatters = localStorage.getItem(CHATTERS_PRESENT);
-    if (savedChatters) {
-      localStorage.setItem(`${CHATTERS_PRESENT}-${session.id}`, savedChatters);
-      localStorage.removeItem(CHATTERS_PRESENT);
-    }
-
     const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
       `${CHATTERS_PRESENT}-${session.id}`
     )
@@ -112,14 +104,6 @@ export default function Home() {
       )
       : {};
     setChattersPresent(savedChattersPerChannel);
-
-    // handle client lama yg pakai key whitelist
-    // delete after update
-    const whitelist = localStorage.getItem("chattersWhitelist");
-    if (whitelist) {
-      localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, whitelist);
-      localStorage.removeItem("chattersWhitelist");
-    }
 
     const blacklistedChatters =
       localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
@@ -150,6 +134,8 @@ export default function Home() {
 
       client.on("message", async (channel, tags, message, self) => {
         if (self) return;
+
+        if (tags["message-type"] !== 'chat') return;
 
         const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
           `${CHATTERS_PRESENT}-${session.id}`
@@ -224,9 +210,10 @@ export default function Home() {
         saveChatter(tags, userData, followerData, channelData);
 
         // save yg udah hadir
-        if (tags["display-name"]) {
+        if (tags["display-name"] && tags.username) {
           chattersPresent[tags["display-name"]] = {
-            name: tags["display-name"],
+            display_name: tags["display-name"],
+            username: tags.username,
             shoutout: false,
             image: userData.data[0].profile_image_url,
             time: new Date().toISOString()

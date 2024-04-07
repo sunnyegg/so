@@ -11,7 +11,7 @@ export default function Attendance({
     <section className="collapse collapse-arrow rounded-lg bg-base-200 px-2">
       <input type="checkbox" />
       <div className="collapse-title text-sm md:text-lg px-2">
-        Attendance
+        Attendance {Object.entries(chattersPresent).length ? `(${Object.entries(chattersPresent).length})` : ''}
       </div>
 
       <div className="collapse-content space-y-2 overflow-auto">
@@ -36,7 +36,7 @@ export default function Attendance({
                 </div>
                 <div>
                   <p className="font-bold text-xs md:text-base">
-                    {chatter[1].name}
+                    {chatter[1].display_name}
                   </p>
                   <p className="text-[0.65rem] md:text-sm">Present at {dayjs(chatter[1].time).format('HH:mm:ss')} ({dayjs(chatter[1].time).format('DD-MM-YYYY')})</p>
                 </div>

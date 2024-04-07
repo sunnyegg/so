@@ -83,7 +83,7 @@ export default function Card({
         </div>
         <div>
           <p className="text-xs font-bold text-slate-700 md:text-base">
-            {chat?.display_name}
+            {chat?.name}
           </p>
           <p className="text-[0.5rem] text-slate-700 md:text-xs">
             {chat?.followers} Followers

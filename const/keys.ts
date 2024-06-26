@@ -6,3 +6,4 @@ export const APP_VERSION = "appVersion";
 export const CHATTERS_PRESENT = "chattersPresent";
 export const CHATTERS_BLACKLIST = "chattersBlacklist";
 export const TIMER_CARD = "timerCard";
+export const IS_ANNOUNCEMENT_READ = "isAnnouncementRead";

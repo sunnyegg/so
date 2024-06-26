@@ -55,7 +55,7 @@ export default function ModalChannel({
         {channels.length ? <div className="mb-4 space-y-2 text-xs md:text-lg">
           <h4>Channels You Moderate:</h4>
 
-          <form method="dialog" className="flex flex-wrap justify-between">
+          <form method="dialog" className="flex flex-wrap gap-2">
             {channels.map((c: Channel, idx: number) => {
               return (
                 <div key={idx}>
@@ -87,6 +87,10 @@ export default function ModalChannel({
             })}
           </form>
         </div> : ''}
+
+        <div>
+          <p className="text-sm">*ps: if someone is not here, try relogin</p>
+        </div>
 
         <div className="modal-action">
           <form method="dialog">

@@ -19,5 +19,5 @@ export default function Logout(success: any, setSuccess: any, session: any) {
 
   setTimeout(() => {
     location.reload();
-  }, 2000);
+  }, 1000);
 }

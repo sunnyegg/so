@@ -12,7 +12,9 @@ export default function LoadData(
   setMySession: any,
   setChannels: any,
   setToken: any,
-  setTimerValue: any
+  setTimerValue: any,
+  errors: any,
+  setErrors: any
 ) {
   try {
     const accessToken = localStorage.getItem(ACCESS_TOKEN) || "";
@@ -51,6 +53,10 @@ export default function LoadData(
     setTimerValue(currentTimer);
   } catch (error: any) {
     console.error(error.message);
-    localStorage.clear();
+    if (error.message === "something went wrong with token") {
+      setErrors([...errors, "Please login/relogin"])
+    } else {
+      localStorage.clear();
+    }
   }
 }

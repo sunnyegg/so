@@ -1,8 +1,4 @@
-import { IS_ANNOUNCEMENT_READ } from "@/const/keys";
-
 export default function ModalAnnouncement() {
-  localStorage.setItem(IS_ANNOUNCEMENT_READ, "true")
-
   return (
     <dialog id="announcement_modal" className="modal">
       <div className="modal-box">
@@ -16,7 +12,7 @@ export default function ModalAnnouncement() {
           <p className="text-sm">- Redeemer channel point will be shown in <b>Shoutout</b> section</p>
           <p className="text-sm">- Redeemer channel point will be saved in <b>Attendance</b> section</p>
           <br />
-          <p className="text-xs">*please relogin after you close this announcement ^_^</p>
+          <p className="text-xs">*if you have not, please relogin after you close this announcement ^_^</p>
         </div>
 
         <div className="modal-action">

@@ -13,6 +13,7 @@ import ModalShoutout from "@/components/modalShoutout";
 import ModalConfirmation from "@/components/modalConfirmation";
 import ModalTimerCard from "@/components/modalTimerCard";
 import {
+  APP_VERSION,
   CHATTERS_BLACKLIST,
   CHATTERS_PRESENT,
   IS_ANNOUNCEMENT_READ,
@@ -58,14 +59,32 @@ export default function Home() {
 
   const refButton = useRef(null)
 
+  // load all necessaries data
   useEffect(() => {
-    LoadData(setSession, setMySession, setChannels, setToken, setTimerValue)
+    LoadData(setSession, setMySession, setChannels, setToken, setTimerValue, errors, setErrors)
 
-    if (localStorage.getItem(IS_ANNOUNCEMENT_READ) !== "true") {
+    const annBool = localStorage.getItem(IS_ANNOUNCEMENT_READ)
+    if (annBool !== "true") {
       setTimeout(() => {
         // @ts-ignore
         if (refButton) refButton.current.click()
+        localStorage.setItem(IS_ANNOUNCEMENT_READ, "true")
       }, 1000);
+    }
+
+    const appVersion = localStorage.getItem(APP_VERSION)
+    if (appVersion) {
+      if (appVersion === packageJson.version) {
+        localStorage.setItem(APP_VERSION, packageJson.version)
+      } else {
+        setTimeout(() => {
+          // @ts-ignore
+          if (refButton) refButton.current.click()
+          localStorage.setItem(APP_VERSION, packageJson.version)
+        }, 1000);
+      }
+    } else {
+      localStorage.setItem(APP_VERSION, packageJson.version)
     }
   }, []);
 

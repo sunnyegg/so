@@ -89,7 +89,7 @@ export default function ModalChannel({
         </div> : ''}
 
         <div>
-          <p className="text-sm">*ps: if someone isn't here, try relogin</p>
+          <p className="text-sm">*ps: if someone is not here, try relogin</p>
         </div>
 
         <div className="modal-action">

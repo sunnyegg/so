@@ -9,12 +9,12 @@ export default function ModalAnnouncement() {
         <h3 className="mb-4 text-xs md:text-lg font-bold">Announcement</h3>
 
         <div className="mb-4 space-y-2 text-xs md:text-base">
-          <p>Hey! It's Sunny here!</p>
-          <p>Thank you so much for using this app! Sorry for the no-update for a while. There's so many things happening lately.</p>
+          <p>Hey! It is Sunny here!</p>
+          <p>Thank you so much for using this app! Sorry for the no-update for a while. There is so many things happening lately.</p>
           <br />
           <p>With this announcement, I update:</p>
-          <p className="text-sm">- Redeemer channel point will be shown in "Shoutout" section</p>
-          <p className="text-sm">- Redeemer channel point will be saved in "Attendance" section</p>
+          <p className="text-sm">- Redeemer channel point will be shown in <b>Shoutout</b> section</p>
+          <p className="text-sm">- Redeemer channel point will be saved in <b>Attendance</b> section</p>
           <br />
           <p className="text-xs">*please relogin after you close this announcement ^_^</p>
         </div>

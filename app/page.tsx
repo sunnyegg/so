@@ -1,8 +1,9 @@
 "use client";
 
-import tmi from "tmi.js";
 import Image from "next/legacy/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import useWebSocket from 'react-use-websocket';
+
 import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
 import GearIcon from "@/public/gear.svg";
 import packageJson from "@/package.json";
@@ -12,21 +13,23 @@ import ModalShoutout from "@/components/modalShoutout";
 import ModalConfirmation from "@/components/modalConfirmation";
 import ModalTimerCard from "@/components/modalTimerCard";
 import {
-  ACCESS_TOKEN,
   APP_VERSION,
   CHATTERS_BLACKLIST,
   CHATTERS_PRESENT,
-  MY_SESSION,
-  TIMER_CARD,
-  USER_CHANNEL_MODERATED,
+  IS_ANNOUNCEMENT_READ,
   USER_SESSION,
 } from "@/const/keys";
 import Attendance from "@/components/attendance";
 import Shoutout from "@/components/shoutout";
+import LoadData from "./functions/loadData";
+import InitTwitchChat from "./functions/initTwitchChat";
+import Logout from "./functions/logout";
+import SaveChatter from "./functions/saveChatter";
+import ModalAnnouncement from "@/components/modalAnnouncement";
 
 export default function Home() {
   const scopes =
-    "user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels";
+    "user:read:email moderator:manage:shoutouts moderator:read:followers chat:read chat:edit channel:moderate whispers:read whispers:edit channel_editor user:write:chat user:read:moderated_channels channel:read:redemptions";
 
   const [token, setToken] = useState("");
   const [session, setSession] = useState<UserSession>({
@@ -39,61 +42,207 @@ export default function Home() {
     name: "",
     image: "",
   });
-
   const [chatters, setChatters] = useState<Chatters[]>([]);
   const [chattersTemp, setChattersTemp] = useState<any>();
   const [chattersPresent, setChattersPresent] = useState<ChattersPresent>({});
   const [chattersBlacklist, setChattersBlacklist] = useState<string>("");
   const [timerValue, setTimerValue] = useState<string>("60");
-
   const [channels, setChannels] = useState<Channel[]>([]);
-
   const [stateChattersBlacklist, setStateChattersBlacklist] =
     useState<string>(chattersBlacklist);
-
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState<string[]>([]);
 
+  const [isConnectedWebsocket, setIsConnectedWebsocket] = useState<boolean>(false);
+  const [messageHistory, setMessageHistory] = useState<any[]>([]);
+  const { lastMessage } = useWebSocket('wss://eventsub.wss.twitch.tv/ws');
+
+  const refButton = useRef(null)
+
+  // load all necessaries data
   useEffect(() => {
-    try {
-      const accessToken = localStorage.getItem(ACCESS_TOKEN) || "";
+    LoadData(setSession, setMySession, setChannels, setToken, setTimerValue, errors, setErrors)
 
-      if (accessToken) {
-        const savedUserSession: UserSession = localStorage.getItem(USER_SESSION)
-          ? JSON.parse(localStorage.getItem(USER_SESSION) || "")
-          : {
-            id: "",
-            image: "",
-            name: "",
-          };
-        setSession(savedUserSession);
+    const annBool = localStorage.getItem(IS_ANNOUNCEMENT_READ)
+    if (annBool !== "true") {
+      setTimeout(() => {
+        // @ts-ignore
+        if (refButton) refButton.current.click()
+        localStorage.setItem(IS_ANNOUNCEMENT_READ, "true")
+      }, 1000);
+    }
 
-        const savedMySession: UserSession = localStorage.getItem(MY_SESSION)
-          ? JSON.parse(localStorage.getItem(MY_SESSION) || "")
-          : {
-            id: "",
-            image: "",
-            name: "",
-          };
-        setMySession(savedMySession);
-
-        const savedChannels: Channel[] = localStorage.getItem(
-          USER_CHANNEL_MODERATED
-        )
-          ? JSON.parse(localStorage.getItem(USER_CHANNEL_MODERATED) || "")
-          : [];
-        setChannels(savedChannels);
+    const appVersion = localStorage.getItem(APP_VERSION)
+    if (appVersion) {
+      if (appVersion === packageJson.version) {
+        localStorage.setItem(APP_VERSION, packageJson.version)
+      } else {
+        setTimeout(() => {
+          // @ts-ignore
+          if (refButton) refButton.current.click()
+          localStorage.setItem(APP_VERSION, packageJson.version)
+        }, 1000);
       }
-      setToken(accessToken);
-
-      const currentTimer = localStorage.getItem(TIMER_CARD) || "60";
-      setTimerValue(currentTimer);
-
-      localStorage.setItem(APP_VERSION, packageJson.version);
-    } catch (error) {
-      localStorage.clear();
+    } else {
+      localStorage.setItem(APP_VERSION, packageJson.version)
     }
   }, []);
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setMessageHistory((prev) => prev.concat(lastMessage));
+    }
+  }, [lastMessage]);
+
+  useEffect(() => {
+    const initConn = async (session_id: any) => {
+      const resWebsocket = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/api/event-twitch`,
+        {
+          headers: {
+            token,
+          },
+          body: JSON.stringify({
+            broadcaster_user_id: session.id,
+            moderator_user_id: mySession.id,
+            session_id
+          }),
+          method: "POST",
+        }
+      )
+
+      if (!resWebsocket.ok) {
+        const jsonData = await resWebsocket.json()
+        throw new Error(jsonData.error)
+      }
+    }
+
+    if (!token) return
+
+    if (messageHistory.length) {
+      const dataWebsocket: any = messageHistory.map(val => JSON.parse(val.data))
+      const sessionWelcome = dataWebsocket.filter((val: any) => val.metadata.message_type === 'session_welcome');
+
+      const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
+        `${CHATTERS_PRESENT}-${session.id}`
+      )
+        ? JSON.parse(
+          localStorage.getItem(`${CHATTERS_PRESENT}-${session.id}`) || ""
+        )
+        : {};
+
+      const blacklistedChatters =
+        localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
+
+      if (sessionWelcome.length && !isConnectedWebsocket) {
+        const data = sessionWelcome[0]
+        const session_id = data.payload.session.id
+
+        initConn(session_id).then(() => {
+          setIsConnectedWebsocket(true);
+          setSuccess([...success, "Connected to Websocket"])
+        }).catch(err => {
+          setErrors([...errors, err.message])
+        })
+      }
+
+      const notifications = dataWebsocket.filter((val: any) => val.metadata.message_type === 'notification');
+
+      // save yg udah hadir
+      if (notifications.length) {
+        notifications.forEach(async (n: any) => {
+          const display_name = n.payload.event.user_name;
+          const username = n.payload.event.user_login;
+          const userid = n.payload.event.user_id;
+
+          try {
+            const tags = { 'user-id': userid, 'display-name': display_name, username }
+
+            // skip yg Blacklisted
+            // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
+            if (blacklistedChatters.length > 0) {
+              const arrayBlacklist = blacklistedChatters.split(",");
+              if (
+                arrayBlacklist.find((c) => c === tags["display-name"]?.toLowerCase())
+              ) {
+                return;
+              }
+            }
+
+            // skip yg sudah hadir
+            if (Object.keys(savedChattersPerChannel).length > 0) {
+              if (tags["display-name"]) {
+                if (savedChattersPerChannel[tags["display-name"]]) {
+                  return;
+                }
+              }
+            }
+
+            const resUser = await fetch(
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`,
+              {
+                headers: { token },
+              }
+            );
+            if (!resUser.ok) {
+              const errUser = await resUser.json();
+              setErrors([...errors, errUser.error]);
+            }
+
+            const resChannel = await fetch(
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`,
+              {
+                headers: { token },
+              }
+            );
+            if (!resChannel.ok) {
+              const errChannel = await resChannel.json();
+              setErrors([...errors, errChannel.error]);
+            }
+
+            const resFollower = await fetch(
+              `${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`,
+              {
+                headers: { token },
+              }
+            );
+            if (!resFollower.ok) {
+              const errFollower = await resFollower.json();
+              setErrors([...errors, errFollower.error]);
+            }
+
+            const { data: userData } = await resUser.json();
+            const { data: channelData } = await resChannel.json();
+            const { data: followerData } = await resFollower.json();
+
+            SaveChatter(tags, userData, followerData, channelData, setChattersTemp);
+
+            // save yg udah hadir
+            if (tags["display-name"] && tags.username) {
+              chattersPresent[tags["display-name"]] = {
+                display_name: tags["display-name"],
+                username: tags.username,
+                shoutout: false,
+                image: userData.data[0].profile_image_url,
+                time: new Date().toISOString(),
+              };
+            }
+
+            localStorage.setItem(
+              `${CHATTERS_PRESENT}-${session.id}`,
+              JSON.stringify(chattersPresent)
+            );
+            setChattersPresent(chattersPresent);
+          } catch (error: any) {
+            setErrors([...errors, error.message])
+          }
+        });
+      }
+
+      // done with the data, clear
+      setMessageHistory([])
+    }
+  }, [messageHistory, token])
 
   useEffect(() => {
     const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
@@ -109,132 +258,8 @@ export default function Home() {
       localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
     setChattersBlacklist(blacklistedChatters);
     setStateChattersBlacklist(blacklistedChatters);
-  }, [session]);
 
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-
-    if (!session.name) {
-      return;
-    }
-
-    try {
-      const client = new tmi.Client({
-        options: { debug: false, skipUpdatingEmotesets: true },
-        identity: {
-          username: session.name,
-          password: `oauth:${token}`,
-        },
-        channels: [session.name],
-      });
-
-      client.connect();
-
-      client.on("message", async (channel, tags, message, self) => {
-        if (self) return;
-
-        if (tags["message-type"] !== 'chat') return;
-
-        const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
-          `${CHATTERS_PRESENT}-${session.id}`
-        )
-          ? JSON.parse(
-            localStorage.getItem(`${CHATTERS_PRESENT}-${session.id}`) || ""
-          )
-          : {};
-
-        const blacklistedChatters =
-          localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
-
-        // skip yg Blacklisted
-        // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
-        if (blacklistedChatters.length > 0) {
-          const arrayBlacklist = blacklistedChatters.split(",");
-          if (
-            arrayBlacklist.find(
-              (c) => c === tags["display-name"]?.toLowerCase()
-            )
-          ) {
-            return;
-          }
-        }
-
-        // skip yg sudah hadir
-        if (Object.keys(savedChattersPerChannel).length > 0) {
-          if (tags["display-name"]) {
-            if (savedChattersPerChannel[tags["display-name"]]) {
-              return;
-            }
-          }
-        }
-
-        const resUser = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/users?id=${tags["user-id"]}&multiple=true`,
-          {
-            headers: { token },
-          }
-        );
-        if (!resUser.ok) {
-          const errUser = await resUser.json();
-          setErrors([...errors, errUser.error]);
-        }
-
-        const resChannel = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/channels?broadcasterId=broadcaster_id=${tags["user-id"]}`,
-          {
-            headers: { token },
-          }
-        );
-        if (!resChannel.ok) {
-          const errChannel = await resChannel.json();
-          setErrors([...errors, errChannel.error]);
-        }
-
-        const resFollower = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL}/api/followers?broadcasterId=broadcaster_id=${tags["user-id"]}`,
-          {
-            headers: { token },
-          }
-        );
-        if (!resFollower.ok) {
-          const errFollower = await resFollower.json();
-          setErrors([...errors, errFollower.error]);
-        }
-
-        const { data: userData } = await resUser.json();
-        const { data: channelData } = await resChannel.json();
-        const { data: followerData } = await resFollower.json();
-
-        saveChatter(tags, userData, followerData, channelData);
-
-        // save yg udah hadir
-        if (tags["display-name"] && tags.username) {
-          chattersPresent[tags["display-name"]] = {
-            display_name: tags["display-name"],
-            username: tags.username,
-            shoutout: false,
-            image: userData.data[0].profile_image_url,
-            time: new Date().toISOString()
-          };
-        }
-
-        localStorage.setItem(
-          `${CHATTERS_PRESENT}-${session.id}`,
-          JSON.stringify(chattersPresent)
-        );
-        setChattersPresent(chattersPresent);
-      });
-
-      setSuccess([...success, `Connected to: #${session.name}`]);
-
-      return () => {
-        client.disconnect();
-      };
-    } catch (error: any) {
-      setErrors([...errors, error.message]);
-    }
+    InitTwitchChat(token, session, chattersPresent, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess)
   }, [session]);
 
   useEffect(() => {
@@ -254,27 +279,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [chatters]);
 
-  const saveChatter = (
-    tags: any,
-    userData: any,
-    followerData: any,
-    channelData: any
-  ) => {
-    const chatter: Chatters = {
-      id: tags["user-id"] || "",
-      type: "",
-      name: tags["display-name"] || "",
-      image: userData.data[0].profile_image_url,
-      username: tags.username || "",
-      followers: followerData.total,
-      description: "",
-      lastStreamed: channelData.data[0].game_name,
-      shown: false,
-    };
-
-    setChattersTemp(chatter);
-  };
-
   const setShownChatter = (id: string, shown: boolean) => {
     const chatter = chatters.map((c) => {
       if (c.id === id) {
@@ -285,17 +289,6 @@ export default function Home() {
     if (chatter) {
       setChatters(chatter);
     }
-  };
-
-  const logout = async () => {
-    localStorage.removeItem(`${CHATTERS_PRESENT}-${session.id}`);
-    localStorage.removeItem(ACCESS_TOKEN);
-    localStorage.removeItem(USER_SESSION);
-    localStorage.removeItem(MY_SESSION);
-    localStorage.removeItem(APP_VERSION);
-    localStorage.removeItem(USER_CHANNEL_MODERATED);
-    setSuccess([...success, `Logging out...`]);
-    location.reload();
   };
 
   const reset = async () => {
@@ -422,6 +415,14 @@ export default function Home() {
     }
   };
 
+  const openAnnouncementModal = () => {
+    const modal = document.getElementById("announcement_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
   return (
     <>
       <section className="mb-4 rounded-lg bg-base-200 p-2">
@@ -513,11 +514,14 @@ export default function Home() {
 
             <ModalConfirmation
               id="confirmation_logout_modal"
-              action={logout}
+              action={() => Logout(success, setSuccess, session)}
               content="Logout"
             />
 
             <ModalTimerCard currentTimer={timerValue} />
+
+            <button ref={refButton} className="hidden" onClick={() => openAnnouncementModal()}></button>
+            <ModalAnnouncement />
           </div>
         ) : (
           <div className="flex items-center justify-end space-x-2">
@@ -544,13 +548,13 @@ export default function Home() {
 
       <section className="mt-10 text-center text-xs md:text-base">
         <p>
-          Have feedbacks? Slide me{" "}
+          Have feedbacks? Please report it on{" "}
           <a
-            href="https://twitter.com/_sunnyegg"
+            href="https://github.com/sunnyegg/so/issues"
             className="link"
             target="_blank"
           >
-            DM
+            Github
           </a>
         </p>
         <p>Made with ❤️‍🩹</p>

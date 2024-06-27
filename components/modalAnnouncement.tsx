@@ -14,7 +14,8 @@ export default function ModalAnnouncement() {
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
 
-            <p>- add button announcement</p>
+            <p className="text-sm">- redeemer channel point will only show up on your own channel</p>
+            <p className="text-sm">- add button announcement</p>
           </div>
         </div>
 

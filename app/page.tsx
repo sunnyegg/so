@@ -23,6 +23,11 @@ import {
 } from "@/const/keys";
 import Attendance from "@/components/attendance";
 import Shoutout from "@/components/shoutout";
+import LoadData from "./functions/loadData";
+import InitTwitchChat from "./functions/initTwitchChat";
+import Logout from "./functions/logout";
+import SaveChatter from "./functions/saveChatter";
+import ModalAnnouncement from "@/components/modalAnnouncement";
 
 import LoadData from "./functions/loadData";
 import InitTwitchChat from "./functions/initTwitchChat";
@@ -379,6 +384,14 @@ export default function Home() {
     setSession(currentSession);
     localStorage.setItem(USER_SESSION, JSON.stringify(currentSession));
     setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`]);
+  };
+
+  const openAnnouncementModal = () => {
+    const modal = document.getElementById("announcement_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
   };
 
   const openAnnouncementModal = () => {

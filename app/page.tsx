@@ -99,7 +99,7 @@ export default function Home() {
   }, [lastMessage]);
 
   useEffect(() => {
-    const initConn = async (session_id: any) => {
+    const initConn = async (session: any, mySession: any, session_id: any) => {
       const resWebsocket = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/event-twitch`,
         {
@@ -107,21 +107,26 @@ export default function Home() {
             token,
           },
           body: JSON.stringify({
-            broadcaster_user_id: session.id,
-            moderator_user_id: mySession.id,
+            broadcaster_user_id: session,
+            moderator_user_id: mySession,
             session_id
           }),
           method: "POST",
         }
       )
 
+      const jsonData = await resWebsocket.json()
+
       if (!resWebsocket.ok) {
-        const jsonData = await resWebsocket.json()
-        throw new Error(jsonData.error)
+        setErrors([...errors, jsonData.error])
       }
     }
 
     if (!token) return
+
+    if (session.id !== mySession.id) {
+      return
+    }
 
     if (messageHistory.length) {
       const dataWebsocket: any = messageHistory.map(val => JSON.parse(val.data))
@@ -142,9 +147,9 @@ export default function Home() {
         const data = sessionWelcome[0]
         const session_id = data.payload.session.id
 
-        initConn(session_id).then(() => {
+        initConn(session.id, mySession.id, session_id).then(() => {
           setIsConnectedWebsocket(true);
-          setSuccess([...success, "Connected to Websocket"])
+          setSuccess([...success, "Connected to Channel Point"])
         }).catch(err => {
           setErrors([...errors, err.message])
         })
@@ -246,7 +251,7 @@ export default function Home() {
       // done with the data, clear
       setMessageHistory([])
     }
-  }, [messageHistory, token])
+  }, [session, messageHistory, token])
 
   useEffect(() => {
     const savedChattersPerChannel: ChattersPresent = localStorage.getItem(

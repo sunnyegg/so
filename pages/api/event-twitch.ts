@@ -45,7 +45,7 @@ export default async function handler(
     }
 
     res.status(200).json({
-      data: json,
+      data: json.data[0].id,
     });
   } catch (error: any) {
     console.log(error);

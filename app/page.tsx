@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import useWebSocket from 'react-use-websocket';
 
 import { Channel, Chatters, ChattersPresent, UserSession } from "./types";
-import GearIcon from "@/public/gear.svg";
+
+import MegaPhoneIcon from "@/public/mega-phone.svg";
+
 import packageJson from "@/package.json";
 import ModalBlacklist from "@/components/modalBlacklist";
 import ModalChannel from "@/components/modalChannel";
@@ -21,11 +23,13 @@ import {
 } from "@/const/keys";
 import Attendance from "@/components/attendance";
 import Shoutout from "@/components/shoutout";
+
 import LoadData from "./functions/loadData";
 import InitTwitchChat from "./functions/initTwitchChat";
 import Logout from "./functions/logout";
 import SaveChatter from "./functions/saveChatter";
 import ModalAnnouncement from "@/components/modalAnnouncement";
+import MenuDropdown from "@/components/menuDropdown";
 
 export default function Home() {
   const scopes =
@@ -95,7 +99,7 @@ export default function Home() {
   }, [lastMessage]);
 
   useEffect(() => {
-    const initConn = async (session_id: any) => {
+    const initConn = async (session: any, mySession: any, session_id: any) => {
       const resWebsocket = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/event-twitch`,
         {
@@ -103,21 +107,26 @@ export default function Home() {
             token,
           },
           body: JSON.stringify({
-            broadcaster_user_id: session.id,
-            moderator_user_id: mySession.id,
+            broadcaster_user_id: session,
+            moderator_user_id: mySession,
             session_id
           }),
           method: "POST",
         }
       )
 
+      const jsonData = await resWebsocket.json()
+
       if (!resWebsocket.ok) {
-        const jsonData = await resWebsocket.json()
-        throw new Error(jsonData.error)
+        setErrors([...errors, jsonData.error])
       }
     }
 
     if (!token) return
+
+    if (session.id !== mySession.id) {
+      return
+    }
 
     if (messageHistory.length) {
       const dataWebsocket: any = messageHistory.map(val => JSON.parse(val.data))
@@ -138,9 +147,9 @@ export default function Home() {
         const data = sessionWelcome[0]
         const session_id = data.payload.session.id
 
-        initConn(session_id).then(() => {
+        initConn(session.id, mySession.id, session_id).then(() => {
           setIsConnectedWebsocket(true);
-          setSuccess([...success, "Connected to Websocket"])
+          setSuccess([...success, "Connected to Channel Point"])
         }).catch(err => {
           setErrors([...errors, err.message])
         })
@@ -242,7 +251,7 @@ export default function Home() {
       // done with the data, clear
       setMessageHistory([])
     }
-  }, [messageHistory, token])
+  }, [session, messageHistory, token])
 
   useEffect(() => {
     const savedChattersPerChannel: ChattersPresent = localStorage.getItem(
@@ -342,13 +351,7 @@ export default function Home() {
     }
   };
 
-  const openBlacklistModal = () => {
-    const modal = document.getElementById("blacklist_modal");
-    if (modal) {
-      // @ts-ignore
-      modal.showModal();
-    }
-  };
+
 
   const onSaveBlacklist = (blacklist: string) => {
     localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, blacklist);
@@ -381,38 +384,6 @@ export default function Home() {
     setSession(currentSession);
     localStorage.setItem(USER_SESSION, JSON.stringify(currentSession));
     setSuccess([...success, `Changed channel to: #${ch.broadcaster_name}`]);
-  };
-
-  const openShoutoutModal = () => {
-    const modal = document.getElementById("shoutout_modal");
-    if (modal) {
-      // @ts-ignore
-      modal.showModal();
-    }
-  };
-
-  const openConfirmationResetModal = () => {
-    const modal = document.getElementById("confirmation_reset_modal");
-    if (modal) {
-      // @ts-ignore
-      modal.showModal();
-    }
-  };
-
-  const openConfirmationLogoutModal = () => {
-    const modal = document.getElementById("confirmation_logout_modal");
-    if (modal) {
-      // @ts-ignore
-      modal.showModal();
-    }
-  };
-
-  const openTimerCardModal = () => {
-    const modal = document.getElementById("timer_card_modal");
-    if (modal) {
-      // @ts-ignore
-      modal.showModal();
-    }
   };
 
   const openAnnouncementModal = () => {
@@ -451,12 +422,12 @@ export default function Home() {
               </p>
             </button>
 
-            <details className="dropdown dropdown-end dropdown-bottom">
-              <summary className="btn btn-ghost my-2">
-                {GearIcon ? (
+            <div className="flex gap-2">
+              <div className="btn btn-ghost my-2" onClick={() => openAnnouncementModal()}>
+                {MegaPhoneIcon ? (
                   <Image
-                    alt="gear icon"
-                    src={GearIcon}
+                    alt="mega phone icon"
+                    src={MegaPhoneIcon}
                     width={20}
                     height={20}
                     className="dark:invert"
@@ -464,43 +435,17 @@ export default function Home() {
                 ) : (
                   ""
                 )}
-              </summary>
-              <div className="menu dropdown-content z-[100] grid w-48 md:w-56 grid-cols-2 md:grid-cols-1 rounded-box bg-base-100 p-2 shadow">
-                <button className="btn m-1 text-xs md:text-base" onClick={() => openShoutoutModal()}>
-                  Shoutout
-                </button>
-                <button
-                  className="btn m-1 text-xs md:text-base"
-                  onClick={() => openBlacklistModal()}
-                >
-                  Blacklist
-                </button>
-                <button
-                  className="btn m-1 text-xs md:text-base"
-                  onClick={() => openTimerCardModal()}
-                >
-                  Timer Card
-                </button>
-                <button
-                  className="btn btn-error m-1 text-xs md:text-base"
-                  onClick={() => openConfirmationResetModal()}
-                >
-                  Reset Attendance
-                </button>
-                <button
-                  className="btn m-1 hover:btn-error text-xs md:text-base"
-                  onClick={() => openConfirmationLogoutModal()}
-                >
-                  Logout
-                </button>
               </div>
-            </details>
+
+              <MenuDropdown />
+            </div>
 
             <ModalChannel
               channels={channels}
               mySession={mySession}
               onChooseChannel={onChooseChannel}
             />
+
             <ModalShoutout
               chattersPresent={chattersPresent}
               shoutout={shoutout}

@@ -24,7 +24,6 @@ export default function ModalAutoShoutout({
     const val = e.target.value
     if (val >= 0) {
       setValueDelay(val)
-      localStorage.setItem(AUTO_SO_DELAY, val)
     }
   }
 

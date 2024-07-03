@@ -69,6 +69,7 @@ export default function MenuDropdown() {
         <button className="btn m-1 text-xs md:text-base" onClick={() => openAutoSOModal()}>
           Auto Shoutout
         </button>
+
         <button className="btn m-1 text-xs md:text-base" onClick={() => openShoutoutModal()}>
           Shoutout
         </button>

@@ -10,6 +10,17 @@ export default function ModalAnnouncement() {
 
         <div className="bg-base-300 rounded p-4">
           <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>0.6.0</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">- now you can disable the <b>Shoutout</b> section in Timer Card menu (if you want to just use the <b>Attendance</b> section)</p>
+            <p className="text-sm">- now you can shoutout automatically in Auto SO menu and you can set the delay (so people will not sus you from using bot)</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
             <h1>0.5.1</h1>
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />

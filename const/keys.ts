@@ -7,3 +7,6 @@ export const CHATTERS_PRESENT = "chattersPresent";
 export const CHATTERS_BLACKLIST = "chattersBlacklist";
 export const TIMER_CARD = "timerCard";
 export const IS_ANNOUNCEMENT_READ = "isAnnouncementRead";
+export const IS_SO_ENABLED = "isSOEnabled";
+export const IS_AUTO_SO_ENABLED = "isAutoSOEnabled";
+export const AUTO_SO_DELAY = "autoSODelay";

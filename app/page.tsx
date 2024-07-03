@@ -16,9 +16,11 @@ import ModalConfirmation from "@/components/modalConfirmation";
 import ModalTimerCard from "@/components/modalTimerCard";
 import {
   APP_VERSION,
+  AUTO_SO_DELAY,
   CHATTERS_BLACKLIST,
   CHATTERS_PRESENT,
   IS_ANNOUNCEMENT_READ,
+  IS_AUTO_SO_ENABLED,
   USER_SESSION,
 } from "@/const/keys";
 import Attendance from "@/components/attendance";
@@ -30,6 +32,8 @@ import Logout from "./functions/logout";
 import SaveChatter from "./functions/saveChatter";
 import ModalAnnouncement from "@/components/modalAnnouncement";
 import MenuDropdown from "@/components/menuDropdown";
+import ModalAutoShoutout from "@/components/modalAutoShoutout";
+import { Delay } from "@/utils/delay";
 
 export default function Home() {
   const scopes =
@@ -56,6 +60,9 @@ export default function Home() {
     useState<string>(chattersBlacklist);
   const [errors, setErrors] = useState<string[]>([]);
   const [success, setSuccess] = useState<string[]>([]);
+  const [currentSoStatus, setCurrentSoStatus] = useState<boolean>(true);
+  const [currentAutoSoStatus, setCurrentAutoSoStatus] = useState<boolean>(false);
+  const [currentAutoSoDelay, setCurrentAutoSoDelay] = useState<number>(0);
 
   const [isConnectedWebsocket, setIsConnectedWebsocket] = useState<boolean>(false);
   const [messageHistory, setMessageHistory] = useState<any[]>([]);
@@ -65,7 +72,7 @@ export default function Home() {
 
   // load all necessaries data
   useEffect(() => {
-    LoadData(setSession, setMySession, setChannels, setToken, setTimerValue, errors, setErrors)
+    LoadData(setSession, setMySession, setChannels, setToken, setTimerValue, errors, setErrors, setCurrentSoStatus, setCurrentAutoSoStatus, setCurrentAutoSoDelay)
 
     const annBool = localStorage.getItem(IS_ANNOUNCEMENT_READ)
     if (annBool !== "true") {
@@ -142,6 +149,9 @@ export default function Home() {
 
       const blacklistedChatters =
         localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
+
+      const autoSOStatus = localStorage.getItem(IS_AUTO_SO_ENABLED);
+      const autoSODelay = localStorage.getItem(AUTO_SO_DELAY);
 
       if (sessionWelcome.length && !isConnectedWebsocket) {
         const data = sessionWelcome[0]
@@ -226,6 +236,10 @@ export default function Home() {
 
             SaveChatter(tags, userData, followerData, channelData, setChattersTemp);
 
+            if (autoSOStatus !== null && autoSOStatus === "true") {
+              shoutout(tags.username, undefined, undefined, undefined, Number(autoSODelay) * 1000);
+            }
+
             // save yg udah hadir
             if (tags["display-name"] && tags.username) {
               chattersPresent[tags["display-name"]] = {
@@ -268,7 +282,7 @@ export default function Home() {
     setChattersBlacklist(blacklistedChatters);
     setStateChattersBlacklist(blacklistedChatters);
 
-    InitTwitchChat(token, session, chattersPresent, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess)
+    InitTwitchChat(token, session, chattersPresent, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess, shoutout)
   }, [session]);
 
   useEffect(() => {
@@ -311,11 +325,13 @@ export default function Home() {
 
   const shoutout = async (
     name: string,
-    setStateLoading: any,
+    setStateLoading?: any,
     card?: any,
-    id?: string
+    id?: string,
+    delay?: number
   ) => {
-    setStateLoading(true);
+    if (setStateLoading) setStateLoading(true);
+    if (delay) await Delay(delay)
     try {
       const resChat = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/api/chat`,
@@ -336,7 +352,7 @@ export default function Home() {
         throw new Error(resChatJson.error);
       }
 
-      setStateLoading(false);
+      if (setStateLoading) setStateLoading(false);
       setSuccess([...success, `Shouted: ${name}`]);
       if (card && id) {
         card.classList.add("animate__fadeOut");
@@ -346,7 +362,7 @@ export default function Home() {
         }, 1000);
       }
     } catch (error: any) {
-      setStateLoading(false);
+      if (setStateLoading) setStateLoading(false);
       setErrors([...errors, error.message]);
     }
   };
@@ -463,7 +479,10 @@ export default function Home() {
               content="Logout"
             />
 
-            <ModalTimerCard currentTimer={timerValue} />
+            <ModalTimerCard currentTimer={timerValue} currentSoStatus={currentSoStatus} />
+            <ModalAutoShoutout
+              currentStatus={currentAutoSoStatus}
+              currentDelay={currentAutoSoDelay} />
 
             <button ref={refButton} className="hidden" onClick={() => openAnnouncementModal()}></button>
             <ModalAnnouncement />
@@ -487,7 +506,9 @@ export default function Home() {
         />
       </section>
 
-      <Shoutout chatters={chatters} setShownChatter={setShownChatter} shoutout={shoutout} token={token} />
+      {currentSoStatus ?
+        <Shoutout chatters={chatters} setShownChatter={setShownChatter} shoutout={shoutout} token={token} />
+        : ''}
 
       <Attendance chattersPresent={chattersPresent} />
 
@@ -502,6 +523,10 @@ export default function Home() {
             Github
           </a>
         </p>
+        <p>or you can DM at <a
+          href="https://discordapp.com/users/287937297608081409"
+          className="link"
+          target="_blank">Discord</a></p>
         <p>Made with ❤️‍🩹</p>
         <p className="text-[0.65rem] md:text-xs">App Version: {packageJson.version}</p>
         <br />

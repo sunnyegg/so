@@ -1,6 +1,9 @@
 import { Channel, UserSession } from "../types";
 import {
   ACCESS_TOKEN,
+  AUTO_SO_DELAY,
+  IS_AUTO_SO_ENABLED,
+  IS_SO_ENABLED,
   MY_SESSION,
   TIMER_CARD,
   USER_CHANNEL_MODERATED,
@@ -14,7 +17,10 @@ export default function LoadData(
   setToken: any,
   setTimerValue: any,
   errors: any,
-  setErrors: any
+  setErrors: any,
+  setCurrentSoStatus: any,
+  setCurrentAutoSoStatus: any,
+  setCurrentAutoSoDelay: any
 ) {
   try {
     const accessToken = localStorage.getItem(ACCESS_TOKEN) || "";
@@ -51,10 +57,31 @@ export default function LoadData(
 
     const currentTimer = localStorage.getItem(TIMER_CARD) || "60";
     setTimerValue(currentTimer);
+
+    const currentSoStatus = localStorage.getItem(IS_SO_ENABLED);
+    if (currentSoStatus === null) {
+      setCurrentSoStatus(true);
+    } else {
+      setCurrentSoStatus(currentSoStatus === "true" ? true : false);
+    }
+
+    const currentAutoSoStatus = localStorage.getItem(IS_AUTO_SO_ENABLED);
+    if (currentAutoSoStatus === null) {
+      setCurrentAutoSoStatus(false);
+    } else {
+      setCurrentAutoSoStatus(currentAutoSoStatus === "true" ? true : false);
+    }
+
+    const currentAutoSoDelay = localStorage.getItem(AUTO_SO_DELAY);
+    if (currentAutoSoDelay === null) {
+      setCurrentAutoSoDelay(0);
+    } else {
+      setCurrentAutoSoDelay(Number(currentAutoSoDelay));
+    }
   } catch (error: any) {
     console.error(error.message);
     if (error.message === "something went wrong with token") {
-      setErrors([...errors, "Please login/relogin"])
+      setErrors([...errors, "Please login/relogin"]);
     } else {
       localStorage.clear();
     }

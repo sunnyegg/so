@@ -302,6 +302,23 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [chatters]);
 
+  window.addEventListener("beforeunload", (ev) => {
+    ev.preventDefault();
+    fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL}/api/supabase/analytics/insert`,
+      {
+        headers: {
+          token,
+        },
+        body: JSON.stringify({
+          username: mySession.name,
+          type: "close",
+        }),
+        method: "POST",
+      }
+    );
+  });
+
   const setShownChatter = (id: string, shown: boolean) => {
     const chatter = chatters.map((c) => {
       if (c.id === id) {

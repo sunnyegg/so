@@ -78,6 +78,17 @@ export default function LoadData(
     } else {
       setCurrentAutoSoDelay(Number(currentAutoSoDelay));
     }
+
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/supabase/analytics/insert`, {
+      headers: {
+        token: accessToken,
+      },
+      body: JSON.stringify({
+        username: savedMySession.name,
+        type: "open",
+      }),
+      method: "POST",
+    });
   } catch (error: any) {
     console.error(error.message);
     if (error.message === "something went wrong with token") {

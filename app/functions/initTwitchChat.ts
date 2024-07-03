@@ -1,5 +1,10 @@
 import tmi from "tmi.js";
-import { CHATTERS_BLACKLIST, CHATTERS_PRESENT } from "@/const/keys";
+import {
+  AUTO_SO_DELAY,
+  CHATTERS_BLACKLIST,
+  CHATTERS_PRESENT,
+  IS_AUTO_SO_ENABLED,
+} from "@/const/keys";
 
 import SaveChatter from "./saveChatter";
 import { ChattersPresent } from "../types";
@@ -13,7 +18,8 @@ export default function InitTwitchChat(
   errors: any,
   setErrors: any,
   success: any,
-  setSuccess: any
+  setSuccess: any,
+  shoutout: any
 ) {
   if (!token) {
     return;
@@ -50,6 +56,9 @@ export default function InitTwitchChat(
 
       const blacklistedChatters =
         localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
+
+      const autoSOStatus = localStorage.getItem(IS_AUTO_SO_ENABLED);
+      const autoSODelay = localStorage.getItem(AUTO_SO_DELAY);
 
       // skip yg Blacklisted
       // 'nightbot,sunnyeggbot' => ['nightbot','sunnyeggbot']
@@ -109,6 +118,16 @@ export default function InitTwitchChat(
       const { data: followerData } = await resFollower.json();
 
       SaveChatter(tags, userData, followerData, channelData, setChattersTemp);
+
+      if (autoSOStatus !== null && autoSOStatus === "true") {
+        shoutout(
+          tags.username,
+          undefined,
+          undefined,
+          undefined,
+          Number(autoSODelay) * 1000
+        );
+      }
 
       // save yg udah hadir
       if (tags["display-name"] && tags.username) {

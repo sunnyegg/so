@@ -42,6 +42,14 @@ export default function MenuDropdown() {
     }
   };
 
+  const openAutoSOModal = () => {
+    const modal = document.getElementById("auto_so_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
   return (
     <details className="dropdown dropdown-end dropdown-bottom">
       <summary className="btn btn-ghost my-2">
@@ -58,6 +66,10 @@ export default function MenuDropdown() {
         )}
       </summary>
       <div className="menu dropdown-content z-[100] grid w-48 md:w-56 grid-cols-2 md:grid-cols-1 rounded-box bg-base-100 p-2 shadow">
+        <button className="btn m-1 text-xs md:text-base" onClick={() => openAutoSOModal()}>
+          Auto Shoutout
+        </button>
+
         <button className="btn m-1 text-xs md:text-base" onClick={() => openShoutoutModal()}>
           Shoutout
         </button>

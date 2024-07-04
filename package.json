@@ -1,6 +1,6 @@
 {
   "name": "so",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,7 @@
     "format": "prettier --write . --cache"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.44.2",
     "@types/tmi.js": "^1.8.6",
     "animate.css": "^4.1.1",
     "dayjs": "^1.11.10",

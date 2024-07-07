@@ -12,7 +12,6 @@ import { ChattersPresent } from "../types";
 export default function InitTwitchChat(
   token: any,
   session: any,
-  chattersPresent: any,
   setChattersPresent: any,
   setChattersTemp: any,
   errors: any,
@@ -53,6 +52,7 @@ export default function InitTwitchChat(
             localStorage.getItem(`${CHATTERS_PRESENT}-${session.id}`) || ""
           )
         : {};
+      setChattersPresent(savedChattersPerChannel);
 
       const blacklistedChatters =
         localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
@@ -131,7 +131,7 @@ export default function InitTwitchChat(
 
       // save yg udah hadir
       if (tags["display-name"] && tags.username) {
-        chattersPresent[tags["display-name"]] = {
+        savedChattersPerChannel[tags["display-name"]] = {
           display_name: tags["display-name"],
           username: tags.username,
           shoutout: false,
@@ -142,9 +142,9 @@ export default function InitTwitchChat(
 
       localStorage.setItem(
         `${CHATTERS_PRESENT}-${session.id}`,
-        JSON.stringify(chattersPresent)
+        JSON.stringify(savedChattersPerChannel)
       );
-      setChattersPresent(chattersPresent);
+      setChattersPresent(savedChattersPerChannel);
     });
 
     setSuccess([...success, `Connected to: #${session.name}`]);

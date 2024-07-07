@@ -10,6 +10,17 @@ export default function ModalAnnouncement() {
 
         <div className="bg-base-300 rounded p-4">
           <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>0.6.1</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">- fix blacklist username with space not working</p>
+            <p className="text-sm">- fix (hopefully) attendance sometimes disappearing</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
             <h1>0.6.0</h1>
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />

@@ -282,7 +282,7 @@ export default function Home() {
     setChattersBlacklist(blacklistedChatters);
     setStateChattersBlacklist(blacklistedChatters);
 
-    InitTwitchChat(token, session, chattersPresent, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess, shoutout)
+    InitTwitchChat(token, session, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess, shoutout)
   }, [session]);
 
   useEffect(() => {
@@ -367,10 +367,16 @@ export default function Home() {
     }
   };
 
-
-
   const onSaveBlacklist = (blacklist: string) => {
-    localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, blacklist);
+    // nightbot,sunnyegg21
+    // convert ke array
+    // ["nightbot"," sunnyegg21"]
+    const arrBlacklist = blacklist.split(',')
+    // ["nightbot","sunnyegg21"]
+    // nightbot,sunnyegg21
+    const cleanBlacklist = arrBlacklist.map(v => v.trim()).join(',')
+
+    localStorage.setItem(`${CHATTERS_BLACKLIST}-${session.id}`, cleanBlacklist);
     setSuccess([...success, `Blacklist saved`]);
     location.reload();
   };

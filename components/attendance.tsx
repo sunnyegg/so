@@ -4,6 +4,7 @@ import Image from "next/legacy/image";
 import { ChattersPresent } from "@/app/types";
 import DownloadIcon from "@/public/download.svg";
 import { MY_SESSION } from "@/const/keys";
+import { MakeCSV } from "@/utils/csv";
 
 export default function Attendance({
   chattersPresent,
@@ -33,24 +34,11 @@ export default function Attendance({
 
   const exportCSV = async (data: any, filename: any) => {
     setLoading(true)
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/export-csv`,
-      {
-        body: JSON.stringify({
-          data,
-          filename: filename + dayjs().format('YYYY-MM-DD_HH-mm-ss')
-        }),
-        method: 'POST'
-      }
-    );
-
-    const { data: dataFilename } = await res.json()
-    const dataCSV = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/${dataFilename}`)
-    const blob = await dataCSV.blob()
-    const url = window.URL.createObjectURL(blob);
+    const dataCSV = MakeCSV(data)
+    const url = window.URL.createObjectURL(dataCSV);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', dataFilename);
+    link.setAttribute('download', filename + dayjs().format('YYYY-MM-DD_HH-mm-ss'));
     document.body.appendChild(link);
     link.click();
     link?.parentNode?.removeChild(link);

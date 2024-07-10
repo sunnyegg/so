@@ -10,6 +10,18 @@ export default function ModalAnnouncement() {
 
         <div className="bg-base-300 rounded p-4">
           <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>0.7.0</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">- now you can download current attendance data (csv) in <b>Attendance</b> section</p>
+            <p className="text-sm">- fix analytics data</p>
+            <p className="text-sm">- added some links to contact me (can request feature or report error)</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
             <h1>0.6.1</h1>
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />

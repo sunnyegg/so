@@ -529,10 +529,13 @@ export default function Home() {
             Github
           </a>
         </p>
-        <p>or you can DM at <a
+        <p>or you can DM on <a
           href="https://discordapp.com/users/287937297608081409"
           className="link"
-          target="_blank">Discord</a></p>
+          target="_blank">Discord</a> or <a href="https://www.twitch.tv/sunnyegg21"
+            className="link"
+            target="_blank"
+          >Twitch</a></p>
         <p>Made with ❤️‍🩹</p>
         <p className="text-[0.65rem] md:text-xs">App Version: {packageJson.version}</p>
         <br />

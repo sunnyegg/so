@@ -9,6 +9,10 @@ I see a lot of streamers like to shoutout people who come on their stream, to su
 - Shoutout (no shit sherlock)
 - Attendance
 - Manage another channel to shoutout (for mod)
+- Auto Shoutout (can also add delay)
+- Disable Shoutout (for who wants to use Attendance only or enable Auto SO)
+- Blacklist (to exclude users to appear on Shoutout and Attendance)
+- Timer Card (configure how long the Shoutout card to show)
 
 ## Demo
 

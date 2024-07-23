@@ -169,6 +169,8 @@ export default function Home() {
 
       // save yg udah hadir
       if (notifications.length) {
+        let tempChatters: ChattersPresent = {};
+
         notifications.forEach(async (n: any) => {
           const display_name = n.payload.event.user_name;
           const username = n.payload.event.user_login;
@@ -184,6 +186,12 @@ export default function Home() {
               if (
                 arrayBlacklist.find((c) => c === tags["display-name"]?.toLowerCase())
               ) {
+                return;
+              }
+            }
+
+            if (tags["display-name"]) {
+              if (tempChatters[tags["display-name"]]) {
                 return;
               }
             }
@@ -242,7 +250,7 @@ export default function Home() {
 
             // save yg udah hadir
             if (tags["display-name"] && tags.username) {
-              chattersPresent[tags["display-name"]] = {
+              tempChatters[tags["display-name"]] = {
                 display_name: tags["display-name"],
                 username: tags.username,
                 shoutout: false,
@@ -253,9 +261,9 @@ export default function Home() {
 
             localStorage.setItem(
               `${CHATTERS_PRESENT}-${session.id}`,
-              JSON.stringify(chattersPresent)
+              JSON.stringify(tempChatters)
             );
-            setChattersPresent(chattersPresent);
+            setChattersPresent(tempChatters);
           } catch (error: any) {
             setErrors([...errors, error.message])
           }

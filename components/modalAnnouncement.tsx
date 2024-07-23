@@ -10,6 +10,16 @@ export default function ModalAnnouncement() {
 
         <div className="bg-base-300 rounded p-4">
           <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>0.7.1</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">- fix a bug where a chatter showing up multiple times when they are sending a message too quickly</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
             <h1>0.7.0</h1>
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />

@@ -3,16 +3,46 @@
 @tailwind utilities;
 
 body {
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--fallback-b1, oklch(var(--b1))),
-    var(--fallback-b1, oklch(var(--b1))) 13px,
-    var(--fallback-b2, oklch(var(--b2))) 13px,
-    var(--fallback-b2, oklch(var(--b2))) 14px
-  );
-  min-height: 100vh;
+  background: rgb(65, 65, 65);
+  background: linear-gradient(0deg, rgba(65, 65, 65, 1) 0%, rgba(33, 33, 33, 1) 70%);
 }
 
-.collapse[open] > .collapse-content, .collapse-open > .collapse-content, .collapse:focus:not(.collapse-close) > .collapse-content, .collapse:not(.collapse-close) > input[type="checkbox"]:checked ~ .collapse-content, .collapse:not(.collapse-close) > input[type="radio"]:checked ~ .collapse-content {
+.collapse[open]>.collapse-content,
+.collapse-open>.collapse-content,
+.collapse:focus:not(.collapse-close)>.collapse-content,
+.collapse:not(.collapse-close)>input[type="checkbox"]:checked~.collapse-content,
+.collapse:not(.collapse-close)>input[type="radio"]:checked~.collapse-content {
   min-height: 50vh;
 }
+
+/* start fade animation */
+
+.animate-enter {
+  animation: fadein 0.5s;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-leave {
+  animation: fadeout 0.5s;
+}
+
+@keyframes fadeout {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* end fade animation */

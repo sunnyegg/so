@@ -1,15 +1,12 @@
-import type { Metadata } from "next";
+'use client';
+
 import { Inter } from "next/font/google";
 
+import StoreProvider from "@/context/store";
+
 import "./globals.css";
-import "animate.css";
 
 const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Shoutout Tool",
-  description: "Shoutout Tool",
-};
 
 export default function RootLayout({
   children,
@@ -19,8 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <main className="flex flex-col px-4 py-4 lg:px-40">
-          {children}
+        <main className="flex flex-col">
+          <StoreProvider>
+            {children}
+          </StoreProvider>
         </main>
       </body>
     </html >

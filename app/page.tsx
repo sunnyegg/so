@@ -1,31 +1,36 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { useState } from "react";
 
-import { ErrorContext, IErrorContext } from "@/context/error";
-import { ISuccessContext, SuccessContext } from "@/context/success";
+import Image from "next/legacy/image";
+import { Loader2 } from "lucide-react";
 
-import useLogin from "@/hooks/auth/useLogin";
+import useLogin from "@/hooks/auth/use-login";
 
-import Button from "@/components/common/button";
+import { Button } from "@/components/ui/button";
 import TopBar from "@/components/common/topbar";
-import ToastErrorSuccess from "@/components/common/toastErrorSuccess";
+import { useToast } from "@/components/ui/use-toast";
+
+import TwitchLogo from "@/public/twitch.svg";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
-  const { errors, setErrors } = useContext(ErrorContext) as IErrorContext;
-  const { successes, setSuccesses } = useContext(SuccessContext) as ISuccessContext;
+  const { toast } = useToast()
 
   const handleLogin = async () => {
     setIsLoading(true);
     const err = await useLogin();
     if (err) {
-      setErrors([...errors, err.message]);
+      toast({
+        description: err.message,
+        duration: 5000,
+        variant: "destructive",
+      })
     } else {
-      setSuccesses([...successes, "Login Successful!"]);
-      setTimeout(() => {
-        setErrors([...errors, "Error neh"]);
-      }, 1000);
+      toast({
+        description: "Logging in...",
+        duration: 5000,
+      })
     }
     setIsLoading(false);
   }
@@ -33,17 +38,28 @@ export default function Home() {
   return (
     <div>
       <TopBar>
-        <div className="flex flex-row-reverse">
+        <div className="flex flex-row-reverse md:mx-10">
           <Button
             name="button-login"
-            className="bg-purple-700 hover:bg-purple-800"
+            className="bg-slate-400 hover:bg-slate-500 text-slate-700 justify-center"
             onClick={handleLogin}>
-            {isLoading ? "Loading..." : "Login With Twitch"}
+            {!isLoading ? (
+              <>
+                {TwitchLogo && (
+                  <Image src={TwitchLogo}
+                    alt="Twitch Logo"
+                    width={24}
+                    height={24}
+                    className="vertical-align-middle"
+                  />
+                )} <span>Login</span>
+              </>
+            ) : <>
+              <Loader2 className="animate-spin" />
+            </>}
           </Button>
         </div>
       </TopBar>
-
-      <ToastErrorSuccess />
     </div>
   )
 }

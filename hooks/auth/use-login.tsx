@@ -2,7 +2,12 @@ type StateResponse = {
   url: string;
 }
 
-export default async function useLogin(): Promise<Error | void> {
+type LoginResponse = {
+  error: string;
+  data: string;
+}
+
+export default async function useLogin(): Promise<LoginResponse> {
   let url = `${process.env.NEXT_PUBLIC_APP_URL}/auth/state`;
 
   const stateRes = await fetch(url, {
@@ -10,9 +15,15 @@ export default async function useLogin(): Promise<Error | void> {
   })
 
   if (!stateRes.ok) {
-    return new Error('Failed to fetch state');
+    return {
+      error: "Failed to get state",
+      data: "",
+    }
   }
 
   const state = await stateRes.json() as StateResponse;
-  console.log(state.url);
+  return {
+    error: "",
+    data: state.url,
+  }
 }

@@ -1,5 +1,4 @@
-import { ErrorProvider } from "./error";
-import { SuccessProvider } from "./success";
+import { AuthProvider } from "./auth";
 
 export default function StoreProvider({
   children,
@@ -7,10 +6,8 @@ export default function StoreProvider({
   children: React.ReactNode;
 }>) {
   return (
-    <ErrorProvider>
-      <SuccessProvider>
-        {children}
-      </SuccessProvider>
-    </ErrorProvider>
+    <AuthProvider>
+      {children}
+    </AuthProvider>
   );
 }

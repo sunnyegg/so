@@ -63,7 +63,17 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-so-primary-color text-so-primary-text-color;
   }
+}
+
+:root {
+  --so-primary-color: #292929;
+  --so-secondary-color: #464646;
+  --so-primary-text-color: #FAFAFA;
+  --so-secondary-text-color: #A6A6A6;
+  --so-accent-color: #FFE609;
+  --so-neutral-color: #FAFAFA;
 }

@@ -70,7 +70,7 @@ export default function Login() {
   }, [code, scope, state, isLoggedIn]);
 
   return (
-    <div>
+    <div className="mx-4 md:mx-32 my-8">
       <TopBar />
 
       <p>Processing...</p>

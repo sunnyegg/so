@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext } from "react";
+import usePersistState from "@/hooks/common/use-persist-state";
 
 export interface IAuthContext {
   auth: AuthData;
@@ -18,7 +19,7 @@ export type AuthData = {
 const AuthContext = createContext<IAuthContext | null>(null);
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [auth, setAuth] = useState<AuthData>({
+  const [auth, setAuth] = usePersistState("auth", {
     access_token: "",
     refresh_token: "",
     user: {

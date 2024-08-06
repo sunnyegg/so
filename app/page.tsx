@@ -1,88 +1,48 @@
 "use client";
 
-import { useContext, useState } from "react";
+import { Fira_Mono } from "next/font/google";
 
-import Image from "next/legacy/image";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-
-import { AuthContext, IAuthContext } from "@/context/auth";
-
-import useLogin from "@/hooks/auth/use-login";
-
-import { Button } from "@/components/ui/button";
 import TopBar from "@/components/common/topbar";
-import { useToast } from "@/components/ui/use-toast";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import AuthButton from "@/components/auth/button";
+import StoreProvider from "@/context/store";
 
-import TwitchLogo from "@/public/twitch.svg";
+const firaMono = Fira_Mono({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export default function Home() {
-  const router = useRouter();
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { auth } = useContext(AuthContext) as IAuthContext;
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    const { error, data } = await useLogin();
-    if (error !== "") {
-      toast({
-        description: error,
-        duration: 5000,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        description: "Logging in...",
-        duration: 5000,
-      })
-      router.push(data);
-    }
-    setIsLoading(false);
-  }
-
   return (
-    <div>
-      <TopBar>
-        <div className="flex flex-row-reverse md:mx-10">
-          {auth.user.user_name !== "" ? (
-            <Button
-              name="button-logout"
-              className="bg-slate-400 hover:bg-slate-500 text-slate-700 justify-center">
-              <Avatar className="w-8 h-8 mr-2">
-                <AvatarImage src={auth.user.profile_image_url} alt="Avatar" />
-                <AvatarFallback>
-                  {auth.user.user_name.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
+    <StoreProvider>
+      <div className="mx-4 md:mx-32 my-8">
+        <TopBar />
 
-              <span>{auth.user.user_name}</span>
-            </Button>
-          ) : (
-            <Button
-              name="button-login"
-              className="bg-slate-400 hover:bg-slate-500 text-slate-700 justify-center"
-              onClick={handleLogin}>
-              {!isLoading ? (
-                <>
-                  {TwitchLogo && (
-                    <Image src={TwitchLogo}
-                      alt="Twitch Logo"
-                      width={24}
-                      height={24}
-                      className="vertical-align-middle"
-                    />
-                  )} <span>Login</span>
-                </>
-              ) : <>
-                <Loader2 className="animate-spin" />
-              </>}
-            </Button>
-          )}
-        </div>
-      </TopBar>
-    </div>
+        <section className={`mt-16 md:mt-32 text-center ${firaMono.className}`}>
+          <h1 className="text-[0.82rem] md:text-[1.75rem] font-bold">
+            Egg-perience the Sunny Side of Streaming!
+          </h1>
+          <span className="text-[0.5rem] md:text-sm text-so-secondary-text-color">—where every stream is a chance to create something egg-ceptional</span>
+
+          <div className="mt-8 bg-so-secondary-color p-4 rounded-lg mx-auto w-fit">
+            <ul className="text-left text-[0.6rem] md:text-sm">
+              <li>• Automatically shoutout chatters in your stream</li>
+              <li>• Create an attendance for each of your stream</li>
+              <li>...and more!</li>
+            </ul>
+          </div>
+        </section>
+
+        <section className="mt-8 flex items-center justify-center">
+          <AuthButton
+            className="font-bold bg-so-accent-color text-so-primary-color px-4 py-2 rounded-md border-so-accent-color hover:bg-transparent hover:text-so-primary-text-color"
+            variant={"outline"}>
+            Let's Start Cooking
+          </AuthButton>
+        </section>
+
+        <section className="md:hidden absolute bottom-8 left-0 w-full flex items-center justify-center gap-4">
+          <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">SUPPORT</div>
+          <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">ABOUT</div>
+          <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">HOW IT WORKS?</div>
+        </section>
+      </div>
+    </StoreProvider>
   )
 }

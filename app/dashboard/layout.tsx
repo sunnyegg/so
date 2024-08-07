@@ -1,4 +1,11 @@
+'use client'
+
 import StoreProvider from "@/context/store";
+import TopBar from "@/components/common/topbar";
+
+import { Fira_Mono } from "next/font/google";
+
+const firaMono = Fira_Mono({ subsets: ["latin"], weight: ["400", "500", "700",] });
 
 export default function DashboardLayout({
   children,
@@ -6,10 +13,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <StoreProvider>
-      <div className="mx-4 md:mx-32 my-8">
+    <div className={`mx-4 md:mx-32 my-8 ${firaMono.className}`}>
+      <StoreProvider>
+        <TopBar />
+
         {children}
-      </div>
-    </StoreProvider>
+      </StoreProvider>
+    </div>
   )
 }

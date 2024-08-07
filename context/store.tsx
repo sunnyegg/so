@@ -1,4 +1,5 @@
 import { AuthProvider } from "./auth";
+import { ChatterProvider } from "./chatter";
 
 export default function StoreProvider({
   children,
@@ -7,7 +8,9 @@ export default function StoreProvider({
 }>) {
   return (
     <AuthProvider>
-      {children}
+      <ChatterProvider>
+        {children}
+      </ChatterProvider>
     </AuthProvider>
   );
 }

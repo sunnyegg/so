@@ -8,10 +8,11 @@ export interface IChatterContext {
 
 export type ChatterData = {
   shown: boolean;
+  channel: string;
   user_name: string;
   user_login: string;
-  user_profile_image_url: string;
   followers: number;
+  profile_image_url: string;
   last_seen_playing: string;
 }
 

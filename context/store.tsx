@@ -1,5 +1,8 @@
 import { AuthProvider } from "./auth";
 import { ChatterProvider } from "./chatter";
+import { ShoutoutProvider } from "./shoutout";
+import { StreamProvider } from "./stream";
+import { WebsocketProvider } from "./websocket";
 
 export default function StoreProvider({
   children,
@@ -9,7 +12,13 @@ export default function StoreProvider({
   return (
     <AuthProvider>
       <ChatterProvider>
-        {children}
+        <StreamProvider>
+          <ShoutoutProvider>
+            <WebsocketProvider>
+              {children}
+            </WebsocketProvider>
+          </ShoutoutProvider>
+        </StreamProvider>
       </ChatterProvider>
     </AuthProvider>
   );

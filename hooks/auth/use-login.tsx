@@ -1,13 +1,6 @@
-type StateResponse = {
-  url: string;
-}
+import { CommonResponse, StateResponse } from "../types";
 
-type LoginResponse = {
-  error: string;
-  data: string;
-}
-
-export default async function useLogin(): Promise<LoginResponse> {
+export default async function useLogin(): Promise<CommonResponse> {
   let url = `${process.env.NEXT_PUBLIC_APP_URL}/auth/state`;
 
   const stateRes = await fetch(url, {

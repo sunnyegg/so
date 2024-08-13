@@ -1,44 +1,51 @@
 'use client';
 
-import ShoutoutCard from "@/components/dashboard/shoutout/card";
-import { ChatterContext, IChatterContext } from "@/context/chatter";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
+
+import { AuthContext, IAuthContext } from "@/context/auth";
+
+import { useConnectWs } from "@/hooks/ws/use-connect-ws";
+
+import StreamCard from "@/components/dashboard/stream";
+import ShoutoutManager from "@/components/dashboard/shoutout/manager";
+
+import { ChatterData } from "@/context/chatter";
+import { IShoutoutContext, ShoutoutContext } from "@/context/shoutout";
 
 export default function ShoutoutPage() {
-  const { chatters } = useContext(ChatterContext) as IChatterContext;
+  const { auth } = useContext(AuthContext) as IAuthContext;
+  const { addShoutout } = useContext(ShoutoutContext) as IShoutoutContext;
+
+  const { ws, isConnected } = useConnectWs(auth.access_token, auth.user.user_login);
+
+  useEffect(() => {
+    if (isConnected && ws.current) {
+      ws.current.onmessage = (event: any) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "chatter") {
+          const chatter = JSON.parse(data.data) as ChatterData;
+
+          addShoutout({
+            id: "",
+            avatar: chatter.profile_image_url,
+            userName: chatter.user_name,
+            userLogin: chatter.user_login,
+            followers: chatter.followers,
+            lastSeenPlaying: chatter.last_seen_playing,
+            channel: chatter.channel,
+          });
+        }
+      }
+    }
+  }, [isConnected])
 
   return (
     <div className="mt-8">
-      <div className="bg-so-secondary-color rounded-md p-4 flex flex-col">
-        <div className="text-lg md:text-[1.5rem]">Ongoing Stream</div>
-        <div className="flex gap-2 text-[0.8rem] md:text-sm text-so-secondary-text-color">
-          <span>Title:</span>
-          <span className="text-so-primary-text-color">ngodinggg</span>
-        </div>
-        <div className="flex gap-2 text-[0.8rem] md:text-sm text-so-secondary-text-color">
-          <span>Game:</span>
-          <span className="text-so-primary-text-color">Software and Game Development</span>
-        </div>
-        <div className="flex gap-2 text-[0.8rem] md:text-sm text-so-secondary-text-color">
-          <span>Started At:</span>
-          <span className="text-so-primary-text-color">2023-01-01, 14:00:00</span>
-        </div>
-      </div>
+      <StreamCard />
 
       <div className="border-t-[1px] mt-8 border-so-secondary-color"></div>
 
-      {chatters.map((item, index) => (
-        <ShoutoutCard
-          key={index}
-          id={`shoutout_card_${index}`}
-          avatar={item.user_profile_image_url}
-          userName={item.user_name}
-          userLogin={item.user_login}
-          followers={item.followers}
-          lastSeenPlaying={item.last_seen_playing}
-          shown={item.shown}
-        />
-      ))}
+      <ShoutoutManager />
     </div>
   )
 }

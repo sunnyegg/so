@@ -37,7 +37,7 @@ export default function Home() {
           </AuthButton>
         </section>
 
-        <section className="md:hidden absolute bottom-8 left-0 w-full flex items-center justify-center gap-4">
+        <section className="md:hidden absolute bottom-8 left-0 w-full flex gap-4 text-[0.8rem] justify-center">
           <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">SUPPORT</div>
           <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">ABOUT</div>
           <div className="p-2 hover:bg-so-secondary-color hover:rounded-md transition-all">HOW IT WORKS?</div>

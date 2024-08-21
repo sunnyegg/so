@@ -29,7 +29,7 @@ export default function InitTwitchChat(
   }
 
   try {
-    let tempChatters: ChattersPresent = {};
+    let tempChatters: any  = {};
 
     const client = new tmi.Client({
       options: { debug: false, skipUpdatingEmotesets: true },
@@ -76,6 +76,8 @@ export default function InitTwitchChat(
       if (tags["display-name"]) {
         if (tempChatters[tags["display-name"]]) {
           return;
+        } else {
+          tempChatters[tags["display-name"]] = true
         }
       }
 
@@ -139,7 +141,7 @@ export default function InitTwitchChat(
 
       // save yg udah hadir
       if (tags["display-name"] && tags.username) {
-        tempChatters[tags["display-name"]] = {
+        savedChattersPerChannel[tags["display-name"]] = {
           display_name: tags["display-name"],
           username: tags.username,
           shoutout: false,
@@ -150,9 +152,9 @@ export default function InitTwitchChat(
 
       localStorage.setItem(
         `${CHATTERS_PRESENT}-${session.id}`,
-        JSON.stringify(tempChatters)
+        JSON.stringify(savedChattersPerChannel)
       );
-      setChattersPresent(tempChatters);
+      setChattersPresent(savedChattersPerChannel);
     });
 
     setSuccess([...success, `Connected to: #${session.name}`]);

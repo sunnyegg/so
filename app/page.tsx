@@ -169,7 +169,7 @@ export default function Home() {
 
       // save yg udah hadir
       if (notifications.length) {
-        let tempChatters: ChattersPresent = {};
+        let tempChatters: any = {};
 
         notifications.forEach(async (n: any) => {
           const display_name = n.payload.event.user_name;
@@ -193,6 +193,8 @@ export default function Home() {
             if (tags["display-name"]) {
               if (tempChatters[tags["display-name"]]) {
                 return;
+              } else {
+                tempChatters[tags["display-name"]] = true
               }
             }
 
@@ -250,7 +252,7 @@ export default function Home() {
 
             // save yg udah hadir
             if (tags["display-name"] && tags.username) {
-              tempChatters[tags["display-name"]] = {
+              savedChattersPerChannel[tags["display-name"]] = {
                 display_name: tags["display-name"],
                 username: tags.username,
                 shoutout: false,
@@ -261,9 +263,9 @@ export default function Home() {
 
             localStorage.setItem(
               `${CHATTERS_PRESENT}-${session.id}`,
-              JSON.stringify(tempChatters)
+              JSON.stringify(savedChattersPerChannel)
             );
-            setChattersPresent(tempChatters);
+            setChattersPresent(savedChattersPerChannel);
           } catch (error: any) {
             setErrors([...errors, error.message])
           }

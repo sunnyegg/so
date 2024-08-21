@@ -18,6 +18,14 @@ export default function MenuDropdown() {
     }
   };
 
+  const openBlacklistWordsModal = () => {
+    const modal = document.getElementById("blacklist_words_modal");
+    if (modal) {
+      // @ts-ignore
+      modal.showModal();
+    }
+  };
+
   const openTimerCardModal = () => {
     const modal = document.getElementById("timer_card_modal");
     if (modal) {
@@ -78,6 +86,12 @@ export default function MenuDropdown() {
           onClick={() => openBlacklistModal()}
         >
           Blacklist
+        </button>
+        <button
+          className="btn m-1 text-xs md:text-base"
+          onClick={() => openBlacklistWordsModal()}
+        >
+          Blacklist Words
         </button>
         <button
           className="btn m-1 text-xs md:text-base"

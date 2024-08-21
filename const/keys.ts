@@ -11,3 +11,4 @@ export const IS_SO_ENABLED = "isSOEnabled";
 export const IS_AUTO_SO_ENABLED = "isAutoSOEnabled";
 export const AUTO_SO_DELAY = "autoSODelay";
 export const TITLE_STREAM = "titleStream";
+export const BLACKLIST_WORDS = "blacklistWords";

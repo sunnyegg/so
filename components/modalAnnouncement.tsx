@@ -10,6 +10,26 @@ export default function ModalAnnouncement() {
 
         <div className="bg-base-300 rounded p-4">
           <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>IMPORTANT NOTICE</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">Right now, I am working on splitting the app into proper backend and frontend. So, I will not be able to update this app (Shoutout Tool) that frequently, except for bugs fixing or urgent feature. In the future, this app will be renamed and will be using new URL / domain. Thank you for using this app:)</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
+            <h1>0.8.0</h1>
+
+            <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
+
+            <p className="text-sm">- add blacklist words: input words that you want to blacklist (ex: cheap viewers,buy followers)</p>
+          </div>
+        </div>
+
+        <div className="bg-base-300 rounded p-4">
+          <div className="mb-4 space-y-2 text-xs md:text-base">
             <h1>0.7.1</h1>
 
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />

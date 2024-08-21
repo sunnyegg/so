@@ -1,6 +1,7 @@
 import tmi from "tmi.js";
 import {
   AUTO_SO_DELAY,
+  BLACKLIST_WORDS,
   CHATTERS_BLACKLIST,
   CHATTERS_PRESENT,
   IS_AUTO_SO_ENABLED,
@@ -29,7 +30,7 @@ export default function InitTwitchChat(
   }
 
   try {
-    let tempChatters: any  = {};
+    let tempChatters: any = {};
 
     const client = new tmi.Client({
       options: { debug: false, skipUpdatingEmotesets: true },
@@ -59,6 +60,9 @@ export default function InitTwitchChat(
       const blacklistedChatters =
         localStorage.getItem(`${CHATTERS_BLACKLIST}-${session.id}`) || "";
 
+      const blacklistedWords =
+        localStorage.getItem(`${BLACKLIST_WORDS}-${session.id}`) || "";
+
       const autoSOStatus = localStorage.getItem(IS_AUTO_SO_ENABLED);
       const autoSODelay = localStorage.getItem(AUTO_SO_DELAY);
 
@@ -73,11 +77,24 @@ export default function InitTwitchChat(
         }
       }
 
+      // skip yg Blacklisted Words
+      if (blacklistedWords.length > 0) {
+        const arrayBlacklist = blacklistedWords.split(",");
+
+        // word in 'message' may contain more than one word
+        // compare 'message' with each word in arrayBlacklist
+        if (
+          arrayBlacklist.some((word) => message.toLowerCase().includes(word))
+        ) {
+          return;
+        }
+      }
+
       if (tags["display-name"]) {
         if (tempChatters[tags["display-name"]]) {
           return;
         } else {
-          tempChatters[tags["display-name"]] = true
+          tempChatters[tags["display-name"]] = true;
         }
       }
 

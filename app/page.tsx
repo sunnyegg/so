@@ -17,6 +17,7 @@ import ModalTimerCard from "@/components/modalTimerCard";
 import {
   APP_VERSION,
   AUTO_SO_DELAY,
+  BLACKLIST_WORDS,
   CHATTERS_BLACKLIST,
   CHATTERS_PRESENT,
   IS_ANNOUNCEMENT_READ,
@@ -33,6 +34,8 @@ import SaveChatter from "./functions/saveChatter";
 import ModalAnnouncement from "@/components/modalAnnouncement";
 import MenuDropdown from "@/components/menuDropdown";
 import ModalAutoShoutout from "@/components/modalAutoShoutout";
+import ModalBlacklistWords from "@/components/modalBlacklistWords";
+
 import { Delay } from "@/utils/delay";
 
 export default function Home() {
@@ -63,6 +66,9 @@ export default function Home() {
   const [currentSoStatus, setCurrentSoStatus] = useState<boolean>(true);
   const [currentAutoSoStatus, setCurrentAutoSoStatus] = useState<boolean>(false);
   const [currentAutoSoDelay, setCurrentAutoSoDelay] = useState<number>(0);
+  const [blacklistWords, setBlacklistWords] = useState<string>("");
+  const [stateBlacklistWords, setStateBlacklistWords] =
+    useState<string>(blacklistWords);
 
   const [isConnectedWebsocket, setIsConnectedWebsocket] = useState<boolean>(false);
   const [messageHistory, setMessageHistory] = useState<any[]>([]);
@@ -78,7 +84,7 @@ export default function Home() {
     if (annBool !== "true") {
       setTimeout(() => {
         // @ts-ignore
-        if (refButton) refButton.current.click()
+        if (refButton) refButton.current?.click()
         localStorage.setItem(IS_ANNOUNCEMENT_READ, "true")
       }, 1000);
     }
@@ -292,6 +298,11 @@ export default function Home() {
     setChattersBlacklist(blacklistedChatters);
     setStateChattersBlacklist(blacklistedChatters);
 
+    const blacklistedWords =
+      localStorage.getItem(`${BLACKLIST_WORDS}-${session.id}`) || "";
+    setBlacklistWords(blacklistedChatters);
+    setStateBlacklistWords(blacklistedWords);
+
     InitTwitchChat(token, session, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess, shoutout)
   }, [session]);
 
@@ -397,6 +408,23 @@ export default function Home() {
 
   const onChangeBlacklist = (e: any) => {
     setStateChattersBlacklist(e.target.value);
+  };
+
+  const onSaveBlacklistWords = (blacklist: string) => {
+    const arrBlacklist = blacklist.split(',')
+    const cleanBlacklist = arrBlacklist.map(v => v.trim()).join(',')
+
+    localStorage.setItem(`${BLACKLIST_WORDS}-${session.id}`, cleanBlacklist);
+    setSuccess([...success, `Blacklist words saved`]);
+    location.reload();
+  };
+
+  const onCloseBlacklistWords = () => {
+    setStateBlacklistWords(blacklistWords);
+  };
+
+  const onChangeBlacklistWords = (e: any) => {
+    setStateBlacklistWords(e.target.value);
   };
 
   const openModalChannel = () => {
@@ -519,6 +547,13 @@ export default function Home() {
           stateChattersBlacklist={stateChattersBlacklist}
           onChangeBlacklist={onChangeBlacklist}
           onCloseBlacklist={onCloseBlacklist}
+        />
+
+        <ModalBlacklistWords
+          onSaveBlacklist={onSaveBlacklistWords}
+          stateBlacklistWords={stateBlacklistWords}
+          onChangeBlacklist={onChangeBlacklistWords}
+          onCloseBlacklist={onCloseBlacklistWords}
         />
       </section>
 

@@ -300,7 +300,7 @@ export default function Home() {
 
     const blacklistedWords =
       localStorage.getItem(`${BLACKLIST_WORDS}-${session.id}`) || "";
-    setBlacklistWords(blacklistedChatters);
+    setBlacklistWords(blacklistedWords);
     setStateBlacklistWords(blacklistedWords);
 
     InitTwitchChat(token, session, setChattersPresent, setChattersTemp, errors, setErrors, success, setSuccess, shoutout)

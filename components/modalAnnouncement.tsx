@@ -25,6 +25,8 @@ export default function ModalAnnouncement() {
             <hr className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700" />
 
             <p className="text-sm">- add blacklist words: input words that you want to blacklist (ex: cheap viewers,buy followers)</p>
+            <p className="text-sm">- user that send message with blacklist words will not be shown in the <b>Shoutout</b> and <b>Attendance</b> section afterwards.</p>
+            <p className="text-sm">- I suggest blacklist words like: views,viewers,followers,buy</p>
           </div>
         </div>
 

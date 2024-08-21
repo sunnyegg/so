@@ -86,6 +86,7 @@ export default function InitTwitchChat(
         if (
           arrayBlacklist.some((word) => message.toLowerCase().includes(word))
         ) {
+          if (tags["display-name"]) tempChatters[tags["display-name"]] = true;
           return;
         }
       }

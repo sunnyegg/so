@@ -1,23 +1,41 @@
 import dayjs from "dayjs";
+import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
 
 import { IStreamContext, StreamContext } from "@/context/stream";
-import { AuthContext, IAuthContext } from "@/context/auth";
+import { AuthContext, AuthData, IAuthContext } from "@/context/auth";
 import { ChannelContext, IChannelContext } from "@/context/channel";
+
 import { toast } from "../ui/use-toast";
 
+import useRefreshToken from "@/hooks/auth/use-refresh-token";
+import useLogout from "@/hooks/auth/use-logout";
+
 export default function StreamCard() {
-  const { auth } = useContext(AuthContext) as IAuthContext;
+  const { auth, setAuth } = useContext(AuthContext) as IAuthContext;
   const { channel } = useContext(ChannelContext) as IChannelContext;
   const { stream, setStream, getStream, getLiveInfo } = useContext(StreamContext) as IStreamContext;
 
   const [retries, setRetries] = useState(0);
 
-  const getLive = async (channel: string) => {
-    const { error, data } = await getLiveInfo(channel);
+  const router = useRouter();
+
+  const getLive = async (authData: AuthData, channel: string) => {
+    const { error, data } = await getLiveInfo(authData.access_token, channel);
     if (error) {
       if (error === "stream not found") {
-        return await getOffline(channel);
+        return await getOffline(authData, channel);
+      }
+
+      if (error === "expired token") {
+        const { error, data } = await useRefreshToken(authData.refresh_token);
+        if (error) {
+          useLogout(authData.access_token);
+          return router.push("/");
+        }
+
+        setAuth({ ...auth, access_token: data });
+        return;
       }
 
       return toast({
@@ -25,15 +43,26 @@ export default function StreamCard() {
         description: error,
         duration: 5000,
         variant: "destructive",
-      })
+      });
     }
 
     setStream({ ...data, is_live: true, channel, id: stream.id });
   }
 
-  const getOffline = async (channel: string) => {
-    const { error, data } = await getStream(channel);
+  const getOffline = async (authData: AuthData, channel: string) => {
+    const { error, data } = await getStream(authData.access_token, channel);
     if (error) {
+      if (error === "expired token") {
+        const { error, data } = await useRefreshToken(authData.refresh_token);
+        if (error) {
+          useLogout(authData.access_token);
+          return router.push("/");
+        }
+
+        setAuth({ ...auth, access_token: data });
+        return;
+      }
+
       return toast({
         title: "Error Getting Stream Info",
         description: error,
@@ -51,13 +80,13 @@ export default function StreamCard() {
     if (retries >= 1) return;
 
     if (stream.is_live) {
-      getLive(channel);
+      getLive(auth, channel);
       setRetries(prev => prev + 1);
       return;
     }
 
     if (!stream.is_live) {
-      getOffline(channel);
+      getOffline(auth, channel);
       setRetries(prev => prev + 1);
     }
   }, [auth, channel, stream, retries])

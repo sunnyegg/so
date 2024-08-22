@@ -28,7 +28,7 @@ export default function TopBar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    useLogout(auth.access_token);
+    useLogout(auth.refresh_token);
     browserStorage.clearAll();
     router.push("/");
   }

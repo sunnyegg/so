@@ -1,6 +1,7 @@
 'use client';
 
 import { useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { AuthContext, IAuthContext } from "@/context/auth";
 
@@ -26,6 +27,8 @@ export default function ShoutoutPage() {
   const [open, setOpen] = useState(false);
 
   const { ws, isConnected } = useConnectWs(auth.access_token, auth.user.user_login, channel, stream.id);
+
+  const router = useRouter();
 
   useEffect(() => {
     if (isConnected && ws.current) {
@@ -68,7 +71,7 @@ export default function ShoutoutPage() {
         </div>
       )}
 
-      <LiveDialog open={open} setOpen={setOpen} />
+      <LiveDialog open={open} setOpen={setOpen} router={router} />
     </div>
   )
 }

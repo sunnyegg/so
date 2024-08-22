@@ -6,7 +6,6 @@ import usePersistState from "@/hooks/common/use-persist-state";
 
 import { AUTH } from "./types";
 
-import useLogout from "@/hooks/auth/use-logout";
 import useRefreshToken from "@/hooks/auth/use-refresh-token";
 
 export interface IAuthContext {

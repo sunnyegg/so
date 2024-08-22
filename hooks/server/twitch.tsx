@@ -7,6 +7,12 @@ export const getChannelInfo = async (token: string, userLogin: string): Promise<
     data: {
       game_name: "",
       title: "",
+      followers: 0,
+      user: {
+        login: "",
+        display_name: "",
+        profile_image_url: "",
+      },
     },
   }
 

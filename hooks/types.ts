@@ -10,6 +10,8 @@ export type StateResponse = {
 export type ChannelInfoResponseData = {
   game_name: string;
   title: string;
+  followers: number;
+  user: UserInfoResponseData;
 };
 
 export type ChannelInfoResponse = {
@@ -27,4 +29,24 @@ export type StreamInfoResponseData = {
 export type StreamInfoResponse = {
   error: string;
   data: StreamInfoResponseData;
+};
+
+export type GetAttendanceResponseData = {
+  title: string;
+  game_name: string;
+  started_at: string;
+  username: string;
+  is_shouted: boolean;
+  present_at: string;
+};
+
+export type GetAttendanceResponse = {
+  error: string;
+  data: GetAttendanceResponseData[];
+};
+
+export type UserInfoResponseData = {
+  login: string;
+  display_name: string;
+  profile_image_url: string;
 };

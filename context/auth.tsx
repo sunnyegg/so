@@ -41,16 +41,8 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshAuth = async () => {
     if (auth.access_token !== "" && auth.refresh_token !== "") {
-      const { error, data } = await useRefreshToken(auth.refresh_token);
-      if (error === "expired token") {
-        useLogout(auth.refresh_token);
-        browserStorage.clearAll();
-        router.push("/");
-        return "";
-      }
-
-      if (error === "unauthorized") {
-        browserStorage.clearAll();
+      const { error, data } = await useRefreshToken(auth.access_token, auth.refresh_token);
+      if (error) {
         router.push("/");
         return "";
       }

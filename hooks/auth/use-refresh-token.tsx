@@ -1,7 +1,13 @@
 import { CommonResponse } from "../types";
+import useLogout from "./use-logout";
+import browserStorage from 'store'
 
-export default async function useRefreshToken(refreshToken: string): Promise<CommonResponse> {
+export default async function useRefreshToken(token: string, refreshToken: string): Promise<CommonResponse> {
   let url = `${process.env.NEXT_PUBLIC_APP_URL}/auth/refresh`;
+  let output: CommonResponse = {
+    error: "",
+    data: "",
+  }
 
   const res = await fetch(url, {
     method: 'POST',
@@ -12,15 +18,15 @@ export default async function useRefreshToken(refreshToken: string): Promise<Com
 
   if (!res.ok) {
     const { error } = await res.json()
-    return {
-      error: error,
-      data: "",
-    }
+
+    useLogout(token);
+    browserStorage.clearAll()
+
+    output.error = error;
+    return output
   }
 
   const data = await res.json() as string;
-  return {
-    error: "",
-    data: data,
-  };
+  output.data = data;
+  return output
 }

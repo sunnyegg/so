@@ -18,7 +18,8 @@ export const getChannelInfo = async (token: string, userLogin: string): Promise<
   })
 
   if (!stateRes.ok) {
-    output.error = "Failed to get channel info";
+    const { error } = await stateRes.json()
+    output.error = error
     return output
   }
 
@@ -33,6 +34,7 @@ export const getStreamInfo = async (token: string, userLogin: string): Promise<S
   let output: StreamInfoResponse = {
     error: "",
     data: {
+      id: 0,
       game_name: "",
       title: "",
       started_at: "",
@@ -47,11 +49,8 @@ export const getStreamInfo = async (token: string, userLogin: string): Promise<S
   })
 
   if (!stateRes.ok) {
-    if (stateRes.status === 404) {
-      output.error = "stream not found";
-      return output
-    }
-    output.error = "Failed to get stream info";
+    const { error } = await stateRes.json()
+    output.error = error;
     return output
   }
 
@@ -61,8 +60,12 @@ export const getStreamInfo = async (token: string, userLogin: string): Promise<S
   return output
 };
 
-export const connectChat = async (token: string, userLogin: string, channel: string, streamId?: number): Promise<CommonResponse> => {
+export const connectChat = async (token: string, userLogin: string, channel: string, streamId: number): Promise<CommonResponse> => {
   let url = `${process.env.NEXT_PUBLIC_APP_URL}/twitch/chat/connect`;
+  let output: CommonResponse = {
+    error: "",
+    data: ""
+  }
 
   const stateRes = await fetch(url, {
     method: 'POST',
@@ -72,21 +75,18 @@ export const connectChat = async (token: string, userLogin: string, channel: str
     body: JSON.stringify({
       user_login: userLogin,
       channel: channel,
-      stream_id: "1", // TODO: get stream id
+      stream_id: streamId?.toString() || "",
     }),
   })
 
   if (!stateRes.ok) {
-    return {
-      error: "Failed to connect to chat",
-      data: ""
-    };
+    const { error } = await stateRes.json()
+    output.error = error;
+    return output
   }
 
-  return {
-    error: "",
-    data: "Successfully connected to chat"
-  };
+  output.data = "Successfully connected to chat";
+  return output
 }
 
 export const sendMessage = async (token: string, channel: string, message: string): Promise<CommonResponse> => {
@@ -108,14 +108,13 @@ export const sendMessage = async (token: string, channel: string, message: strin
   })
 
   if (!stateRes.ok) {
-    output.error = "Failed to send message";
+    const { error } = await stateRes.json()
+    output.error = error;
     return output
   }
 
-  return {
-    error: "",
-    data: "Successfully sent message"
-  }
+  output.data = "Successfully sent message";
+  return output
 }
 
 export const sendShoutout = async (token: string, fromID: string, toID: string, moderatorID: string): Promise<CommonResponse> => {
@@ -138,12 +137,11 @@ export const sendShoutout = async (token: string, fromID: string, toID: string, 
   })
 
   if (!stateRes.ok) {
-    output.error = "Failed to send shoutout";
+    const { error } = await stateRes.json()
+    output.error = error;
     return output
   }
 
-  return {
-    error: "",
-    data: "Successfully sent shoutout"
-  }
+  output.data = "Successfully sent shoutout";
+  return output
 }

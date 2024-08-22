@@ -1,15 +1,23 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "react";
 
 import usePersistState from "@/hooks/common/use-persist-state";
 
+import { createStreamInfo } from "@/hooks/server/stream";
+import { ChannelInfoResponse, StreamInfoResponse } from "@/hooks/types";
 import { getChannelInfo, getStreamInfo } from "@/hooks/server/twitch";
+import { AUTH, STREAM } from "./types";
+import useRefreshToken from "@/hooks/auth/use-refresh-token";
 
 export interface IStreamContext {
   stream: StreamData;
   setStream: (stream: StreamData) => void;
+  createStream: (stream: StreamData) => Promise<StreamInfoResponse>;
+  getStream: (channel: string) => Promise<ChannelInfoResponse>;
+  getLiveInfo: (channel: string) => Promise<StreamInfoResponse>;
 }
 
 export type StreamData = {
+  id: number;
   title: string;
   channel: string;
   is_live: boolean;
@@ -20,39 +28,67 @@ export type StreamData = {
 const StreamContext = createContext<IStreamContext | null>(null);
 
 const StreamProvider = ({ children }: { children: React.ReactNode }) => {
-  const [stream, setStream] = usePersistState("stream", {});
-  const [auth, _] = usePersistState("auth", {});
-  const [numberOfRetries, setNumberOfRetries] = useState(0);
+  const [stream, setStream] = usePersistState(STREAM, {});
+  const [auth, setAuth] = usePersistState(AUTH, {});
 
-  const fetchStream = async (token: string, userLogin: string) => {
-    const { error, data } = await getStreamInfo(token, userLogin);
-    if (error === "stream not found") {
-      const ch = await getChannelInfo(token, userLogin);
-      if (ch.error === "") {
-        setStream({ ...ch.data, is_live: false, channel: userLogin });
+  const getStream = async (channel: string): Promise<ChannelInfoResponse> => {
+    const res = await getChannelInfo(auth.access_token, channel);
+    if (res.error) {
+      if (res.error === "expired token") {
+        const { error, data } = await useRefreshToken(auth.access_token, auth.refresh_token);
+        if (error) {
+          res.error = error;
+          return res;
+        }
+        setAuth({ ...auth, access_token: data });
+        return getStream(channel);
       }
     }
 
-    if (error === "") {
-      setStream({ ...data, is_live: true, channel: userLogin });
-    }
+    return res;
   }
 
-  useEffect(() => {
-    if (numberOfRetries >= 1) return;
-
-    const ch = stream.channel || auth?.user?.user_login;
-
-    if (ch && !stream.is_live) {
-      fetchStream(auth.access_token, ch)
-      setNumberOfRetries(numberOfRetries + 1);
+  const getLiveInfo = async (channel: string): Promise<StreamInfoResponse> => {
+    const res = await getStreamInfo(auth.access_token, channel);
+    if (res.error) {
+      if (res.error === "expired token") {
+        const { error, data } = await useRefreshToken(auth.access_token, auth.refresh_token);
+        if (error) {
+          res.error = error;
+          return res;
+        }
+        setAuth({ ...auth, access_token: data });
+        return getLiveInfo(channel);
+      }
     }
-  }, [auth, stream, numberOfRetries])
+
+    return res;
+  }
+
+  const createStream = async (stream: StreamData): Promise<StreamInfoResponse> => {
+    const res = await createStreamInfo(auth.access_token, stream);
+    if (res.error) {
+      if (res.error === "expired token") {
+        const { error, data } = await useRefreshToken(auth.access_token, auth.refresh_token);
+        if (error) {
+          res.error = error;
+          return res;
+        }
+        setAuth({ ...auth, access_token: data });
+        return createStream(stream);
+      }
+    }
+
+    return res;
+  }
 
   return (
     <StreamContext.Provider value={{
       stream: stream,
       setStream: setStream,
+      createStream: createStream,
+      getStream: getStream,
+      getLiveInfo: getLiveInfo,
     }}>
       {children}
     </StreamContext.Provider>

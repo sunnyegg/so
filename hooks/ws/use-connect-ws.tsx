@@ -4,7 +4,7 @@ import { IWebsocketContext, WebsocketContext } from "@/context/websocket";
 
 import { connectChat } from "../server/twitch";
 
-export const useConnectWs = (token: string, userLogin: string) => {
+export const useConnectWs = (token: string, userLogin: string, channel: string, streamId: number) => {
   const ws = useRef<WebSocket | null>(null);
   const { websocket, setWebsocket } = useContext(WebsocketContext) as IWebsocketContext;
 
@@ -12,6 +12,8 @@ export const useConnectWs = (token: string, userLogin: string) => {
   const [numberOfRetries, setNumberOfRetries] = useState(0);
 
   useEffect(() => {
+    if (!streamId) return;
+
     if (websocket) {
       ws.current = websocket;
       setIsConnected(true);
@@ -27,8 +29,7 @@ export const useConnectWs = (token: string, userLogin: string) => {
 
       const wsconn = new WebSocket(process.env.NEXT_PUBLIC_WS_URL + `/${userLogin}` || "");
       wsconn.onopen = async () => {
-        const ch = "sunnyegg21"
-        await connectChat(token, userLogin, ch)
+        await connectChat(token, userLogin, channel, streamId)
         setIsConnected(true);
       };
       wsconn.onclose = () => {
@@ -39,7 +40,7 @@ export const useConnectWs = (token: string, userLogin: string) => {
       ws.current = wsconn;
       setWebsocket(wsconn)
     }
-  }, [websocket, userLogin, isConnected, numberOfRetries]);
+  }, [websocket, userLogin, isConnected, numberOfRetries, channel, streamId]);
 
   return {
     ws,

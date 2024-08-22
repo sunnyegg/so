@@ -6,16 +6,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import TopBar from "@/components/common/topbar";
 import { AuthContext, IAuthContext } from "@/context/auth";
 import { useToast } from "@/components/ui/use-toast";
+import { ChannelContext, IChannelContext } from "@/context/channel";
 
 export default function Login() {
   const { setAuth } = useContext(AuthContext) as IAuthContext;
+  const { setChannel } = useContext(ChannelContext) as IChannelContext;
 
   const { toast } = useToast()
   const router = useRouter();
   const searchParams = useSearchParams();
-  const code = searchParams.get("code");
-  const scope = searchParams.get("scope");
-  const state = searchParams.get("state");
+  const code = searchParams && searchParams.get("code");
+  const scope = searchParams && searchParams.get("scope");
+  const state = searchParams && searchParams.get("state");
 
   let isLoggedIn = false;
 
@@ -56,13 +58,15 @@ export default function Login() {
         },
       });
 
+      setChannel(data.user.user_login);
+
       toast({
         description: "Successfully logged in",
         duration: 1000,
       })
 
       setTimeout(() => {
-        router.push("/")
+        router.push("/dashboard/shoutout")
       }, 1000);;
     }
 

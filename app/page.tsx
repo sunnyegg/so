@@ -31,8 +31,8 @@ export default function Home() {
 
         <section className="mt-8 flex items-center justify-center">
           <AuthButton
-            className="font-bold bg-so-accent-color text-so-primary-color px-4 py-2 rounded-md border-so-accent-color hover:bg-transparent hover:text-so-primary-text-color"
-            variant={"outline"}>
+            className="font-bold px-4 py-2"
+            variant="streamegg-outline">
             Let's Start Cooking
           </AuthButton>
         </section>

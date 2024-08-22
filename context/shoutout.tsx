@@ -1,6 +1,8 @@
 import { createContext, useCallback } from "react";
 import usePersistState from "@/hooks/common/use-persist-state";
 
+import { SHOUTOUT } from "./types";
+
 export interface IShoutoutContext {
   shoutouts: ShoutoutData[];
   setShoutouts: (shoutouts: ShoutoutData[]) => void;
@@ -21,7 +23,7 @@ export type ShoutoutData = {
 const ShoutoutContext = createContext<IShoutoutContext | null>(null);
 
 const ShoutoutProvider = ({ children }: { children: React.ReactNode }) => {
-  const [shoutouts, setShoutouts] = usePersistState("shoutouts", []);
+  const [shoutouts, setShoutouts] = usePersistState(SHOUTOUT, []);
 
   const addShoutout = useCallback((shoutout: ShoutoutData) => {
     const id = Date.now().toString();

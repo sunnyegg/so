@@ -18,6 +18,7 @@ export type ChannelInfoResponse = {
 };
 
 export type StreamInfoResponseData = {
+  id: number;
   game_name: string;
   title: string;
   started_at: string;

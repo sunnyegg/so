@@ -8,7 +8,7 @@ import { useToast } from "../ui/use-toast";
 import useLogin from "@/hooks/auth/use-login";
 import { AuthContext, IAuthContext } from "@/context/auth";
 
-type AuthButtonVariant = "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | null | undefined;
+type AuthButtonVariant = "outline" | "link" | "default" | "destructive" | "secondary" | "ghost" | "streamegg" | "streamegg-outline" | null | undefined;
 
 export default function AuthButton({ children, className, variant }: Readonly<{ children: React.ReactNode, className?: string, variant?: AuthButtonVariant }>) {
   const { auth } = useContext(AuthContext) as IAuthContext;

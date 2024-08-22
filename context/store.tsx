@@ -1,4 +1,5 @@
 import { AuthProvider } from "./auth";
+import { ChannelProvider } from "./channel";
 import { ChatterProvider } from "./chatter";
 import { ShoutoutProvider } from "./shoutout";
 import { StreamProvider } from "./stream";
@@ -11,15 +12,17 @@ export default function StoreProvider({
 }>) {
   return (
     <AuthProvider>
-      <ChatterProvider>
-        <StreamProvider>
-          <ShoutoutProvider>
-            <WebsocketProvider>
-              {children}
-            </WebsocketProvider>
-          </ShoutoutProvider>
-        </StreamProvider>
-      </ChatterProvider>
+      <ChannelProvider>
+        <ChatterProvider>
+          <StreamProvider>
+            <ShoutoutProvider>
+              <WebsocketProvider>
+                {children}
+              </WebsocketProvider>
+            </ShoutoutProvider>
+          </StreamProvider>
+        </ChatterProvider>
+      </ChannelProvider>
     </AuthProvider>
   );
 }

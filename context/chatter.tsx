@@ -1,5 +1,6 @@
 import { createContext } from "react";
 import usePersistState from "@/hooks/common/use-persist-state";
+import { CHATTER } from "./types";
 
 export interface IChatterContext {
   chatters: ChatterData[];
@@ -19,7 +20,7 @@ export type ChatterData = {
 const ChatterContext = createContext<IChatterContext | null>(null);
 
 const ChatterProvider = ({ children }: { children: React.ReactNode }) => {
-  const [chatters, setChatters] = usePersistState("chatters", []);
+  const [chatters, setChatters] = usePersistState(CHATTER, []);
 
   return (
     <ChatterContext.Provider value={{

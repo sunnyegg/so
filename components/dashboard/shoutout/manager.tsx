@@ -16,6 +16,8 @@ export default function ShoutoutManager() {
           removeShoutout={removeShoutout}
         />
       ))}
+
+      {shoutouts.length === 0 && <div className="mt-8 text-center animate-fade-in">Waiting for someone to chat...</div>}
     </div>
   )
 }

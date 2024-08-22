@@ -1,9 +1,18 @@
 import { createContext } from "react";
+import browserStorage from 'store';
+import { useRouter } from "next/navigation";
+
 import usePersistState from "@/hooks/common/use-persist-state";
+
+import { AUTH } from "./types";
+
+import useLogout from "@/hooks/auth/use-logout";
+import useRefreshToken from "@/hooks/auth/use-refresh-token";
 
 export interface IAuthContext {
   auth: AuthData;
   setAuth: (auth: AuthData) => void;
+  refreshAuth: () => Promise<string>;
 }
 
 export type AuthData = {
@@ -19,7 +28,7 @@ export type AuthData = {
 const AuthContext = createContext<IAuthContext | null>(null);
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [auth, setAuth] = usePersistState("auth", {
+  const [auth, setAuth] = usePersistState(AUTH, {
     access_token: "",
     refresh_token: "",
     user: {
@@ -28,11 +37,36 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       profile_image_url: "",
     },
   });
+  const router = useRouter();
+
+  const refreshAuth = async () => {
+    if (auth.access_token !== "" && auth.refresh_token !== "") {
+      const { error, data } = await useRefreshToken(auth.refresh_token);
+      if (error === "expired token") {
+        useLogout(auth.refresh_token);
+        browserStorage.clearAll();
+        router.push("/");
+        return "";
+      }
+
+      if (error === "unauthorized") {
+        browserStorage.clearAll();
+        router.push("/");
+        return "";
+      }
+
+      setAuth({ ...auth, access_token: data })
+      return data;
+    }
+
+    return "";
+  }
 
   return (
     <AuthContext.Provider value={{
       auth: auth,
       setAuth: setAuth,
+      refreshAuth: refreshAuth,
     }}>
       {children}
     </AuthContext.Provider>

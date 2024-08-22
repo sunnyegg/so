@@ -3,7 +3,7 @@
 import { useContext } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { Coiny, Fira_Sans } from "next/font/google";
 
@@ -11,6 +11,10 @@ import { AuthContext, IAuthContext } from "@/context/auth";
 
 import AuthButton from "../auth/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import useLogout from "@/hooks/auth/use-logout";
+
+import browserStorage from 'store';
 
 const coiny = Coiny({ subsets: ["latin"], weight: ["400"] });
 const fira = Fira_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"] });
@@ -20,7 +24,14 @@ export default function TopBar() {
 
   const pathname = usePathname();
   const isActivePath = (path: string) => pathname === path ? 'bg-so-secondary-color rounded-md' : '';
-  const isDashboardPath = () => pathname.startsWith("/dashboard");
+  const isDashboardPath = () => pathname && pathname.startsWith("/dashboard");
+  const router = useRouter();
+
+  const handleLogout = () => {
+    useLogout(auth.access_token);
+    browserStorage.clearAll();
+    router.push("/");
+  }
 
   return (
     <section className={`flex items-center justify-between ${fira.className}`}>
@@ -54,8 +65,7 @@ export default function TopBar() {
             <AvatarFallback>{auth.user.user_login.charAt(0)}</AvatarFallback>
           </Avatar>
         ) : <AuthButton
-          className="bg-transparent border-so-accent-color hover:bg-so-accent-color"
-          variant={"outline"}>
+          variant="streamegg-outline">
           LOGIN
         </AuthButton>
         }
@@ -81,10 +91,19 @@ export default function TopBar() {
             </Link>
           </div>
 
-          <Avatar>
-            <AvatarImage src={auth.user.profile_image_url} alt={auth.user.user_login} />
-            <AvatarFallback>{auth.user.user_login.charAt(0)}</AvatarFallback>
-          </Avatar>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="cursor-pointer">
+              <Avatar>
+                <AvatarImage src={auth.user.profile_image_url} alt={auth.user.user_login} />
+                <AvatarFallback>{auth.user.user_login.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>{auth.user.user_name}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </>
       )}
     </section>

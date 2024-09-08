@@ -12,6 +12,7 @@ export const useConnectWs = (token: string, userLogin: string, channel: string, 
   const [numberOfRetries, setNumberOfRetries] = useState(0);
 
   useEffect(() => {
+    console.log('tes')
     if (!streamId) return;
 
     if (websocket) {
@@ -23,13 +24,20 @@ export const useConnectWs = (token: string, userLogin: string, channel: string, 
     if (userLogin && !isConnected) {
       if (ws.current) return;
 
-      if (numberOfRetries > 3) {
+      if (numberOfRetries > 5) {
         return;
       }
 
       const wsconn = new WebSocket(process.env.NEXT_PUBLIC_WS_URL + `/${userLogin}` || "");
       wsconn.onopen = async () => {
-        await connectChat(token, userLogin, channel, streamId)
+        console.log("aaa")
+        const { error } = await connectChat(token, userLogin, channel, streamId)
+        if (error) {
+          console.log(error)
+          setIsConnected(false);
+          setNumberOfRetries(numberOfRetries + 1);
+          return;
+        }
         setIsConnected(true);
       };
       wsconn.onclose = () => {

@@ -14,7 +14,7 @@ import StreamCard from "@/components/dashboard/stream";
 import ShoutoutManager from "@/components/dashboard/shoutout/manager";
 import { LiveDialog } from "@/components/dashboard/shoutout/live-dialog";
 
-import { ChatterData } from "@/context/chatter";
+import { CHANNEL_REDEMPTION, ChatterData, EventsubData, STREAM_OFFLINE, STREAM_ONLINE } from "@/context/chatter";
 import { IStreamContext, StreamContext } from "@/context/stream";
 import { ChannelContext, IChannelContext } from "@/context/channel";
 import { IShoutoutContext, ShoutoutContext } from "@/context/shoutout";
@@ -23,6 +23,7 @@ import useLogout from "@/hooks/auth/use-logout";
 import { getChannelInfo } from "@/hooks/server/twitch";
 import useRefreshToken from "@/hooks/auth/use-refresh-token";
 import { createAttendance, getAttendance } from "@/hooks/server/attendance";
+import { ChannelInfoResponseData } from "@/hooks/types";
 
 export default function ShoutoutPage() {
   const { auth, setAuth } = useContext(AuthContext) as IAuthContext;
@@ -65,55 +66,89 @@ export default function ShoutoutPage() {
     }
   }
 
-  const processEventMessage = async (authData: AuthData, streamId: number, data: any) => {
-    // chatter buat attendance
-    if (data.type === "chatter") {
-      const chatter = JSON.parse(data.data) as ChatterData;
+  const handleChannelInfo = async (authData: AuthData, channel: string) => {
+    const res = await getChannelInfo(authData.access_token, channel);
+    if (res.error) {
+      if (res.error === "expired token") {
+        const { error, data } = await useRefreshToken(authData.refresh_token);
+        if (error) {
+          useLogout(authData.access_token);
+          return router.push("/");
+        }
 
-      // skip jika sudah hadir
-      if (tempChatter[chatter.user_login]) {
+        setAuth({ ...authData, access_token: data });
         return;
       }
 
-      tempChatter[chatter.user_login] = true;
-      setTempChatter(tempChatter);
-
-      // get info chatter
-      const res = await getChannelInfo(authData.access_token, chatter.user_login);
-      if (res.error) {
-        if (res.error === "expired token") {
-          const { error, data } = await useRefreshToken(authData.refresh_token);
-          if (error) {
-            useLogout(authData.access_token);
-            return router.push("/");
-          }
-
-          setAuth({ ...authData, access_token: data });
-          return;
-        }
-
-        return toast({
-          title: "Error",
-          description: res.error,
-          duration: 5000,
-          variant: "destructive",
-        })
-      }
-
-      addShoutout({
-        id: "",
-        avatar: res.data.user.profile_image_url,
-        userName: res.data.user.display_name,
-        userLogin: res.data.user.login,
-        followers: res.data.followers,
-        lastSeenPlaying: res.data.game_name,
-        channel: chatter.channel,
+      toast({
+        title: "Error",
+        description: res.error,
+        duration: 5000,
+        variant: "destructive",
       });
 
-      // attendance
-      const presentAt = new Date().toISOString();
-      createAttendance(authData.access_token, chatter.user_login, presentAt, streamId);
+      return;
     }
+
+    return res.data;
+  }
+
+  const processEventMessage = async (authData: AuthData, streamId: number, data: any) => {
+    let chatter = {} as { user_login: string, channel: string };
+    console.log(data);
+
+    // chatter buat attendance
+    if (data.type === "chatter") {
+      const c = JSON.parse(data.data) as ChatterData;
+      chatter.channel = c.channel;
+      chatter.user_login = c.user_login;
+    }
+
+    if (data.type === "eventsub") {
+      const eventsub = JSON.parse(data.data) as EventsubData;
+
+      // TODO: handle stream online
+      if (eventsub.type === STREAM_ONLINE) {
+        console.log(eventsub);
+        return;
+      }
+
+      // TODO: handle stream offline
+      if (eventsub.type === STREAM_OFFLINE) {
+        console.log(eventsub);
+        return;
+      }
+
+      if (eventsub.type === CHANNEL_REDEMPTION) {
+        chatter.channel = eventsub.channel;
+        chatter.user_login = eventsub.redeemer as string;
+      }
+    }
+
+    // skip jika sudah hadir
+    // if (tempChatter[chatter.user_login]) {
+    //   return;
+    // }
+
+    tempChatter[chatter.user_login] = true;
+    setTempChatter(tempChatter);
+
+    // get info chatter
+    const channelData = await handleChannelInfo(authData, chatter.channel) as ChannelInfoResponseData;
+
+    addShoutout({
+      id: "",
+      avatar: channelData.user.profile_image_url,
+      userName: channelData.user.display_name,
+      userLogin: channelData.user.login,
+      followers: channelData.followers,
+      lastSeenPlaying: channelData.game_name,
+      channel: chatter.channel,
+    });
+
+    // attendance
+    // const presentAt = new Date().toISOString();
+    // createAttendance(authData.access_token, chatter.user_login, presentAt, streamId);
   }
 
   useEffect(() => {

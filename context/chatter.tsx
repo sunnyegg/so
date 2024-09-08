@@ -17,6 +17,16 @@ export type ChatterData = {
   last_seen_playing: string;
 }
 
+export type EventsubData = {
+  channel: string;
+  redeemer?: string;
+  type: string;
+}
+
+export const STREAM_ONLINE = "stream.online";
+export const STREAM_OFFLINE = "stream.offline";
+export const CHANNEL_REDEMPTION = "channel.channel_points_custom_reward_redemption.add";
+
 const ChatterContext = createContext<IChatterContext | null>(null);
 
 const ChatterProvider = ({ children }: { children: React.ReactNode }) => {

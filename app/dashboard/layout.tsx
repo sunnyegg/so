@@ -1,6 +1,6 @@
 "use client";
 
-import TopBar from "@/app/components/topbar";
+import TopBar from "@/components/common/topbar";
 
 import { Fira_Mono } from "next/font/google";
 

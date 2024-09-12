@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import TopBar from "@/app/components/topbar";
+import TopBar from "@/components/common/topbar";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function Login() {
@@ -27,7 +27,7 @@ export default function Login() {
     const fetchLogin = async () => {
       isLoggedIn = true;
 
-      const url = `${process.env.NEXT_PUBLIC_APP_URL}/auth/login?code=${code}&scope=${scope}&state=${state}`;
+      const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/login?code=${code}&scope=${scope}&state=${state}`;
       const res = await fetch(url, {
         method: "GET",
       });
@@ -45,6 +45,7 @@ export default function Login() {
       }
 
       const data = await res.json();
+      console.log(res);
 
       setAuth({
         access_token: data.access_token,

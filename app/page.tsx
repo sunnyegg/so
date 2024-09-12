@@ -2,8 +2,8 @@
 
 import { Fira_Mono } from "next/font/google";
 
-import TopBar from "@/app/components/topbar";
-import AuthButton from "@/app/components/button";
+import TopBar from "@/components/common/topbar";
+import LoginButton from "@/components/common/login-button";
 
 const firaMono = Fira_Mono({
   subsets: ["latin"],
@@ -33,9 +33,11 @@ export default function Home() {
       </section>
 
       <section className="mt-8 flex items-center justify-center">
-        <AuthButton className="px-4 py-2 font-bold" variant="streamegg-outline">
-          Let's Start Cooking
-        </AuthButton>
+        <LoginButton
+          className="px-4 py-2 font-bold"
+          variant="streamegg-outline"
+          text={"Let's Start Cooking"}
+        />
       </section>
 
       <section className="absolute bottom-8 left-0 flex w-full justify-center gap-4 text-[0.8rem] md:hidden">

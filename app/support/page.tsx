@@ -1,7 +1,7 @@
 "use client";
 
 import StoreProvider from "@/context/store";
-import TopBar from "@/app/components/topbar";
+import TopBar from "@/components/common/topbar";
 
 export default function SupportPage() {
   return (

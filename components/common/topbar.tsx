@@ -1,20 +1,14 @@
 "use client";
 
-import { useContext } from "react";
+import { memo } from "react";
+import browserStorage from "store";
 
 import Link from "next/link";
+import { Coiny, Fira_Sans } from "next/font/google";
 import { usePathname, useRouter } from "next/navigation";
 
-import { Coiny, Fira_Sans } from "next/font/google";
-
-import { AuthContext, IAuthContext } from "@/context/auth";
-
-import AuthButton from "../auth/button";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "../../components/ui/avatar";
+import LoginButton from "./login-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,10 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
-import useLogout from "@/hooks/auth/use-logout";
-
-import browserStorage from "store";
+} from "@/components/ui/dropdown-menu";
 
 const coiny = Coiny({ subsets: ["latin"], weight: ["400"] });
 const fira = Fira_Sans({
@@ -33,9 +24,7 @@ const fira = Fira_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-export default function TopBar() {
-  const { auth } = useContext(AuthContext) as IAuthContext;
-
+function TopBar() {
   const pathname = usePathname();
   const isActivePath = (path: string) =>
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
@@ -43,7 +32,6 @@ export default function TopBar() {
   const router = useRouter();
 
   const handleLogout = () => {
-    useLogout(auth.refresh_token);
     browserStorage.clearAll();
     router.push("/");
   };
@@ -79,7 +67,7 @@ export default function TopBar() {
             HOW IT WORKS?
           </Link>
 
-          {auth.user.user_login !== "" ? (
+          {/* {auth.user.user_login !== "" ? (
             <Avatar>
               <AvatarImage
                 src={auth.user.profile_image_url}
@@ -88,8 +76,8 @@ export default function TopBar() {
               <AvatarFallback>{auth.user.user_login.charAt(0)}</AvatarFallback>
             </Avatar>
           ) : (
-            <AuthButton variant="streamegg-outline">LOGIN</AuthButton>
-          )}
+            <LoginButton variant="streamegg-outline">LOGIN</LoginButton>
+          )} */}
         </div>
       )}
 
@@ -116,7 +104,7 @@ export default function TopBar() {
             </Link>
           </div>
 
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild className="cursor-pointer">
               <Avatar>
                 <AvatarImage
@@ -133,9 +121,11 @@ export default function TopBar() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </>
       )}
     </section>
   );
 }
+
+export default memo(TopBar);

@@ -1,23 +1,21 @@
-'use client';
+"use client";
 
-import { useContext, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import TopBar from "@/components/common/topbar";
-import { AuthContext, IAuthContext } from "@/context/auth";
+import TopBar from "@/app/components/topbar";
 import { useToast } from "@/components/ui/use-toast";
-import { ChannelContext, IChannelContext } from "@/context/channel";
 
 export default function Login() {
-  const { setAuth } = useContext(AuthContext) as IAuthContext;
-  const { setChannel } = useContext(ChannelContext) as IChannelContext;
-
-  const { toast } = useToast()
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams && searchParams.get("code");
   const scope = searchParams && searchParams.get("scope");
   const state = searchParams && searchParams.get("state");
+
+  const [auth, setAuth] = useState<any>();
+  const [channel, setChannel] = useState<string>();
 
   let isLoggedIn = false;
 
@@ -39,7 +37,7 @@ export default function Login() {
           description: "Failed to login",
           duration: 5000,
           variant: "destructive",
-        })
+        });
         setTimeout(() => {
           router.push("/");
         }, 5100);
@@ -63,21 +61,21 @@ export default function Login() {
       toast({
         description: "Successfully logged in",
         duration: 1000,
-      })
+      });
 
       setTimeout(() => {
-        router.push("/dashboard/shoutout")
-      }, 1000);;
-    }
+        router.push("/dashboard/shoutout");
+      }, 1000);
+    };
 
     fetchLogin();
   }, [code, scope, state, isLoggedIn]);
 
   return (
-    <div className="mx-4 md:mx-32 my-8">
+    <div className="mx-4 my-8 md:mx-32">
       <TopBar />
 
       <p>Processing...</p>
     </div>
-  )
+  );
 }

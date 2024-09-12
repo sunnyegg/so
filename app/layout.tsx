@@ -5,11 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 
 import "./globals.css";
 
-const fira = Fira_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"] });
+const fira = Fira_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
 
 export const metadata: Metadata = {
   title: "StreamEGG",
-  description: "StreamEGG is a platform that allows you to create a custom stream experience for your Twitch stream!",
+  description:
+    "StreamEGG is a platform that allows you to create a custom stream experience for your Twitch stream!",
 };
 
 export default function RootLayout({
@@ -20,12 +24,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={fira.className}>
-        <main className="flex flex-col">
-          {children}
-        </main>
+        <main className="flex flex-col">{children}</main>
 
         <Toaster />
       </body>
-    </html >
+    </html>
   );
 }

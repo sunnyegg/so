@@ -1,6 +1,4 @@
-'use client';
-
-import StoreProvider from "@/context/store";
+"use client";
 
 import { Toaster } from "@/components/ui/toaster";
 
@@ -11,11 +9,9 @@ export default function AuthLayout({
 }>) {
   return (
     <div>
-      <StoreProvider>
-        {children}
-      </StoreProvider>
+      {children}
 
       <Toaster />
-    </div >
+    </div>
   );
 }

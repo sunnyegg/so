@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
 import StoreProvider from "@/context/store";
-import TopBar from "@/components/common/topbar";
+import TopBar from "@/app/components/topbar";
 
 export default function SupportPage() {
   return (
     <StoreProvider>
-      <div className="mx-4 md:mx-32 my-8">
+      <div className="mx-4 my-8 md:mx-32">
         <TopBar />
 
         <div>Support</div>
       </div>
     </StoreProvider>
-  )
+  );
 }

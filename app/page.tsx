@@ -113,25 +113,31 @@ export default function Home() {
 
   useEffect(() => {
     const initConn = async (session: any, mySession: any, session_id: any) => {
-      const resWebsocket = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/api/event-twitch`,
-        {
-          headers: {
-            token,
-          },
-          body: JSON.stringify({
-            broadcaster_user_id: session,
-            moderator_user_id: mySession,
-            session_id
-          }),
-          method: "POST",
+      try {
+        const resWebsocket = await fetch(
+          `${process.env.NEXT_PUBLIC_APP_URL}/api/event-twitch`,
+          {
+            headers: {
+              token,
+            },
+            body: JSON.stringify({
+              broadcaster_user_id: session,
+              moderator_user_id: mySession,
+              session_id
+            }),
+            method: "POST",
+          }
+        )
+  
+        const jsonData = await resWebsocket.json()
+  
+        if (!resWebsocket.ok) {
+          throw new Error(jsonData.error)
         }
-      )
-
-      const jsonData = await resWebsocket.json()
-
-      if (!resWebsocket.ok) {
-        setErrors([...errors, jsonData.error])
+      } catch (error: any) {
+        if (error.message === "Invalid OAuth token") {
+          Logout(success, setSuccess, session)
+        }
       }
     }
 

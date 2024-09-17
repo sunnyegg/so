@@ -4,11 +4,10 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import Divider from "@/app/components/divider";
+import Divider from "@/components/common/divider";
 import { toast } from "@/components/ui/use-toast";
-import StreamCard from "@/components/dashboard/stream";
+import StreamCard from "@/app/dashboard/components/stream";
 import ShoutoutManager from "@/app/dashboard/shoutout/components/manager";
-import { LiveDialog } from "@/components/dashboard/shoutout/live-dialog";
 
 export default function ShoutoutPage() {
   const [open, setOpen] = useState(false);
@@ -42,8 +41,6 @@ export default function ShoutoutPage() {
           I'm going to live in a minute
         </Button>
       </div>
-
-      <LiveDialog open={open} setOpen={setOpen} router={router} />
     </div>
   );
 }

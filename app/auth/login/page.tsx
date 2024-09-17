@@ -6,6 +6,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import TopBar from "@/components/common/topbar";
 import { useToast } from "@/components/ui/use-toast";
 
+type Auth = {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  user: {
+    login: string;
+    displayName: string;
+    profileImageUrl: string;
+  };
+};
+
 export default function Login() {
   const { toast } = useToast();
   const router = useRouter();
@@ -14,7 +25,7 @@ export default function Login() {
   const scope = searchParams && searchParams.get("scope");
   const state = searchParams && searchParams.get("state");
 
-  const [auth, setAuth] = useState<any>();
+  const [auth, setAuth] = useState<Auth>({} as Auth);
   const [channel, setChannel] = useState<string>();
 
   let isLoggedIn = false;
@@ -45,19 +56,29 @@ export default function Login() {
       }
 
       const data = await res.json();
-      console.log(res);
+      if (!data.status) {
+        toast({
+          description: "Failed to login",
+          duration: 5000,
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          router.push("/");
+        }, 5100);
+      }
 
       setAuth({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
+        accessToken: data.data.accessToken,
+        refreshToken: data.data.refreshToken,
+        expiresIn: data.data.expiresIn,
         user: {
-          user_login: data.user.user_login,
-          user_name: data.user.user_name,
-          profile_image_url: data.user.profile_image_url,
+          login: data.data.user.login,
+          displayName: data.data.user.displayName,
+          profileImageUrl: data.data.user.profileImageUrl,
         },
       });
 
-      setChannel(data.user.user_login);
+      setChannel(data.data.user.login);
 
       toast({
         description: "Successfully logged in",

@@ -3,6 +3,8 @@ import fs from "fs/promises";
 
 import { Auth, User } from "@/types/auth";
 
+import { encrypt } from "@/lib/encryption";
+
 type TokenResponse = {
   access_token: string;
   refresh_token: string;
@@ -51,11 +53,15 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
 
+    // encrypt tokens
+    const accessToken = encrypt(data.access_token);
+    const refreshToken = encrypt(data.refresh_token);
+
     return res.status(200).json({
       status: true,
       data: {
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         expiredAt: dayjs().add(data.expires_in, "second").toISOString(),
         user: getMeResponse.data,
       } as Auth,

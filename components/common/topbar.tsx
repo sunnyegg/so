@@ -18,6 +18,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import usePersistState from "@/hooks/use-persist-state";
+
+import { Auth } from "@/types/auth";
+import { PersistAuth } from "@/types/persist";
+
 const coiny = Coiny({ subsets: ["latin"], weight: ["400"] });
 const fira = Fira_Sans({
   subsets: ["latin"],
@@ -30,6 +35,11 @@ function TopBar() {
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
   const isDashboardPath = () => pathname && pathname.startsWith("/dashboard");
   const router = useRouter();
+
+  const [auth] = usePersistState(
+    PersistAuth.name,
+    PersistAuth.defaultValue
+  ) as [Auth];
 
   const handleLogout = () => {
     browserStorage.clearAll();
@@ -67,17 +77,17 @@ function TopBar() {
             HOW IT WORKS?
           </Link>
 
-          {/* {auth.user.user_login !== "" ? (
+          {auth.user ? (
             <Avatar>
               <AvatarImage
-                src={auth.user.profile_image_url}
-                alt={auth.user.user_login}
+                src={auth.user.profileImageUrl}
+                alt={auth.user.login}
               />
-              <AvatarFallback>{auth.user.user_login.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{auth.user.login.charAt(0)}</AvatarFallback>
             </Avatar>
           ) : (
-            <LoginButton variant="streamegg-outline">LOGIN</LoginButton>
-          )} */}
+            <LoginButton variant="streamegg-outline" text="Login" />
+          )}
         </div>
       )}
 
@@ -104,24 +114,22 @@ function TopBar() {
             </Link>
           </div>
 
-          {/* <DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild className="cursor-pointer">
               <Avatar>
                 <AvatarImage
-                  src={auth.user.profile_image_url}
-                  alt={auth.user.user_login}
+                  src={auth.user?.profileImageUrl}
+                  alt={auth.user?.login}
                 />
-                <AvatarFallback>
-                  {auth.user.user_login.charAt(0)}
-                </AvatarFallback>
+                <AvatarFallback>{auth.user?.login.charAt(0)}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuLabel>{auth.user.user_name}</DropdownMenuLabel>
+              <DropdownMenuLabel>{auth.user?.displayName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu> */}
+          </DropdownMenu>
         </>
       )}
     </section>

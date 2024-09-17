@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import TopBar from "@/components/common/topbar";
 import { useToast } from "@/components/ui/use-toast";
 
-type Auth = {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  user: {
-    login: string;
-    displayName: string;
-    profileImageUrl: string;
-  };
+import usePersistState from "@/hooks/use-persist-state";
+
+import { Auth } from "@/types/auth";
+import { PersistAuth, PersistChannel } from "@/types/persist";
+
+type LoginResponse = {
+  status: boolean;
+  data: Auth;
 };
 
 export default function Login() {
@@ -25,8 +24,14 @@ export default function Login() {
   const scope = searchParams && searchParams.get("scope");
   const state = searchParams && searchParams.get("state");
 
-  const [auth, setAuth] = useState<Auth>({} as Auth);
-  const [channel, setChannel] = useState<string>();
+  const [, setAuth] = usePersistState(
+    PersistAuth.name,
+    PersistAuth.defaultValue
+  );
+  const [, setChannel] = usePersistState(
+    PersistChannel.name,
+    PersistChannel.defaultValue
+  );
 
   let isLoggedIn = false;
 
@@ -55,7 +60,7 @@ export default function Login() {
         return;
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as LoginResponse;
       if (!data.status) {
         toast({
           description: "Failed to login",
@@ -65,12 +70,13 @@ export default function Login() {
         setTimeout(() => {
           router.push("/");
         }, 5100);
+        return;
       }
 
       setAuth({
         accessToken: data.data.accessToken,
         refreshToken: data.data.refreshToken,
-        expiresIn: data.data.expiresIn,
+        expiredAt: data.data.expiredAt,
         user: {
           login: data.data.user.login,
           displayName: data.data.user.displayName,

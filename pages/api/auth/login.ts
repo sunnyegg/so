@@ -1,4 +1,7 @@
+import dayjs from "dayjs";
 import fs from "fs/promises";
+
+import { Auth, User } from "@/types/auth";
 
 type TokenResponse = {
   access_token: string;
@@ -6,13 +9,6 @@ type TokenResponse = {
   expires_in: number;
   scope: string[];
   token_type: string;
-};
-
-type User = {
-  id: string;
-  login: string;
-  displayName: string;
-  profileImageUrl: string;
 };
 
 type GetMeResponse = {
@@ -23,7 +19,6 @@ type GetMeResponse = {
 export default async function handler(req: any, res: any) {
   try {
     const { code, scope, state } = req.query;
-    console.log(code, scope, state);
 
     const savedState = await fs.readFile(__dirname + "/state.json", "utf8");
     const { state: savedStateString } = JSON.parse(savedState);
@@ -61,9 +56,9 @@ export default async function handler(req: any, res: any) {
       data: {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
-        expiresIn: data.expires_in,
+        expiredAt: dayjs().add(data.expires_in, "second").toISOString(),
         user: getMeResponse.data,
-      },
+      } as Auth,
     });
   } catch (error: any) {
     console.log(error.message);
@@ -103,7 +98,6 @@ const getMe = async (
   }
 
   const data = await res.json();
-  console.log(data);
 
   output.status = true;
   output.data = {
@@ -111,7 +105,7 @@ const getMe = async (
     login: data.data[0].login,
     displayName: data.data[0].display_name,
     profileImageUrl: data.data[0].profile_image_url,
-  };
+  } as User;
 
   return output;
 };

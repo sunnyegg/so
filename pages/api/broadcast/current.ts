@@ -1,0 +1,37 @@
+import { decrypt } from "@/lib/encryption";
+import { NewAPIClient } from "@/lib/twitch";
+
+type Broadcast = {
+  gameName: string;
+  title: string;
+  startDate: string;
+};
+
+export default async function handler(req: any, res: any) {
+  try {
+    const { login, token } = req.query;
+    const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
+    const decryptedToken = decrypt(token);
+
+    const apiClient = NewAPIClient(CLIENT_ID, decryptedToken);
+
+    const currentBroadcast = await apiClient.streams.getStreamByUserName(login);
+    if (!currentBroadcast) {
+      return res.status(404).json({ status: false });
+    }
+
+    const data = {
+      gameName: currentBroadcast.gameName,
+      title: currentBroadcast.title,
+      startDate: currentBroadcast.startDate.toISOString(),
+    } as Broadcast;
+
+    return res.status(200).json({
+      status: true,
+      data,
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({ status: false });
+  }
+}

@@ -83,9 +83,11 @@ export default function StreamCard() {
 }
 
 const getCurrentBroadcast = async (login: string, token: string) => {
-  const res = await fetch(
-    `/api/broadcast/current?login=${login}&token=${token}`
-  );
+  const res = await fetch(`/api/broadcast/current?login=${login}`, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
   if (!res.ok) {
     return {
       code: res.status,
@@ -98,7 +100,11 @@ const getCurrentBroadcast = async (login: string, token: string) => {
 };
 
 const getChannelInfo = async (login: string, token: string) => {
-  const res = await fetch(`/api/channel/info?login=${login}&token=${token}`);
+  const res = await fetch(`/api/channel/info?login=${login}`, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
   if (!res.ok) {
     return {
       code: res.status,

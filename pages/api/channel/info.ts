@@ -10,7 +10,10 @@ type Channel = {
 
 export default async function handler(req: any, res: any) {
   try {
-    const { login, token } = req.query;
+    const { login } = req.query;
+    const { authorization } = req.headers;
+    const token = authorization.split(" ")[1];
+
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const decryptedToken = decrypt(token);
 

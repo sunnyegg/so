@@ -22,7 +22,7 @@ export default async function handler(req: any, res: any) {
   try {
     const { code, scope, state } = req.query;
 
-    const savedState = await fs.readFile(__dirname + "/state.json", "utf8");
+    const savedState = await fs.readFile("/db/state.json", "utf8");
     const { state: savedStateString } = JSON.parse(savedState);
 
     if (state !== savedStateString) {
@@ -70,7 +70,7 @@ export default async function handler(req: any, res: any) {
     console.log(error.message);
     return res.status(500).json({ status: false });
   } finally {
-    await fs.unlink(__dirname + "/state.json");
+    await fs.unlink("/db/state.json");
   }
 }
 

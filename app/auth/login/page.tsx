@@ -73,15 +73,7 @@ export default function Login() {
         return;
       }
 
-      setAuth({
-        accessToken: data.data.accessToken,
-        user: {
-          login: data.data.user.login,
-          displayName: data.data.user.displayName,
-          profileImageUrl: data.data.user.profileImageUrl,
-        },
-      });
-
+      setAuth({ ...data.data });
       setChannel(data.data.user.login);
 
       toast({

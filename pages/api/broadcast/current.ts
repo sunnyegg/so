@@ -12,11 +12,8 @@ export default async function handler(req: any, res: any) {
     const { login } = req.query;
     const { authorization } = req.headers;
     const token = authorization.split(" ")[1];
-
-    const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const decryptedToken = decrypt(token);
-
-    const apiClient = NewAPIClient(CLIENT_ID, decryptedToken);
+    const apiClient = NewAPIClient(decryptedToken);
 
     const currentBroadcast = await apiClient.streams.getStreamByUserName(login);
     if (!currentBroadcast) {

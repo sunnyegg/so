@@ -5,7 +5,7 @@ const AUTH_KEY = "authorization";
 export default function authenticationMiddleware(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
-  if (pathname === "/api/auth/login" || pathname === "/api/auth/save-state") {
+  if (pathname.startsWith("/api/auth/")) {
     return NextResponse.next();
   }
 

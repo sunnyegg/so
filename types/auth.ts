@@ -1,7 +1,5 @@
 export type Auth = {
   accessToken: string;
-  refreshToken: string;
-  expiredAt: string;
   user: User;
 };
 

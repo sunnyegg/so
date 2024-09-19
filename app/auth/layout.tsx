@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+
 import { Toaster } from "@/components/ui/toaster";
 
 export default function AuthLayout({
@@ -8,10 +10,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
+    <Suspense>
       {children}
 
       <Toaster />
-    </div>
+    </Suspense>
   );
 }

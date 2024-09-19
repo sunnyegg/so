@@ -1,9 +1,7 @@
-import dayjs from "dayjs";
-import fs from "fs/promises";
-
 import { Auth, User } from "@/types/auth";
 
 import { encrypt } from "@/lib/encryption";
+import { NewAPIClient } from "@/lib/twitch";
 
 type TokenResponse = {
   access_token: string;
@@ -20,14 +18,7 @@ type GetMeResponse = {
 
 export default async function handler(req: any, res: any) {
   try {
-    const { code, scope, state } = req.query;
-
-    const savedState = await fs.readFile("/db/state.json", "utf8");
-    const { state: savedStateString } = JSON.parse(savedState);
-
-    if (state !== savedStateString) {
-      return res.status(403).json({ status: false, error: "Invalid state" });
-    }
+    const { code, scope } = req.query;
 
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
@@ -53,24 +44,22 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
 
+    const apiClient = NewAPIClient(data.access_token);
+    const newToken = await apiClient._authProvider.getAnyAccessToken();
+
     // encrypt tokens
-    const accessToken = encrypt(data.access_token);
-    const refreshToken = encrypt(data.refresh_token);
+    const accessToken = encrypt(newToken.accessToken);
 
     return res.status(200).json({
       status: true,
       data: {
         accessToken: accessToken,
-        refreshToken: refreshToken,
-        expiredAt: dayjs().add(data.expires_in, "second").toISOString(),
         user: getMeResponse.data,
       } as Auth,
     });
   } catch (error: any) {
     console.log(error.message);
     return res.status(500).json({ status: false });
-  } finally {
-    await fs.unlink("/db/state.json");
   }
 }
 

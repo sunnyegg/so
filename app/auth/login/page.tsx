@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import TopBar from "@/components/common/topbar";
@@ -33,15 +33,15 @@ export default function Login() {
     PersistChannel.defaultValue
   );
 
-  let isLoggedIn = false;
+  const isLoggedIn = useRef(false);
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn.current) {
       return;
     }
 
     const fetchLogin = async () => {
-      isLoggedIn = true;
+      isLoggedIn.current = true;
 
       const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/login?code=${code}&scope=${scope}&state=${state}`;
       const res = await fetch(url, {
@@ -75,8 +75,6 @@ export default function Login() {
 
       setAuth({
         accessToken: data.data.accessToken,
-        refreshToken: data.data.refreshToken,
-        expiredAt: data.data.expiredAt,
         user: {
           login: data.data.user.login,
           displayName: data.data.user.displayName,

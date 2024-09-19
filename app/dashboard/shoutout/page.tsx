@@ -31,14 +31,14 @@ export default function ShoutoutPage() {
       {/* not live */}
       <div className="mt-8 text-center">
         <div className="animate-fade-in">
-          It seems that you're not live right now...
+          It seems that you are not live right now...
         </div>
         <Button
           className="mt-4"
           variant="streamegg"
           onClick={() => setOpen(true)}
         >
-          I'm going to live in a minute
+          I am going to live in a minute
         </Button>
       </div>
     </div>

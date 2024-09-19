@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -27,7 +27,7 @@ export default function ShoutoutCard({
   removeShoutout,
 }: ShoutoutCardProps) {
   const [loadingValue, setLoadingValue] = useState<number>(100);
-  let interval: NodeJS.Timeout;
+  const interval = useRef<NodeJS.Timeout>();
 
   const handleMessageSO = (
     token: string,
@@ -56,18 +56,18 @@ export default function ShoutoutCard({
   };
 
   useEffect(() => {
-    interval = setInterval(() => {
+    interval.current = setInterval(() => {
       setLoadingValue((prevValue) => prevValue - 1);
     }, 100);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(interval.current);
     };
   }, []);
 
   useEffect(() => {
     if (loadingValue <= 0) {
-      clearInterval(interval);
+      clearInterval(interval.current);
 
       handleRemoveShoutout(id, removeShoutout);
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import browserStorage from "store";
 
 import Link from "next/link";
@@ -45,6 +45,12 @@ function TopBar() {
     browserStorage.clearAll();
     router.push("/");
   };
+
+  useEffect(() => {
+    if (pathname === "/" && auth.accessToken) {
+      router.push("/dashboard/shoutout");
+    }
+  }, [auth]);
 
   return (
     <section className={`flex items-center justify-between ${fira.className}`}>

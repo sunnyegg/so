@@ -3,30 +3,55 @@ import { Server } from "socket.io";
 import { decrypt } from "@/lib/encryption";
 import { NewChatClient } from "@/lib/twitch";
 
+import NewSupabaseClient from "@/db/supabase";
+
+import { ConnectedChatClients } from "@/const/global";
+
 export default function handler(req: any, res: any) {
-  const { channel } = req.query;
-  const { authorization } = req.headers;
-  const token = authorization.split(" ")[1];
+  try {
+    const { login, channel } = req.query;
+    const { authorization } = req.headers;
+    const token = authorization.split(" ")[1];
+    const supabase = NewSupabaseClient();
 
-  if (!res.socket.server.io) {
-    const io = new Server(res.socket.server);
-    res.socket.server.io = io;
+    if (!res.socket.server.io) {
+      const io = new Server(res.socket.server);
+      res.socket.server.io = io;
 
-    const decryptedToken = decrypt(token);
-    const chatClient = NewChatClient(decryptedToken, channel);
+      if (!ConnectedChatClients.has(login)) {
+        const decryptedToken = decrypt(token);
+        const chatClient = NewChatClient(decryptedToken, channel);
+        ConnectedChatClients.set(login, new Map().set(channel, chatClient)); // unfinished
 
-    io.on("connection", (socket) => {
-      chatClient.connect();
-      chatClient.onMessage((ch, user, text) => {
-        const message = { user, text };
-        socket.emit("chat", JSON.stringify(message));
-      });
+        if (!chatClient.isConnected) {
+          chatClient.connect();
+        }
 
-      socket.on("disconnect", () => {
-        chatClient.quit();
-      });
-    });
+        chatClient.onConnect(() => {
+          console.log("connected to twitch chat");
+        });
+        chatClient.onDisconnect(() => {
+          console.log("disconnected from twitch chat");
+        });
+
+        chatClient.onMessage(async (ch, user, text) => {
+          // if (alreadyPresent.has(user)) {
+          //   return;
+          // }
+          // alreadyPresent.set(user, true);
+
+          const sb = await supabase.from("attendance").insert({
+            name: user,
+          });
+          console.log(sb);
+
+          io.emit(`chat-${ch}`, JSON.stringify({ user, text }));
+        });
+      }
+    }
+
+    res.end();
+  } catch (error: any) {
+    console.log(error);
   }
-
-  res.end();
 }

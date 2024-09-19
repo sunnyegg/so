@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useEffect } from "react";
-import browserStorage from "store";
 
 import Link from "next/link";
 import { Coiny, Fira_Sans } from "next/font/google";
@@ -29,7 +28,7 @@ const fira = Fira_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-function TopBar() {
+function TopBar({ handleLogout }: { handleLogout?: () => void }) {
   const pathname = usePathname();
   const isActivePath = (path: string) =>
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
@@ -40,11 +39,6 @@ function TopBar() {
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
-
-  const handleLogout = () => {
-    browserStorage.clearAll();
-    router.push("/");
-  };
 
   useEffect(() => {
     if (pathname === "/" && auth.accessToken) {

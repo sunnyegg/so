@@ -19,7 +19,7 @@ export default async function handler(req: any, res: any) {
     formData.append("grant_type", "refresh_token");
     formData.append("refresh_token", decryptedToken);
 
-    const res = await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -27,13 +27,13 @@ export default async function handler(req: any, res: any) {
       body: formData,
     });
 
-    if (!res.ok) {
-      const error = await res.json();
+    if (!response.ok) {
+      const error = await response.json();
       console.log(error);
       throw new Error("Failed to refresh token");
     }
 
-    const data = (await res.json()) as TokenResponse;
+    const data = (await response.json()) as TokenResponse;
 
     // encrypt tokens
     const accessToken = encrypt(data.access_token);

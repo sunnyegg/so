@@ -124,14 +124,14 @@ export default function TwitchProvider({
   };
 
   useEffect(() => {
-    if (auth.accessToken) {
+    if (auth.accessToken && isLive) {
       handleConnectChat(auth.accessToken);
     }
 
     return () => {
       chatClient.current?.quit();
     };
-  }, [auth.accessToken]);
+  }, [auth.accessToken, isLive]);
 
   return (
     <TwitchContext.Provider

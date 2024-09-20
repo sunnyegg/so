@@ -102,13 +102,13 @@ function TopBar({ handleLogout }: { handleLogout?: () => void }) {
             </Link>
             <Link
               href={"/dashboard/attendance"}
-              className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/dashboard/support")}`}
+              className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/dashboard/attendance")}`}
             >
               ATTENDANCE
             </Link>
             <Link
               href={"/dashboard/settings"}
-              className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/dashboard/support")}`}
+              className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/dashboard/settings")}`}
             >
               SETTINGS
             </Link>

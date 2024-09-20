@@ -10,6 +10,7 @@ import { TwitchContext } from "@/contexts/twitch";
 
 export default function ShoutoutPage() {
   const { isConnectedChat } = useContext(TwitchContext).chat;
+  const { isLive } = useContext(TwitchContext).stream;
 
   return (
     <div className="mt-8">
@@ -17,7 +18,7 @@ export default function ShoutoutPage() {
 
       <Divider />
 
-      {!isConnectedChat && (
+      {!isConnectedChat && isLive && (
         <div className="animate-fade-in mt-8 text-center">
           Connecting to chat...
         </div>
@@ -25,12 +26,13 @@ export default function ShoutoutPage() {
 
       <ShoutoutManager />
 
-      {/* not live */}
-      <div className="mt-8 text-center">
-        <div className="animate-fade-in">
-          It seems that you are not live right now...
+      {!isLive && (
+        <div className="mt-8 text-center">
+          <div className="animate-fade-in">
+            It seems that you are not live right now...
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

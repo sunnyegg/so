@@ -109,7 +109,7 @@ export default function TwitchProvider({
       toast({
         title: "Connected to chat",
         variant: "success",
-        duration: 5000,
+        duration: 3000,
       });
     });
 
@@ -117,8 +117,8 @@ export default function TwitchProvider({
       setIsConnectedChat(false);
       toast({
         title: "Disconnected from chat",
-        variant: "success",
-        duration: 5000,
+        variant: "destructive",
+        duration: 3000,
       });
     });
   };

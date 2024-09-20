@@ -1,15 +1,8 @@
-import { Auth, User } from "@/types/auth";
+import dayjs from "dayjs";
+
+import { Auth, TokenResponse, User } from "@/types/auth";
 
 import { encrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
-
-type TokenResponse = {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  scope: string[];
-  token_type: string;
-};
 
 type GetMeResponse = {
   status: boolean;
@@ -44,16 +37,16 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
 
-    const apiClient = NewAPIClient(data.access_token);
-    const newToken = await apiClient._authProvider.getAnyAccessToken();
-
     // encrypt tokens
-    const accessToken = encrypt(newToken.accessToken);
+    const accessToken = encrypt(data.access_token);
+    const refreshToken = encrypt(data.refresh_token);
 
     return res.status(200).json({
       status: true,
       data: {
-        accessToken: accessToken,
+        accessToken,
+        refreshToken,
+        expiredAt: dayjs().add(30, "minutes").toISOString(),
         user: getMeResponse.data,
       } as Auth,
     });

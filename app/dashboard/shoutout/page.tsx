@@ -1,19 +1,15 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useContext } from "react";
 
-import { Button } from "@/components/ui/button";
 import Divider from "@/components/common/divider";
-import { toast } from "@/components/ui/use-toast";
 import StreamCard from "@/app/dashboard/components/stream";
 import ShoutoutManager from "@/app/dashboard/shoutout/components/manager";
 
-export default function ShoutoutPage() {
-  const [open, setOpen] = useState(false);
-  const [tempChatter, setTempChatter] = useState<any>({});
+import { TwitchContext } from "@/contexts/twitch";
 
-  const router = useRouter();
+export default function ShoutoutPage() {
+  const { isConnectedChat } = useContext(TwitchContext).chat;
 
   return (
     <div className="mt-8">
@@ -21,10 +17,11 @@ export default function ShoutoutPage() {
 
       <Divider />
 
-      {/* not live and not connected */}
-      <div className="animate-fade-in mt-8 text-center">
-        Connecting to chat...
-      </div>
+      {!isConnectedChat && (
+        <div className="animate-fade-in mt-8 text-center">
+          Connecting to chat...
+        </div>
+      )}
 
       <ShoutoutManager />
 
@@ -33,13 +30,6 @@ export default function ShoutoutPage() {
         <div className="animate-fade-in">
           It seems that you are not live right now...
         </div>
-        <Button
-          className="mt-4"
-          variant="streamegg"
-          onClick={() => setOpen(true)}
-        >
-          I am going to live in a minute
-        </Button>
       </div>
     </div>
   );

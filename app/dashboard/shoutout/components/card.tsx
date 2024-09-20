@@ -7,27 +7,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export type ShoutoutCardProps = {
   id: string;
-  avatar: string | undefined;
-  channel: string;
-  userName: string;
-  userLogin: string;
+  profileImageUrl: string | undefined;
+  login: string;
+  displayName: string;
   followers: number;
   lastSeenPlaying: string;
-  removeShoutout: (id: string) => void;
+  removeFromShoutout: (id: string) => void;
 };
 
-export default function ShoutoutCard({
-  id,
-  avatar,
-  userName,
-  userLogin,
-  followers,
-  lastSeenPlaying,
-  channel,
-  removeShoutout,
-}: ShoutoutCardProps) {
+export default function ShoutoutCard(props: ShoutoutCardProps) {
   const [loadingValue, setLoadingValue] = useState<number>(100);
   const interval = useRef<NodeJS.Timeout>();
+
+  const {
+    id,
+    profileImageUrl,
+    login,
+    displayName,
+    followers,
+    lastSeenPlaying,
+    removeFromShoutout,
+  } = props;
 
   const handleMessageSO = (
     token: string,
@@ -36,13 +36,13 @@ export default function ShoutoutCard({
   ) => {
     const message = `!so @${userLogin}`;
     // sendMessage(token, channel, message);
-    handleRemoveShoutout(id, removeShoutout);
+    handleRemoveFromShoutout(id, removeFromShoutout);
   };
 
-  const handleSendSO = (token: string, channel: string, userLogin: string) => {
+  const handleSendSO = (token: string, channel: string, login: string) => {
     const moderator = channel; // TODO: get moderator from context
 
-    if (channel === userLogin) {
+    if (channel === login) {
       toast({
         title: "Shoutout Error",
         description: "You can't shoutout the broadcaster",
@@ -52,7 +52,7 @@ export default function ShoutoutCard({
     }
 
     // sendShoutout(token, channel, userLogin, moderator);
-    handleRemoveShoutout(id, removeShoutout);
+    handleRemoveFromShoutout(id, removeFromShoutout);
   };
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function ShoutoutCard({
     if (loadingValue <= 0) {
       clearInterval(interval.current);
 
-      handleRemoveShoutout(id, removeShoutout);
+      handleRemoveFromShoutout(id, removeFromShoutout);
     }
   }, [loadingValue]);
 
@@ -81,16 +81,16 @@ export default function ShoutoutCard({
       <div className="flex flex-col justify-between gap-4 p-4 md:flex-row">
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={avatar} alt={userLogin} />
-            <AvatarFallback>{userLogin.charAt(0)}</AvatarFallback>
+            <AvatarImage src={profileImageUrl} alt={login} />
+            <AvatarFallback>{login.charAt(0)}</AvatarFallback>
           </Avatar>
 
           <div>
             <div className="flex text-lg text-so-secondary-text-color">
-              <span className="text-so-primary-text-color">{userName}</span>
+              <span className="text-so-primary-text-color">{displayName}</span>
             </div>
             <div className="flex text-[0.8rem] text-so-secondary-text-color">
-              <span>@{userLogin}</span>
+              <span>@{login}</span>
             </div>
             <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color">
               <span className="text-so-primary-text-color">{followers}</span>
@@ -133,9 +133,9 @@ export default function ShoutoutCard({
   );
 }
 
-const handleRemoveShoutout = (
+const handleRemoveFromShoutout = (
   id: string,
-  removeShoutout: (id: string) => void
+  removeFromShoutout: (id: string) => void
 ) => {
   const shoutoutCard = document.getElementById(id);
   if (shoutoutCard && !shoutoutCard.classList.contains("animate-fade-out")) {
@@ -143,7 +143,7 @@ const handleRemoveShoutout = (
     shoutoutCard.classList.add("animate-fade-out");
 
     setTimeout(() => {
-      removeShoutout(id);
+      removeFromShoutout(id);
     }, 500);
   }
 };

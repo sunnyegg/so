@@ -53,7 +53,7 @@ export default function LoginButton({
       className={className}
       variant={variant}
       onClick={handleLogin}
-      disabled={isLoading}
+      isLoading={isLoading}
     >
       {text}
     </Button>

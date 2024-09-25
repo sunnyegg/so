@@ -56,7 +56,7 @@ export default function DashboardLayout({
 
     const data = (await res.json()) as RefreshTokenResponse;
     const user = auth.user;
-    setAuth({ ...data.data, ...user });
+    setAuth({ ...data.data, user });
   };
 
   const handleLogout = async () => {

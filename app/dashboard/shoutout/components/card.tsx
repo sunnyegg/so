@@ -5,6 +5,11 @@ import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import usePersistState from "@/hooks/use-persist-state";
+
+import { Auth } from "@/types/auth";
+import { PersistAuth, PersistChannel } from "@/types/persist";
+
 export type ShoutoutCardProps = {
   id: string;
   profileImageUrl: string | undefined;
@@ -17,6 +22,9 @@ export type ShoutoutCardProps = {
 
 export default function ShoutoutCard(props: ShoutoutCardProps) {
   const [loadingValue, setLoadingValue] = useState<number>(100);
+  const [isSoLoading, setIsSoLoading] = useState(false);
+  const [isShoutoutLoading, setIsShoutoutLoading] = useState(false);
+
   const interval = useRef<NodeJS.Timeout>();
 
   const {
@@ -29,30 +37,96 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     removeFromShoutout,
   } = props;
 
-  const handleMessageSO = (
-    token: string,
-    userLogin: string,
-    channel: string
-  ) => {
-    const message = `!so @${userLogin}`;
-    // sendMessage(token, channel, message);
-    handleRemoveFromShoutout(id, removeFromShoutout);
-  };
+  const [auth] = usePersistState(
+    PersistAuth.name,
+    PersistAuth.defaultValue
+  ) as [Auth];
+  const [channel] = usePersistState(
+    PersistChannel.name,
+    PersistChannel.defaultValue
+  ) as [string];
 
-  const handleSendSO = (token: string, channel: string, login: string) => {
-    const moderator = channel; // TODO: get moderator from context
-
-    if (channel === login) {
+  const handleMessageSO = async (token: string, login: string, ch: string) => {
+    setIsSoLoading(true);
+    if (ch === login) {
       toast({
         title: "Shoutout Error",
-        description: "You can't shoutout the broadcaster",
+        description: "You cannot shoutout the broadcaster",
         variant: "destructive",
+        duration: 2000,
       });
+      setIsSoLoading(false);
       return;
     }
 
-    // sendShoutout(token, channel, userLogin, moderator);
+    const message = `!so @${login}`;
+
+    const res = await fetch(`/api/chat/send-message`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ channel: ch, message }),
+    });
+    if (!res.ok) {
+      toast({
+        title: "Failed to send shoutout",
+        variant: "destructive",
+        duration: 5000,
+      });
+      setIsSoLoading(false);
+      return;
+    }
+
+    toast({
+      title: "Shoutout sent",
+      variant: "success",
+      duration: 2000,
+    });
+
     handleRemoveFromShoutout(id, removeFromShoutout);
+    setIsSoLoading(false);
+  };
+
+  const handleSendSO = async (token: string, ch: string, login: string) => {
+    setIsShoutoutLoading(true);
+    const moderator = ch; // TODO: get moderator from context
+
+    if (ch === login) {
+      toast({
+        title: "Shoutout Error",
+        description: "You cannot shoutout the broadcaster",
+        variant: "destructive",
+      });
+      setIsShoutoutLoading(false);
+      return;
+    }
+
+    const res = await fetch(`/api/chat/send-shoutout`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ from: ch, to: login }),
+    });
+    if (!res.ok) {
+      toast({
+        title: "Failed to send shoutout",
+        variant: "destructive",
+        duration: 2000,
+      });
+      setIsShoutoutLoading(false);
+      return;
+    }
+
+    toast({
+      title: "Shoutout sent",
+      variant: "success",
+      duration: 2000,
+    });
+
+    handleRemoveFromShoutout(id, removeFromShoutout);
+    setIsShoutoutLoading(false);
   };
 
   useEffect(() => {
@@ -109,16 +183,18 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
           <Button
             className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
             onClick={() => {
-              // handleMessageSO(auth.access_token, userLogin, channel)
+              handleMessageSO(auth.accessToken, login, channel);
             }}
+            isLoading={isSoLoading}
           >
             !so
           </Button>
           <Button
             className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
             onClick={() => {
-              // handleSendSO(auth.access_token, channel, userLogin)
+              handleSendSO(auth.accessToken, channel, login);
             }}
+            isLoading={isShoutoutLoading}
           >
             /shoutout
           </Button>

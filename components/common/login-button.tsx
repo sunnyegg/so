@@ -40,7 +40,7 @@ export default function LoginButton({
 
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID;
     const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + "/auth/login";
-    const SCOPE = "chat:read chat:edit";
+    const SCOPE = process.env.NEXT_PUBLIC_SCOPES;
 
     const url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
     router.push(url);

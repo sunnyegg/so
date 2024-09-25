@@ -8,6 +8,7 @@ import usePersistState from "@/hooks/use-persist-state";
 import { NewChatClient } from "@/lib/twitch";
 
 import { Auth } from "@/types/auth";
+import { Channel } from "@/types/channel";
 import { PersistAuth } from "@/types/persist";
 
 type Chatter = {
@@ -19,6 +20,11 @@ type Chatter = {
   profileImageUrl: string | undefined;
 };
 
+type ChannelResponse = {
+  status: boolean;
+  data: Channel;
+};
+
 type TwitchChatContextType = {
   isConnectedChat: boolean;
   chatters: Chatter[];
@@ -27,6 +33,7 @@ type TwitchChatContextType = {
 
 type TwitchStreamContextType = {
   isLive: boolean;
+  setIsLive: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 type TwitchContextType = {
@@ -42,6 +49,7 @@ export const TwitchContext = createContext<TwitchContextType>({
   },
   stream: {
     isLive: false,
+    setIsLive: () => {},
   },
 });
 
@@ -71,7 +79,7 @@ export default function TwitchProvider({
     );
   }, []);
 
-  const handleConnectChat = async (token: string) => {
+  const handleConnectChat = async (token: string, channel: string) => {
     const res = await fetch("/api/chat/connect", {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -88,19 +96,32 @@ export default function TwitchProvider({
     }
 
     const data = await res.json();
-    chatClient.current = NewChatClient(data.data, auth.user.login);
+    chatClient.current = NewChatClient(data.data, channel);
     chatClient.current.connect();
 
     // events
-    chatClient.current.onMessage((ch, user, text) => {
+    chatClient.current.onMessage(async (ch, user, text) => {
       const id = Date.now().toString();
+
+      const chatterRes = await fetch(`/api/channel/info?login=${user}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!chatterRes.ok) {
+        console.log("Failed to get chatter info", await chatterRes.json());
+        return;
+      }
+
+      const chatterData = (await chatterRes.json()) as ChannelResponse;
+
       addToShoutout({
         id,
         login: user,
-        displayName: user,
-        followers: 0,
-        lastSeenPlaying: "",
-        profileImageUrl: undefined,
+        displayName: chatterData.data.name,
+        followers: chatterData.data.followers,
+        lastSeenPlaying: chatterData.data.gameName,
+        profileImageUrl: chatterData.data.profileImageUrl,
       });
     });
 
@@ -125,7 +146,7 @@ export default function TwitchProvider({
 
   useEffect(() => {
     if (auth.accessToken && isLive) {
-      handleConnectChat(auth.accessToken);
+      handleConnectChat(auth.accessToken, auth.user.login);
     }
 
     return () => {
@@ -143,6 +164,7 @@ export default function TwitchProvider({
         },
         stream: {
           isLive,
+          setIsLive,
         },
       }}
     >

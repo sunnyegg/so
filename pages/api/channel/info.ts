@@ -1,12 +1,9 @@
+import { Channel } from "@/types/channel";
+
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 
-type Channel = {
-  name: string;
-  gameName: string;
-  title: string;
-  profileImageUrl: string;
-};
+const Cache = new Map<string, Channel>();
 
 export default async function handler(req: any, res: any) {
   try {
@@ -15,6 +12,13 @@ export default async function handler(req: any, res: any) {
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
+
+    if (Cache.has(login)) {
+      return res.status(200).json({
+        status: true,
+        data: Cache.get(login),
+      });
+    }
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
@@ -25,13 +29,17 @@ export default async function handler(req: any, res: any) {
     if (!channel) {
       return res.status(404).json({ status: false });
     }
+    const followers = await user.getChannelFollowers();
 
     const data = {
       name: channel.name,
       gameName: channel.gameName,
       title: channel.title,
       profileImageUrl: user.profilePictureUrl,
+      followers: followers.total,
     } as Channel;
+
+    Cache.set(login, data);
 
     return res.status(200).json({
       status: true,
@@ -42,3 +50,11 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ status: false });
   }
 }
+
+setInterval(
+  () => {
+    console.log(`Clearing ${Cache.size} cache entries`);
+    Cache.clear();
+  },
+  1000 * 60 * 5
+); // every 5 minutes

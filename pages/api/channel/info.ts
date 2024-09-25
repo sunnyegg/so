@@ -32,7 +32,8 @@ export default async function handler(req: any, res: any) {
     const followers = await user.getChannelFollowers();
 
     const data = {
-      name: channel.name,
+      login: channel.name,
+      displayName: channel.displayName,
       gameName: channel.gameName,
       title: channel.title,
       profileImageUrl: user.profilePictureUrl,

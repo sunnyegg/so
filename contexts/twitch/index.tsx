@@ -1,5 +1,5 @@
 import { ChatClient } from "@twurple/chat";
-import { createContext, useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 
 import { toast } from "@/components/ui/use-toast";
 
@@ -8,17 +8,9 @@ import usePersistState from "@/hooks/use-persist-state";
 import { NewChatClient } from "@/lib/twitch";
 
 import { Auth } from "@/types/auth";
+import { Chatter } from "@/types/chat";
 import { Channel } from "@/types/channel";
 import { PersistAuth } from "@/types/persist";
-
-type Chatter = {
-  id: string;
-  login: string;
-  displayName: string;
-  followers: number;
-  lastSeenPlaying: string;
-  profileImageUrl: string | undefined;
-};
 
 type ChannelResponse = {
   status: boolean;
@@ -28,6 +20,7 @@ type ChannelResponse = {
 type TwitchChatContextType = {
   isConnectedChat: boolean;
   chatters: Chatter[];
+  attendance: Chatter[];
   removeFromShoutout: (id: string) => void;
 };
 
@@ -45,6 +38,7 @@ export const TwitchContext = createContext<TwitchContextType>({
   chat: {
     isConnectedChat: false,
     chatters: [],
+    attendance: [],
     removeFromShoutout: () => {},
   },
   stream: {
@@ -61,16 +55,28 @@ export default function TwitchProvider({
   const [isConnectedChat, setIsConnectedChat] = useState(false);
   const [isLive, setIsLive] = useState(false);
   const [chatters, setChatters] = useState<Chatter[]>([]);
+  const [attendance, setAttendance] = useState<Chatter[]>([]);
+  const alreadyPresent = new Map<string, Chatter>();
 
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
 
-  const chatClient = useRef<ChatClient>();
+  let chatClient: ChatClient | undefined;
 
   const addToShoutout = useCallback((chatter: Chatter) => {
+    if (alreadyPresent.has(chatter.login)) {
+      return;
+    }
+
+    alreadyPresent.set(chatter.login, chatter);
+
     setChatters((prevChatters: Chatter[]) => [...prevChatters, { ...chatter }]);
+    setAttendance((prevAttendance: Chatter[]) => [
+      ...prevAttendance,
+      { ...chatter },
+    ]);
   }, []);
 
   const removeFromShoutout = useCallback((id: string) => {
@@ -96,13 +102,11 @@ export default function TwitchProvider({
     }
 
     const data = await res.json();
-    chatClient.current = NewChatClient(data.data, channel);
-    chatClient.current.connect();
+    chatClient = NewChatClient(data.data, channel);
+    chatClient.connect();
 
     // events
-    chatClient.current.onMessage(async (ch, user, text) => {
-      const id = Date.now().toString();
-
+    chatClient.onMessage(async (ch, user, text) => {
       const chatterRes = await fetch(`/api/channel/info?login=${user}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -116,16 +120,17 @@ export default function TwitchProvider({
       const chatterData = (await chatterRes.json()) as ChannelResponse;
 
       addToShoutout({
-        id,
+        id: Date.now().toString(),
         login: user,
-        displayName: chatterData.data.name,
+        displayName: chatterData.data.displayName,
         followers: chatterData.data.followers,
         lastSeenPlaying: chatterData.data.gameName,
         profileImageUrl: chatterData.data.profileImageUrl,
+        presentAt: new Date().toISOString(),
       });
     });
 
-    chatClient.current.onConnect(() => {
+    chatClient.onConnect(() => {
       setIsConnectedChat(true);
       toast({
         title: "Connected to chat",
@@ -134,7 +139,7 @@ export default function TwitchProvider({
       });
     });
 
-    chatClient.current.onDisconnect(() => {
+    chatClient.onDisconnect(() => {
       setIsConnectedChat(false);
       toast({
         title: "Disconnected from chat",
@@ -150,7 +155,7 @@ export default function TwitchProvider({
     }
 
     return () => {
-      chatClient.current?.quit();
+      chatClient?.quit();
     };
   }, [auth.accessToken, isLive]);
 
@@ -160,6 +165,7 @@ export default function TwitchProvider({
         chat: {
           isConnectedChat,
           chatters,
+          attendance,
           removeFromShoutout,
         },
         stream: {

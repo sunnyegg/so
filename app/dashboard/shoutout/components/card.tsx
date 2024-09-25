@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -8,7 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
-import { PersistAuth, PersistChannel } from "@/types/persist";
+import {
+  PersistAttendance,
+  PersistAuth,
+  PersistChannel,
+} from "@/types/persist";
+
+import { TwitchContext } from "@/contexts/twitch";
 
 export type ShoutoutCardProps = {
   id: string;
@@ -45,6 +51,12 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     PersistChannel.name,
     PersistChannel.defaultValue
   ) as [string];
+  const [_, setAttendance] = usePersistState(
+    PersistAttendance.name,
+    PersistAttendance.defaultValue
+  );
+
+  const { attendance } = useContext(TwitchContext).chat;
 
   const handleMessageSO = async (token: string, login: string, ch: string) => {
     setIsSoLoading(true);
@@ -135,6 +147,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     }, 100);
 
     return () => {
+      setAttendance(attendance);
       clearInterval(interval.current);
     };
   }, []);

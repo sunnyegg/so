@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import dayjs from "dayjs";
 
 import {
   createColumnHelper,
@@ -21,43 +22,17 @@ import {
 import StreamCard from "../components/stream";
 import Divider from "@/components/common/divider";
 
+import usePersistState from "@/hooks/use-persist-state";
+
+import { PersistAttendance } from "@/types/persist";
+import { Chatter } from "@/types/chat";
+
 type ColumnAttendance = {
   displayName: string;
   profileImageUrl: string;
   followers: number;
   presentAt: string;
 };
-
-const dummyData: ColumnAttendance[] = [
-  {
-    displayName: "sunnyegg21",
-    profileImageUrl:
-      "https://static-cdn.jtvnw.net/jtv_user_pictures/eae32a3c-19e1-4682-8df9-bdcda04ba746-profile_image-300x300.png",
-    followers: 100,
-    presentAt: "2023-04-01",
-  },
-  {
-    displayName: "sunnyegg21",
-    profileImageUrl:
-      "https://static-cdn.jtvnw.net/jtv_user_pictures/eae32a3c-19e1-4682-8df9-bdcda04ba746-profile_image-300x300.png",
-    followers: 100,
-    presentAt: "2023-04-01",
-  },
-  {
-    displayName: "sunnyegg21",
-    profileImageUrl:
-      "https://static-cdn.jtvnw.net/jtv_user_pictures/eae32a3c-19e1-4682-8df9-bdcda04ba746-profile_image-300x300.png",
-    followers: 100,
-    presentAt: "2023-04-01",
-  },
-  {
-    displayName: "sunnyegg21",
-    profileImageUrl:
-      "https://static-cdn.jtvnw.net/jtv_user_pictures/eae32a3c-19e1-4682-8df9-bdcda04ba746-profile_image-300x300.png",
-    followers: 100,
-    presentAt: "2023-04-01",
-  },
-];
 
 export default function AttendancePage() {
   const columnHelper = createColumnHelper<ColumnAttendance>();
@@ -88,11 +63,29 @@ export default function AttendancePage() {
     }),
     columnHelper.accessor("presentAt", {
       header: "Present At",
-      cell: (info) => info.getValue(),
+      cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD, HH:mm:ss"),
     }),
   ];
 
-  const [data, _setData] = useState(() => [...dummyData]);
+  const [attendance] = usePersistState(
+    PersistAttendance.name,
+    PersistAttendance.defaultValue
+  ) as [Chatter[]];
+
+  const [data, setData] = useState<ColumnAttendance[]>([]);
+
+  useEffect(() => {
+    setData(
+      attendance.map((chatter) => {
+        return {
+          displayName: chatter.displayName,
+          profileImageUrl: chatter.profileImageUrl as string,
+          followers: chatter.followers,
+          presentAt: chatter.presentAt,
+        };
+      })
+    );
+  }, [attendance]);
 
   const table = useReactTable({
     data,
@@ -106,39 +99,43 @@ export default function AttendancePage() {
 
       <Divider />
 
-      <Table className="mt-8">
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className="text-white"
-                  style={{ width: header.getSize() }}
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="mt-8">
+        <span className="text-sm">Attendees: {attendance.length}</span>
+
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="text-white"
+                    style={{ width: header.getSize() }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

@@ -188,8 +188,6 @@ export default function TwitchProvider({
     });
 
     eventSubWsClient.onChannelRedemptionAdd(userId, async (e) => {
-      if (!isLive) return;
-
       const chatterRes = await fetch(`/api/channel/info?login=${e.userName}`, {
         headers: {
           Authorization: `Bearer ${token}`,

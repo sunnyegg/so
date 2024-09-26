@@ -1,4 +1,5 @@
 export type Channel = {
+  id: string;
   login: string;
   displayName: string;
   gameName: string;

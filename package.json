@@ -20,6 +20,7 @@
     "@twurple/api": "^7.1.0",
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
+    "@twurple/eventsub-ws": "^7.1.0",
     "caniuse-lite": "^1.0.30001660",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

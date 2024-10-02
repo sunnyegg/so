@@ -124,7 +124,7 @@ function TopBar({ handleLogout }: { handleLogout?: () => void }) {
                 <AvatarFallback>{auth.user?.login.charAt(0)}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="mt-2 bg-so-secondary-color text-so-primary-text-color">
               <DropdownMenuLabel>{auth.user?.displayName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>

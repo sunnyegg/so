@@ -19,10 +19,13 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        streamegg:
-          "bg-so-accent-color text-so-primary-color hover:bg-so-secondary-color hover:text-so-accent-color",
+        streamegg: "bg-so-accent-color text-so-primary-color",
         "streamegg-outline":
           "bg-so-accent-color text-so-primary-color hover:bg-transparent border-2 border-so-accent-color hover:text-so-primary-text-color",
+        "streamegg-disabled":
+          "bg-so-secondary-color text-so-primary-text-color cursor-not-allowed",
+        "streamegg-secondary":
+          "bg-so-secondary-color text-so-primary-text-color hover:bg-so-secondary-text-color hover:text-so-primary-color",
       },
       size: {
         default: "h-10 px-4 py-2",

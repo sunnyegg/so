@@ -6,12 +6,17 @@ import SettingsForm from "./components/form";
 import StreamCard from "../components/stream";
 import Divider from "@/components/common/divider";
 
+import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
-import { PersistSettings } from "@/types/persist";
+import { PersistAuth, PersistSettings } from "@/types/persist";
 
 import usePersistState from "@/hooks/use-persist-state";
 
 export default function SettingsPage() {
+  const [auth] = usePersistState(
+    PersistAuth.name,
+    PersistAuth.defaultValue
+  ) as [Auth];
   const [settings, setSettings] = usePersistState(
     PersistSettings.name,
     PersistSettings.defaultValue
@@ -27,8 +32,12 @@ export default function SettingsPage() {
 
       <Divider />
 
-      {settings.autoSo !== undefined && (
-        <SettingsForm data={settings} updateSettings={updateSettings} />
+      {settings.autoSo !== undefined && auth.accessToken && (
+        <SettingsForm
+          auth={auth}
+          data={settings}
+          updateSettings={updateSettings}
+        />
       )}
     </div>
   );

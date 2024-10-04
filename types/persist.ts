@@ -1,5 +1,6 @@
 import { Auth } from "./auth";
 import { Chatter } from "./chat";
+import { Stream } from "./stream";
 import { Settings } from "./settings";
 
 export const PersistAuth = {
@@ -20,4 +21,9 @@ export const PersistAttendance = {
 export const PersistSettings = {
   name: "settings",
   defaultValue: {} as Settings,
+};
+
+export const PersistStream = {
+  name: "stream",
+  defaultValue: {} as Stream,
 };

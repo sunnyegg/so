@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 
+import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
 
 const FormSchema = z.object({
@@ -27,13 +28,15 @@ const FormSchema = z.object({
   blacklistWords: z.string().default(""),
 });
 
-function SettingsForm({
-  data,
-  updateSettings,
-}: {
+type SettingsFormProps = {
+  auth: Auth;
   data: Settings;
   updateSettings: (data: Settings) => void;
-}) {
+};
+
+function SettingsForm(props: SettingsFormProps) {
+  const { auth, data, updateSettings } = props;
+
   const [isEdited, setIsEdited] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -46,7 +49,7 @@ function SettingsForm({
     defaultValues,
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
 
     const lettersAndNumbersOnly = /^[a-zA-Z0-9]+$/;
@@ -74,6 +77,24 @@ function SettingsForm({
     }
     data.blacklistUsernames = trimmedBlacklistUsernames.join(",");
     data.blacklistWords = trimmedBlacklistWords.join(",");
+
+    // save to db
+    const res = await fetch("/api/settings/save", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${auth.accessToken}`,
+      },
+      body: JSON.stringify({ login: auth.user.login, settings: data }),
+    });
+    if (!res.ok) {
+      toast({
+        title: "Failed to save settings",
+        description: "Please refresh the page",
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
 
     updateSettings(data);
     setIsLoading(false);

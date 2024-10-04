@@ -5,8 +5,13 @@ import ShoutoutCard from "./card";
 import { TwitchContext } from "@/contexts/twitch";
 
 export default function ShoutoutManager() {
-  const { chatters, removeFromShoutout, isConnectedChat } =
-    useContext(TwitchContext).chat;
+  const {
+    chatters,
+    removeFromShoutout,
+    isConnectedChat,
+    sendMessageSO,
+    sendSO,
+  } = useContext(TwitchContext).chat;
 
   return (
     <div>
@@ -16,6 +21,8 @@ export default function ShoutoutManager() {
             key={item.id}
             {...item}
             removeFromShoutout={removeFromShoutout}
+            sendMessageSO={sendMessageSO}
+            sendSO={sendSO}
           />
         ))}
 

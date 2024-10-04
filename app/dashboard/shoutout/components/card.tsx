@@ -12,7 +12,9 @@ import {
   PersistAttendance,
   PersistAuth,
   PersistChannel,
+  PersistSettings,
 } from "@/types/persist";
+import { Settings } from "@/types/settings";
 
 import { TwitchContext } from "@/contexts/twitch";
 
@@ -24,6 +26,8 @@ export type ShoutoutCardProps = {
   followers: number;
   lastSeenPlaying: string;
   removeFromShoutout: (id: string) => void;
+  sendMessageSO: (token: string, login: string, ch: string) => Promise<string>;
+  sendSO: (token: string, login: string, ch: string) => Promise<string>;
 };
 
 export default function ShoutoutCard(props: ShoutoutCardProps) {
@@ -41,6 +45,8 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     followers,
     lastSeenPlaying,
     removeFromShoutout,
+    sendMessageSO,
+    sendSO,
   } = props;
 
   const [auth] = usePersistState(
@@ -55,36 +61,23 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     PersistAttendance.name,
     PersistAttendance.defaultValue
   );
+  const [settings] = usePersistState(
+    PersistSettings.name,
+    PersistSettings.defaultValue
+  ) as [Settings];
 
   const { attendance } = useContext(TwitchContext).chat;
 
   const handleMessageSO = async (token: string, login: string, ch: string) => {
     setIsSoLoading(true);
-    if (ch === login) {
+
+    const res = await sendMessageSO(token, login, ch);
+    if (res !== "") {
       toast({
         title: "Shoutout Error",
-        description: "You cannot shoutout the broadcaster",
+        description: res,
         variant: "destructive",
         duration: 2000,
-      });
-      setIsSoLoading(false);
-      return;
-    }
-
-    const message = `!so @${login}`;
-
-    const res = await fetch(`/api/chat/send-message`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ channel: ch, message }),
-    });
-    if (!res.ok) {
-      toast({
-        title: "Failed to send shoutout",
-        variant: "destructive",
-        duration: 5000,
       });
       setIsSoLoading(false);
       return;
@@ -104,26 +97,11 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     setIsShoutoutLoading(true);
     const moderator = ch; // TODO: get moderator from context
 
-    if (ch === login) {
+    const res = await sendSO(token, login, ch);
+    if (res !== "") {
       toast({
         title: "Shoutout Error",
-        description: "You cannot shoutout the broadcaster",
-        variant: "destructive",
-      });
-      setIsShoutoutLoading(false);
-      return;
-    }
-
-    const res = await fetch(`/api/chat/send-shoutout`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ from: ch, to: login }),
-    });
-    if (!res.ok) {
-      toast({
-        title: "Failed to send shoutout",
+        description: res,
         variant: "destructive",
         duration: 2000,
       });
@@ -193,24 +171,33 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Button
-            className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
-            onClick={() => {
-              handleMessageSO(auth.accessToken, login, channel);
-            }}
-            isLoading={isSoLoading}
-          >
-            !so
-          </Button>
-          <Button
-            className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
-            onClick={() => {
-              handleSendSO(auth.accessToken, channel, login);
-            }}
-            isLoading={isShoutoutLoading}
-          >
-            /shoutout
-          </Button>
+          {settings.autoSo ? (
+            <>
+              <Button variant={"streamegg-disabled"}>!so</Button>
+              <Button variant={"streamegg-disabled"}>/shoutout</Button>
+            </>
+          ) : (
+            <>
+              <Button
+                className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
+                onClick={() => {
+                  handleMessageSO(auth.accessToken, login, channel);
+                }}
+                isLoading={isSoLoading}
+              >
+                !so
+              </Button>
+              <Button
+                className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
+                onClick={() => {
+                  handleSendSO(auth.accessToken, channel, login);
+                }}
+                isLoading={isShoutoutLoading}
+              >
+                /shoutout
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

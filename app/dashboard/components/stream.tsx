@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
@@ -14,7 +14,7 @@ type Stream = {
   isLive: boolean;
 };
 
-export default function StreamCard() {
+function StreamCard() {
   const { toast } = useToast();
 
   const [stream, setStream] = useState<Stream>({} as Stream);
@@ -24,8 +24,21 @@ export default function StreamCard() {
     PersistAuth.defaultValue
   ) as [Auth];
 
+  const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
+
   useEffect(() => {
     if (!auth.accessToken) {
+      return;
+    }
+
+    if (env === "dev") {
+      getChannelInfo(auth.user.login, auth.accessToken).then((res) => {
+        if (res.status) {
+          const data = res.data as Stream;
+          setStream({ ...data, isLive: false });
+          return;
+        }
+      });
       return;
     }
 
@@ -115,3 +128,5 @@ const getChannelInfo = async (login: string, token: string) => {
   const data = await res.json();
   return data;
 };
+
+export default memo(StreamCard);

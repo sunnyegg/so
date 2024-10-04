@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import dayjs from "dayjs";
 
 import {
@@ -44,7 +45,7 @@ export default function AttendancePage() {
       cell: (info) => {
         return (
           <div>
-            <img
+            <Image
               src={info.getValue()}
               alt="avatar"
               className="h-8 w-8 rounded-full"

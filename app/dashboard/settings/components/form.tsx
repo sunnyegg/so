@@ -48,6 +48,7 @@ function SettingsForm(props: SettingsFormProps) {
     resolver: zodResolver(FormSchema),
     defaultValues,
   });
+  const watchForm = form.watch();
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     setIsLoading(true);
@@ -136,7 +137,7 @@ function SettingsForm(props: SettingsFormProps) {
       }
     });
     return () => subs.unsubscribe();
-  }, [form.watch()]);
+  }, [watchForm]);
 
   return (
     <Form {...form}>
@@ -233,7 +234,7 @@ function SettingsForm(props: SettingsFormProps) {
                   </FormLabel>
                   <FormDescription className="text-so-secondary-text-color">
                     Blacklist words from shoutout and attendance. Usually used
-                    for blacklisting bot's words.
+                    for blacklisting bot&apos;s words.
                   </FormDescription>
                   <FormMessage />
                 </div>

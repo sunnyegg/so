@@ -20,7 +20,12 @@ export const PersistAttendance = {
 
 export const PersistSettings = {
   name: "settings",
-  defaultValue: {} as Settings,
+  defaultValue: {
+    autoSo: false,
+    autoSoDelay: 0,
+    blacklistUsernames: "",
+    blacklistWords: "",
+  } as Settings,
 };
 
 export const PersistStream = {

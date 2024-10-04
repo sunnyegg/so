@@ -32,7 +32,7 @@ export default function SettingsPage() {
 
       <Divider />
 
-      {settings.autoSo !== undefined && auth.accessToken && (
+      {auth.accessToken && (
         <SettingsForm
           auth={auth}
           data={settings}

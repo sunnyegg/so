@@ -1,5 +1,5 @@
 import { ChatClient } from "@twurple/chat";
-import { createContext, useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useRef, useState } from "react";
 
 import { toast } from "@/components/ui/use-toast";
 
@@ -84,8 +84,8 @@ export default function TwitchProvider({
     PersistStream.defaultValue
   ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
 
-  let chatClient: ChatClient | undefined;
-  let eventSubWsClient: EventSubWsListener | undefined;
+  const chatClient = useRef<ChatClient | undefined>(undefined);
+  const eventSubWsClient = useRef<EventSubWsListener | undefined>(undefined);
 
   const addToShoutout = useCallback(
     async (chatter: Chatter, token: string, login: string) => {
@@ -222,11 +222,11 @@ export default function TwitchProvider({
     }
 
     const data = await res.json();
-    chatClient = NewChatClient(data.data, channel);
-    chatClient.connect();
+    chatClient.current = NewChatClient(data.data, channel);
+    chatClient.current.connect();
 
     // events
-    chatClient.onMessage(async (ch, user, text) => {
+    chatClient.current.onMessage(async (ch, user, text) => {
       // skip own messages
       if (user === channel) {
         return;
@@ -290,7 +290,7 @@ export default function TwitchProvider({
       );
     });
 
-    chatClient.onConnect(() => {
+    chatClient.current.onConnect(() => {
       setIsConnectedChat(true);
       toast({
         title: "Connected to chat",
@@ -299,7 +299,7 @@ export default function TwitchProvider({
       });
     });
 
-    chatClient.onDisconnect(() => {
+    chatClient.current.onDisconnect(() => {
       setIsConnectedChat(false);
       toast({
         title: "Disconnected from chat",
@@ -328,11 +328,11 @@ export default function TwitchProvider({
     }
 
     const data = await res.json();
-    eventSubWsClient = NewEventSubWsClient(data.data);
-    eventSubWsClient.start();
+    eventSubWsClient.current = NewEventSubWsClient(data.data);
+    eventSubWsClient.current.start();
 
     // events
-    eventSubWsClient.onStreamOnline(userId, (e) => {
+    eventSubWsClient.current.onStreamOnline(userId, (e) => {
       setLive(true);
       toast({
         title: "Stream Online",
@@ -342,7 +342,7 @@ export default function TwitchProvider({
       });
     });
 
-    eventSubWsClient.onStreamOffline(userId, (e) => {
+    eventSubWsClient.current.onStreamOffline(userId, (e) => {
       setLive(false);
       toast({
         title: "Stream Offline",
@@ -351,7 +351,7 @@ export default function TwitchProvider({
       });
     });
 
-    eventSubWsClient.onChannelRedemptionAdd(userId, async (e) => {
+    eventSubWsClient.current.onChannelRedemptionAdd(userId, async (e) => {
       if (e.userId === userId) return;
 
       const chatterRes = await fetch(`/api/channel/info?login=${e.userName}`, {
@@ -381,7 +381,7 @@ export default function TwitchProvider({
       );
     });
 
-    eventSubWsClient.onUserSocketConnect(() => {
+    eventSubWsClient.current.onUserSocketConnect(() => {
       setIsConnectedEventSub(true);
       toast({
         title: "Connected to eventsub",
@@ -390,7 +390,7 @@ export default function TwitchProvider({
       });
     });
 
-    eventSubWsClient.onUserSocketDisconnect((_, error) => {
+    eventSubWsClient.current.onUserSocketDisconnect((_, error) => {
       console.log(error);
       setIsConnectedEventSub(false);
       toast({
@@ -414,7 +414,8 @@ export default function TwitchProvider({
     }
 
     return () => {
-      chatClient?.quit();
+      chatClient.current?.quit();
+      chatClient.current = undefined;
     };
   }, [auth, stream.isLive]);
 
@@ -424,7 +425,8 @@ export default function TwitchProvider({
     }
 
     return () => {
-      eventSubWsClient?.stop();
+      eventSubWsClient.current?.stop();
+      eventSubWsClient.current = undefined;
     };
   }, [auth]);
 

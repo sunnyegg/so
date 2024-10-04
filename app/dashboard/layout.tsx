@@ -9,7 +9,11 @@ import TopBar from "@/components/common/topbar";
 import { toast } from "@/components/ui/use-toast";
 
 import { Auth } from "@/types/auth";
-import { PersistAttendance, PersistAuth } from "@/types/persist";
+import {
+  PersistAttendance,
+  PersistAuth,
+  PersistChannel,
+} from "@/types/persist";
 
 import StoreProvider from "@/contexts/store";
 
@@ -57,12 +61,14 @@ export default function DashboardLayout({
     const data = (await res.json()) as RefreshTokenResponse;
     const user = auth.user;
     setAuth({ ...data.data, user });
+    router.refresh();
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     browserStorage.remove(PersistAuth.name);
     browserStorage.remove(PersistAttendance.name);
-    router.push("/");
+    browserStorage.remove(PersistChannel.name);
+    router.replace("/");
   };
 
   useEffect(() => {

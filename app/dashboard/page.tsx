@@ -7,7 +7,7 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/dashboard/shoutout");
+    router.replace("/dashboard/shoutout");
   }, []);
 
   return <div></div>;

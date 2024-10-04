@@ -1,10 +1,10 @@
 "use client";
 
-import { memo, useEffect } from "react";
+import { memo } from "react";
 
 import Link from "next/link";
 import { Coiny, Fira_Sans } from "next/font/google";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import LoginButton from "./login-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,23 +33,16 @@ function TopBar({ handleLogout }: { handleLogout?: () => void }) {
   const isActivePath = (path: string) =>
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
   const isDashboardPath = () => pathname && pathname.startsWith("/dashboard");
-  const router = useRouter();
 
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
 
-  useEffect(() => {
-    if (pathname === "/" && auth.accessToken) {
-      router.push("/dashboard/shoutout");
-    }
-  }, [auth]);
-
   return (
     <section className={`flex items-center justify-between ${fira.className}`}>
       <Link
-        href={"/"}
+        href={auth.accessToken ? "/dashboard/shoutout" : "/"}
         className={`mx-auto flex items-center justify-center text-[1.2rem] md:mx-0 ${coiny.className}`}
       >
         <div>STREAM</div>

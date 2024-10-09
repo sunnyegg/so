@@ -1,5 +1,5 @@
 export type Stream = {
-  id?: string;
+  id?: number;
   streamId: string;
   gameName: string;
   title: string;

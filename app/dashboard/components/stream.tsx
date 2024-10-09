@@ -1,28 +1,23 @@
 import dayjs from "dayjs";
-import { memo, useEffect, useState } from "react";
+import { memo, useContext, useEffect } from "react";
 
 import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
+import { Stream } from "@/types/stream";
 import { PersistAuth } from "@/types/persist";
-
-type Stream = {
-  title: string;
-  gameName: string;
-  startDate: string;
-  isLive: boolean;
-};
+import { TwitchContext } from "@/contexts/twitch";
 
 function StreamCard() {
   const { toast } = useToast();
-
-  const [stream, setStream] = useState<Stream>({} as Stream);
 
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
+
+  const { setStream, stream } = useContext(TwitchContext);
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -35,17 +30,17 @@ function StreamCard() {
       getChannelInfo(auth.user.login, auth.accessToken).then((res) => {
         if (res.status) {
           const data = res.data as Stream;
-          setStream({ ...data, isLive: false });
+          setStream({ ...data, isLive: false, streamId: "" });
           return;
         }
       });
       return;
     }
 
-    getCurrentBroadcast(auth.user.login, auth.accessToken).then((res) => {
+    getOrCreateBroadcast(auth.user.login, auth.accessToken).then((res) => {
       if (res.status) {
         const data = res.data as Stream;
-        setStream({ ...data, isLive: true });
+        setStream(data);
         return;
       }
 
@@ -53,7 +48,7 @@ function StreamCard() {
         getChannelInfo(auth.user.login, auth.accessToken).then((res) => {
           if (res.status) {
             const data = res.data as Stream;
-            setStream({ ...data, isLive: false });
+            setStream({ ...data, isLive: false, streamId: "" });
             return;
           }
         });
@@ -95,8 +90,8 @@ function StreamCard() {
   );
 }
 
-const getCurrentBroadcast = async (login: string, token: string) => {
-  const res = await fetch(`/api/broadcast/current?login=${login}`, {
+const getOrCreateBroadcast = async (login: string, token: string) => {
+  const res = await fetch(`/api/broadcast/get-or-create?login=${login}`, {
     headers: {
       authorization: `Bearer ${token}`,
     },

@@ -39,6 +39,7 @@ type TwitchContextType = {
   chat: TwitchChatContextType;
   stream: Stream;
   setLive: (live: boolean) => void;
+  setStream: React.Dispatch<React.SetStateAction<Stream>>;
 };
 
 export const TwitchContext = createContext<TwitchContextType>({
@@ -62,6 +63,7 @@ export const TwitchContext = createContext<TwitchContextType>({
     isLive: false,
   },
   setLive: () => {},
+  setStream: () => {},
 });
 
 export default function TwitchProvider({
@@ -332,13 +334,62 @@ export default function TwitchProvider({
     eventSubWsClient.current.start();
 
     // events
-    eventSubWsClient.current.onStreamOnline(userId, (e) => {
-      setLive(true);
+    eventSubWsClient.current.onStreamOnline(userId, async (e) => {
+      const getOrCreateBroadcastRes = await getOrCreateBroadcast(
+        e.broadcasterName,
+        token
+      );
+      if (!getOrCreateBroadcastRes.status) {
+        console.log("Failed to get or create broadcast", e);
+        toast({
+          title: "Failed to get or create broadcast",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+
+      const streamData: Stream = getOrCreateBroadcastRes.data;
+      setStream(streamData);
+
       toast({
         title: "Stream Online",
         description: "You are now live",
         variant: "success",
         duration: 3000,
+      });
+
+      eventSubWsClient.current?.onChannelRedemptionAdd(userId, async (e) => {
+        if (e.userId === userId) return;
+
+        const chatterRes = await fetch(
+          `/api/channel/info?login=${e.userName}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (!chatterRes.ok) {
+          console.log("Failed to get chatter info", await chatterRes.json());
+          return;
+        }
+
+        const chatterData = (await chatterRes.json()) as ChannelResponse;
+
+        addToShoutout(
+          {
+            id: Date.now().toString(),
+            login: e.userName,
+            displayName: chatterData.data.displayName,
+            followers: chatterData.data.followers,
+            lastSeenPlaying: chatterData.data.gameName,
+            profileImageUrl: chatterData.data.profileImageUrl,
+            presentAt: new Date().toISOString(),
+          },
+          token,
+          e.broadcasterName
+        );
       });
     });
 
@@ -349,36 +400,6 @@ export default function TwitchProvider({
         description: "You are offline",
         duration: 3000,
       });
-    });
-
-    eventSubWsClient.current.onChannelRedemptionAdd(userId, async (e) => {
-      if (e.userId === userId) return;
-
-      const chatterRes = await fetch(`/api/channel/info?login=${e.userName}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!chatterRes.ok) {
-        console.log("Failed to get chatter info", await chatterRes.json());
-        return;
-      }
-
-      const chatterData = (await chatterRes.json()) as ChannelResponse;
-
-      addToShoutout(
-        {
-          id: Date.now().toString(),
-          login: e.userName,
-          displayName: chatterData.data.displayName,
-          followers: chatterData.data.followers,
-          lastSeenPlaying: chatterData.data.gameName,
-          profileImageUrl: chatterData.data.profileImageUrl,
-          presentAt: new Date().toISOString(),
-        },
-        token,
-        e.broadcasterName
-      );
     });
 
     eventSubWsClient.current.onUserSocketConnect(() => {
@@ -406,6 +427,23 @@ export default function TwitchProvider({
       ...prevStream,
       isLive: live,
     }));
+  };
+
+  const getOrCreateBroadcast = async (login: string, token: string) => {
+    const res = await fetch(`/api/broadcast/get-or-create?login=${login}`, {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) {
+      return {
+        code: res.status,
+        status: false,
+      };
+    }
+
+    const data = await res.json();
+    return data;
   };
 
   useEffect(() => {
@@ -443,6 +481,7 @@ export default function TwitchProvider({
         },
         stream,
         setLive,
+        setStream,
       }}
     >
       {children}

@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import usePersistState from "@/hooks/use-persist-state";
 
@@ -170,35 +176,51 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
-          {settings.autoSo ? (
-            <>
-              <Button variant={"streamegg-disabled"}>!so</Button>
-              <Button variant={"streamegg-disabled"}>/shoutout</Button>
-            </>
-          ) : (
-            <>
-              <Button
-                className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
-                onClick={() => {
-                  handleMessageSO(auth.accessToken, login, channel);
-                }}
-                isLoading={isSoLoading}
-              >
-                !so
-              </Button>
-              <Button
-                className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
-                onClick={() => {
-                  handleSendSO(auth.accessToken, channel, login);
-                }}
-                isLoading={isShoutoutLoading}
-              >
-                /shoutout
-              </Button>
-            </>
-          )}
-        </div>
+        <TooltipProvider>
+          <div className="flex flex-col gap-2">
+            {settings.autoSo ? (
+              <>
+                <Button variant={"streamegg-disabled"}>!so</Button>
+                <Button variant={"streamegg-disabled"}>/shoutout</Button>
+              </>
+            ) : (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
+                      onClick={() => {
+                        handleMessageSO(auth.accessToken, login, channel);
+                      }}
+                      isLoading={isSoLoading}
+                    >
+                      !so
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Send a "!so" message to the chat</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
+                      onClick={() => {
+                        handleSendSO(auth.accessToken, channel, login);
+                      }}
+                      isLoading={isShoutoutLoading}
+                    >
+                      /shoutout
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Execute "/shoutout" command in chat</p>
+                  </TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
+        </TooltipProvider>
       </div>
 
       <Progress

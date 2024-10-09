@@ -22,17 +22,17 @@ export default async function handler(req: any, res: any) {
     const dbRes = await supabase()
       .from("broadcasts")
       .select("*")
-      .eq("streamId", currentBroadcast.id);
+      .eq("stream_id", currentBroadcast.id);
 
     // if not found, create
     if (dbRes.status === 404) {
       const createRes = await supabase().from("broadcasts").insert({
-        streamId: currentBroadcast.id,
-        broadcasterId: currentBroadcast.userId,
-        broadcasterName: currentBroadcast.userName,
-        gameName: currentBroadcast.gameName,
+        stream_id: currentBroadcast.id,
+        broadcaster_id: currentBroadcast.userId,
+        broadcaster_name: currentBroadcast.userName,
+        game_name: currentBroadcast.gameName,
         title: currentBroadcast.title,
-        startDate: currentBroadcast.startDate.toISOString(),
+        start_date: currentBroadcast.startDate.toISOString(),
       });
       if (createRes.status !== 200) {
         console.log(createRes.error);
@@ -47,10 +47,10 @@ export default async function handler(req: any, res: any) {
 
     const data = {
       id: dbRes.data?.[0].id,
-      streamId: dbRes.data?.[0].id,
-      gameName: dbRes.data?.[0].gameName,
+      streamId: dbRes.data?.[0].stream_id,
+      gameName: dbRes.data?.[0].game_name,
       title: dbRes.data?.[0].title,
-      startDate: dbRes.data?.[0].startDate.toISOString(),
+      startDate: dbRes.data?.[0].start_date.toISOString(),
       isLive: true,
     } as Stream;
 

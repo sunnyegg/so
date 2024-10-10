@@ -7,3 +7,17 @@ export type Channel = {
   profileImageUrl: string;
   followers: number;
 };
+
+export type ModeratedChannel = {
+  id: string;
+  login: string;
+  displayName: string;
+  profileImageUrl: string;
+};
+
+export type SelectedChannel = {
+  id: string;
+  login: string;
+  displayName: string;
+  profileImageUrl: string;
+};

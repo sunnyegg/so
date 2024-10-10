@@ -1,23 +1,29 @@
 import dayjs from "dayjs";
-import { memo, useContext, useEffect } from "react";
+import { memo, useEffect } from "react";
 
 import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { Stream } from "@/types/stream";
-import { PersistAuth } from "@/types/persist";
-import { TwitchContext } from "@/contexts/twitch";
+import { PersistAuth, PersistStream } from "@/types/persist";
 
-function StreamCard() {
+type StreamCardProps = {
+  channel: string;
+};
+
+function StreamCard(props: StreamCardProps) {
+  const { channel } = props;
   const { toast } = useToast();
 
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
-
-  const { setStream, stream } = useContext(TwitchContext);
+  const [stream, setStream] = usePersistState(
+    PersistStream.name,
+    PersistStream.defaultValue
+  ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -27,7 +33,7 @@ function StreamCard() {
     }
 
     if (env === "dev") {
-      getChannelInfo(auth.user.login, auth.accessToken).then((res) => {
+      getChannelInfo(channel, auth.accessToken).then((res) => {
         if (res.status) {
           const data = res.data as Stream;
           setStream({ ...data, isLive: false, streamId: "" });
@@ -37,7 +43,7 @@ function StreamCard() {
       return;
     }
 
-    getOrCreateBroadcast(auth.user.login, auth.accessToken).then((res) => {
+    getOrCreateBroadcast(channel, auth.accessToken).then((res) => {
       if (res.status) {
         const data = res.data as Stream;
         setStream(data);
@@ -45,7 +51,7 @@ function StreamCard() {
       }
 
       if (res.code === 404) {
-        getChannelInfo(auth.user.login, auth.accessToken).then((res) => {
+        getChannelInfo(channel, auth.accessToken).then((res) => {
           if (res.status) {
             const data = res.data as Stream;
             setStream({ ...data, isLive: false, streamId: "" });
@@ -65,7 +71,7 @@ function StreamCard() {
   }, [auth]);
 
   return (
-    <div className="flex flex-col rounded-md bg-so-secondary-color p-4">
+    <div className="mt-8 flex flex-col rounded-md bg-so-secondary-color p-4">
       <div className="text-lg md:text-[1.5rem]">
         {stream.isLive ? "Ongoing " : "Last "} Stream Info
       </div>

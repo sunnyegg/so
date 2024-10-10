@@ -24,15 +24,47 @@ export default async function handler(req: any, res: any) {
       .select("*")
       .eq("stream_id", currentBroadcast.id);
 
+    if (dbRes.status !== 200) {
+      console.log(dbRes.error);
+      return res.status(500).json({ status: false });
+    }
+
+    let outputData: Stream = {
+      streamId: "",
+      gameName: "",
+      title: "",
+      startDate: "",
+      isLive: false,
+    };
+
+    // if found, use db data
+    if (dbRes.status === 200 && dbRes.count) {
+      outputData = {
+        streamId: dbRes.data[0].stream_id,
+        gameName: dbRes.data[0].game_name,
+        title: dbRes.data[0].title,
+        startDate: dbRes.data[0].start_date.toISOString(),
+        isLive: true,
+      };
+    }
+
     // if not found, create
-    if (dbRes.status === 404) {
+    if (dbRes.status === 200 && !dbRes.count) {
+      outputData = {
+        streamId: currentBroadcast.id,
+        gameName: currentBroadcast.gameName,
+        title: currentBroadcast.title,
+        startDate: currentBroadcast.startDate.toISOString(),
+        isLive: true,
+      };
+
       const createRes = await supabase().from("broadcasts").insert({
-        stream_id: currentBroadcast.id,
+        stream_id: outputData.streamId,
         broadcaster_id: currentBroadcast.userId,
         broadcaster_name: currentBroadcast.userName,
-        game_name: currentBroadcast.gameName,
-        title: currentBroadcast.title,
-        start_date: currentBroadcast.startDate.toISOString(),
+        game_name: outputData.gameName,
+        title: outputData.title,
+        start_date: outputData.startDate,
       });
       if (createRes.status !== 200) {
         console.log(createRes.error);
@@ -40,23 +72,9 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    if (dbRes.status !== 200) {
-      console.log(dbRes.error);
-      return res.status(500).json({ status: false });
-    }
-
-    const data = {
-      id: dbRes.data?.[0].id,
-      streamId: dbRes.data?.[0].stream_id,
-      gameName: dbRes.data?.[0].game_name,
-      title: dbRes.data?.[0].title,
-      startDate: dbRes.data?.[0].start_date.toISOString(),
-      isLive: true,
-    } as Stream;
-
     return res.status(200).json({
       status: true,
-      data,
+      data: outputData,
     });
   } catch (error: any) {
     console.log(error);

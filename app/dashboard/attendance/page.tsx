@@ -20,9 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import StreamCard from "../components/stream";
-import Divider from "@/components/common/divider";
-
 import usePersistState from "@/hooks/use-persist-state";
 
 import { PersistAttendance } from "@/types/persist";
@@ -96,10 +93,6 @@ export default function AttendancePage() {
 
   return (
     <div className="mt-8">
-      <StreamCard />
-
-      <Divider />
-
       <div className="mt-8">
         <span className="text-sm">Attendees: {attendance.length}</span>
 

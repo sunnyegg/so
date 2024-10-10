@@ -17,8 +17,8 @@ export default async function handler(req: any, res: any) {
 
     // TODO: get from supabase
     const dummy = {
-      autoSo: true,
-      autoSoDelay: 5,
+      autoSo: false,
+      autoSoDelay: 0,
       blacklistUsernames: "",
       blacklistWords: "",
     };

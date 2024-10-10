@@ -23,6 +23,7 @@ import {
 import { Settings } from "@/types/settings";
 
 import { TwitchContext } from "@/contexts/twitch";
+import { SelectedChannel } from "@/types/channel";
 
 export type ShoutoutCardProps = {
   id: string;
@@ -62,7 +63,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
   const [channel] = usePersistState(
     PersistChannel.name,
     PersistChannel.defaultValue
-  ) as [string];
+  ) as [SelectedChannel];
   const [_, setAttendance] = usePersistState(
     PersistAttendance.name,
     PersistAttendance.defaultValue
@@ -99,9 +100,8 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
     setIsSoLoading(false);
   };
 
-  const handleSendSO = async (token: string, ch: string, login: string) => {
+  const handleSendSO = async (token: string, login: string, ch: string) => {
     setIsShoutoutLoading(true);
-    const moderator = ch; // TODO: get moderator from context
 
     const res = await sendSO(token, login, ch);
     if (res !== "") {
@@ -190,7 +190,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
                     <Button
                       className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
                       onClick={() => {
-                        handleMessageSO(auth.accessToken, login, channel);
+                        handleMessageSO(auth.accessToken, login, channel.login);
                       }}
                       isLoading={isSoLoading}
                     >
@@ -206,7 +206,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
                     <Button
                       className="bg-so-accent-color text-so-primary-color hover:bg-so-primary-color hover:text-so-accent-color"
                       onClick={() => {
-                        handleSendSO(auth.accessToken, channel, login);
+                        handleSendSO(auth.accessToken, login, channel.login);
                       }}
                       isLoading={isShoutoutLoading}
                     >

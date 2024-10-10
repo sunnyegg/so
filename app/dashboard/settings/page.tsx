@@ -3,8 +3,6 @@
 import { useCallback } from "react";
 
 import SettingsForm from "./components/form";
-import StreamCard from "../components/stream";
-import Divider from "@/components/common/divider";
 
 import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
@@ -28,10 +26,6 @@ export default function SettingsPage() {
 
   return (
     <div className="mt-8">
-      <StreamCard />
-
-      <Divider />
-
       {auth.accessToken && (
         <SettingsForm
           auth={auth}

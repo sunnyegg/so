@@ -3,13 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import TopBar from "@/components/common/topbar";
 import { useToast } from "@/components/ui/use-toast";
 
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { PersistAuth, PersistChannel } from "@/types/persist";
+import { SelectedChannel } from "@/types/channel";
 
 type LoginResponse = {
   status: boolean;
@@ -28,10 +28,10 @@ export default function Login() {
     PersistAuth.name,
     PersistAuth.defaultValue
   );
-  const [, setChannel] = usePersistState(
+  const [_, setChannel] = usePersistState(
     PersistChannel.name,
     PersistChannel.defaultValue
-  );
+  ) as [SelectedChannel, React.Dispatch<React.SetStateAction<SelectedChannel>>];
 
   const isLoggedIn = useRef(false);
 
@@ -74,7 +74,12 @@ export default function Login() {
       }
 
       setAuth({ ...data.data });
-      setChannel(data.data.user.login);
+      setChannel({
+        id: data.data.user.id,
+        login: data.data.user.login,
+        displayName: data.data.user.displayName,
+        profileImageUrl: data.data.user.profileImageUrl,
+      });
 
       toast({
         description: "Successfully logged in",
@@ -91,8 +96,6 @@ export default function Login() {
 
   return (
     <div className="mx-4 my-8 md:mx-32">
-      <TopBar />
-
       <p>Processing...</p>
     </div>
   );

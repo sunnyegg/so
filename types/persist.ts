@@ -2,6 +2,7 @@ import { Auth } from "./auth";
 import { Chatter } from "./chat";
 import { Stream } from "./stream";
 import { Settings } from "./settings";
+import { SelectedChannel } from "./channel";
 
 export const PersistAuth = {
   name: "auth",
@@ -10,7 +11,7 @@ export const PersistAuth = {
 
 export const PersistChannel = {
   name: "channel",
-  defaultValue: "",
+  defaultValue: {} as SelectedChannel,
 };
 
 export const PersistAttendance = {

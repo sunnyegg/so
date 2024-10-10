@@ -1,10 +1,12 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 
 import Link from "next/link";
 import { Coiny, Fira_Sans } from "next/font/google";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+import { Check } from "lucide-react";
 
 import LoginButton from "./login-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,7 +15,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -21,6 +27,7 @@ import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { PersistAuth } from "@/types/persist";
+import { ModeratedChannel, SelectedChannel } from "@/types/channel";
 
 const coiny = Coiny({ subsets: ["latin"], weight: ["400"] });
 const fira = Fira_Sans({
@@ -28,16 +35,32 @@ const fira = Fira_Sans({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-function TopBar({ handleLogout }: { handleLogout?: () => void }) {
+type TopBarProps = {
+  handleLogout: () => void;
+  moderatedChannels: ModeratedChannel[];
+  channel: SelectedChannel;
+  setChannel: React.Dispatch<React.SetStateAction<SelectedChannel>>;
+};
+
+function TopBar(props: TopBarProps) {
+  const { handleLogout, moderatedChannels, channel, setChannel } = props;
+
   const pathname = usePathname();
   const isActivePath = (path: string) =>
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
   const isDashboardPath = () => pathname && pathname.startsWith("/dashboard");
 
+  const router = useRouter();
+
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
+
+  const handleChangeChannel = (channel: SelectedChannel) => {
+    setChannel(channel);
+    router.refresh();
+  };
 
   return (
     <section className={`flex items-center justify-between ${fira.className}`}>
@@ -111,15 +134,62 @@ function TopBar({ handleLogout }: { handleLogout?: () => void }) {
             <DropdownMenuTrigger asChild className="cursor-pointer">
               <Avatar>
                 <AvatarImage
-                  src={auth.user?.profileImageUrl}
-                  alt={auth.user?.login}
+                  src={channel?.profileImageUrl}
+                  alt={channel?.login}
                 />
-                <AvatarFallback>{auth.user?.login.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{channel.login?.charAt(0)}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mt-2 bg-so-secondary-color text-so-primary-text-color">
-              <DropdownMenuLabel>{auth.user?.displayName}</DropdownMenuLabel>
+              <DropdownMenuLabel>{channel?.displayName}</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Change Channel</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="bg-so-secondary-color text-so-primary-text-color">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleChangeChannel({
+                          id: auth.user?.id,
+                          login: auth.user?.login,
+                          displayName: auth.user?.displayName,
+                          profileImageUrl: auth.user?.profileImageUrl,
+                        })
+                      }
+                    >
+                      <ChannelItem
+                        current={channel.login}
+                        login={auth.user?.login}
+                        displayName="My Channel"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {moderatedChannels &&
+                      moderatedChannels.length &&
+                      moderatedChannels.map((ch) => {
+                        return (
+                          <DropdownMenuItem
+                            key={ch.id}
+                            onClick={() =>
+                              handleChangeChannel({
+                                id: ch.id,
+                                login: ch.login,
+                                displayName: ch.displayName,
+                                profileImageUrl: ch.profileImageUrl,
+                              })
+                            }
+                          >
+                            <ChannelItem
+                              current={channel.login}
+                              login={ch.login}
+                              displayName={ch.displayName}
+                            />
+                          </DropdownMenuItem>
+                        );
+                      })}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -128,5 +198,21 @@ function TopBar({ handleLogout }: { handleLogout?: () => void }) {
     </section>
   );
 }
+
+const ChannelItem = ({
+  current,
+  login,
+  displayName,
+}: {
+  current: string;
+  login: string;
+  displayName: string;
+}) => {
+  return (
+    <>
+      {displayName} {current === login && <Check className="ml-2" size={16} />}
+    </>
+  );
+};
 
 export default memo(TopBar);

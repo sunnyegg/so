@@ -36,10 +36,10 @@ const fira = Fira_Sans({
 });
 
 type TopBarProps = {
-  handleLogout: () => void;
-  moderatedChannels: ModeratedChannel[];
-  channel: SelectedChannel;
-  setChannel: React.Dispatch<React.SetStateAction<SelectedChannel>>;
+  handleLogout?: () => void;
+  moderatedChannels?: ModeratedChannel[];
+  channel?: SelectedChannel;
+  setChannel?: React.Dispatch<React.SetStateAction<SelectedChannel>>;
 };
 
 function TopBar(props: TopBarProps) {
@@ -58,7 +58,7 @@ function TopBar(props: TopBarProps) {
   ) as [Auth];
 
   const handleChangeChannel = (channel: SelectedChannel) => {
-    setChannel(channel);
+    setChannel && setChannel(channel);
     router.refresh();
   };
 
@@ -137,7 +137,7 @@ function TopBar(props: TopBarProps) {
                   src={channel?.profileImageUrl}
                   alt={channel?.login}
                 />
-                <AvatarFallback>{channel.login?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>{channel?.login?.charAt(0)}</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="mt-2 bg-so-secondary-color text-so-primary-text-color">
@@ -158,7 +158,7 @@ function TopBar(props: TopBarProps) {
                       }
                     >
                       <ChannelItem
-                        current={channel.login}
+                        current={channel?.login || ""}
                         login={auth.user?.login}
                         displayName="My Channel"
                       />
@@ -180,7 +180,7 @@ function TopBar(props: TopBarProps) {
                             }
                           >
                             <ChannelItem
-                              current={channel.login}
+                              current={channel?.login || ""}
                               login={ch.login}
                               displayName={ch.displayName}
                             />

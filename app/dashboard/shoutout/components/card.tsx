@@ -198,7 +198,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Send a "!so" message to the chat</p>
+                    <p>Send a `&quot;`!so`&quot;` message to the chat</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
@@ -214,7 +214,7 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Execute "/shoutout" command in chat</p>
+                    <p>Execute `&quot;`/shoutout`&quot;` command in chat</p>
                   </TooltipContent>
                 </Tooltip>
               </>

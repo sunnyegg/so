@@ -22,10 +22,12 @@ export default async function handler(req: any, res: any) {
     const dbRes = await supabase()
       .from("broadcasts")
       .select("*")
-      .eq("stream_id", currentBroadcast.id);
+      .eq("stream_id", currentBroadcast.id)
+      .limit(1)
+      .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      console.log(dbRes.error);
+      console.log(dbRes);
       return res.status(500).json({ status: false });
     }
 
@@ -38,18 +40,18 @@ export default async function handler(req: any, res: any) {
     };
 
     // if found, use db data
-    if (dbRes.status === 200 && dbRes.count) {
+    if (dbRes.status === 200 && dbRes.data?.length) {
       outputData = {
         streamId: dbRes.data[0].stream_id,
         gameName: dbRes.data[0].game_name,
         title: dbRes.data[0].title,
-        startDate: dbRes.data[0].start_date.toISOString(),
+        startDate: dbRes.data[0].start_date,
         isLive: true,
       };
     }
 
     // if not found, create
-    if (dbRes.status === 200 && !dbRes.count) {
+    if (dbRes.status === 200 && !dbRes.data?.length) {
       outputData = {
         streamId: currentBroadcast.id,
         gameName: currentBroadcast.gameName,
@@ -66,8 +68,8 @@ export default async function handler(req: any, res: any) {
         title: outputData.title,
         start_date: outputData.startDate,
       });
-      if (createRes.status !== 200) {
-        console.log(createRes.error);
+      if (createRes.status !== 201) {
+        console.log(createRes);
         return res.status(500).json({ status: false });
       }
     }

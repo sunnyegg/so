@@ -8,16 +8,21 @@ import ShoutoutManager from "@/app/dashboard/shoutout/components/manager";
 import { TwitchContext } from "@/contexts/twitch";
 import usePersistState from "@/hooks/use-persist-state";
 
+import { Stream } from "@/types/stream";
 import { Settings } from "@/types/settings";
-import { PersistSettings } from "@/types/persist";
+import { PersistSettings, PersistStream } from "@/types/persist";
 
 export default function ShoutoutPage() {
-  const { chat, stream } = useContext(TwitchContext);
+  const { isConnectedChat } = useContext(TwitchContext).chat;
 
   const [settings] = usePersistState(
     PersistSettings.name,
     PersistSettings.defaultValue
   ) as [Settings];
+  const [stream, setStream] = usePersistState(
+    PersistStream.name,
+    PersistStream.defaultValue
+  ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -31,7 +36,7 @@ export default function ShoutoutPage() {
         )}
 
         <div className={"" + (settings.autoSo && "blur")}>
-          {!chat.isConnectedChat && stream.isLive && (
+          {!isConnectedChat && stream.isLive && (
             <div className="animate-fade-in mt-8 text-center">
               Connecting to chat...
             </div>
@@ -49,7 +54,9 @@ export default function ShoutoutPage() {
               {env === "dev" && (
                 <Button
                   variant={"streamegg"}
-                  onClick={() => stream.setLive(true)}
+                  onClick={() =>
+                    setStream((prevStream) => ({ ...prevStream, isLive: true }))
+                  }
                 >
                   Live
                 </Button>

@@ -1,14 +1,15 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo } from "react";
 
 import Link from "next/link";
 import { Coiny, Fira_Sans } from "next/font/google";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { Check } from "lucide-react";
 
 import LoginButton from "./login-button";
+import { toast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -50,8 +51,6 @@ function TopBar(props: TopBarProps) {
     pathname === path ? "bg-so-secondary-color rounded-md" : "";
   const isDashboardPath = () => pathname && pathname.startsWith("/dashboard");
 
-  const router = useRouter();
-
   const [auth] = usePersistState(
     PersistAuth.name,
     PersistAuth.defaultValue
@@ -59,7 +58,15 @@ function TopBar(props: TopBarProps) {
 
   const handleChangeChannel = (channel: SelectedChannel) => {
     setChannel && setChannel(channel);
-    router.refresh();
+    toast({
+      title: "Channel changed",
+      description: "Refreshing page...",
+      duration: 1500,
+      variant: "success",
+    });
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   };
 
   return (

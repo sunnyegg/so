@@ -96,7 +96,6 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
       duration: 2000,
     });
 
-    handleRemoveFromShoutout(id, removeFromShoutout);
     setIsSoLoading(false);
   };
 
@@ -121,7 +120,6 @@ export default function ShoutoutCard(props: ShoutoutCardProps) {
       duration: 2000,
     });
 
-    handleRemoveFromShoutout(id, removeFromShoutout);
     setIsShoutoutLoading(false);
   };
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { useContext, useEffect, useState } from "react";
 import dayjs from "dayjs";
 
 import {
@@ -19,11 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import usePersistState from "@/hooks/use-persist-state";
 
 import { PersistAttendance } from "@/types/persist";
 import { Chatter } from "@/types/chat";
+
+import { TwitchContext } from "@/contexts/twitch";
 
 type ColumnAttendance = {
   displayName: string;
@@ -42,11 +44,10 @@ export default function AttendancePage() {
       cell: (info) => {
         return (
           <div>
-            <Image
-              src={info.getValue()}
-              alt="avatar"
-              className="h-8 w-8 rounded-full"
-            />
+            <Avatar>
+              <AvatarImage src={info.getValue()} alt="avatar" />
+              <AvatarFallback></AvatarFallback>
+            </Avatar>
           </div>
         );
       },
@@ -70,19 +71,30 @@ export default function AttendancePage() {
     PersistAttendance.defaultValue
   ) as [Chatter[]];
 
+  const { attendance: attendanceTemp, setAttendance } =
+    useContext(TwitchContext).chat;
+
   const [data, setData] = useState<ColumnAttendance[]>([]);
 
   useEffect(() => {
-    setData(
-      attendance.map((chatter) => {
-        return {
-          displayName: chatter.displayName,
-          profileImageUrl: chatter.profileImageUrl as string,
-          followers: chatter.followers,
-          presentAt: chatter.presentAt,
-        };
-      })
-    );
+    if (attendanceTemp.length) {
+      setData(
+        attendanceTemp.map((chatter) => {
+          return {
+            displayName: chatter.displayName,
+            profileImageUrl: chatter.profileImageUrl as string,
+            followers: chatter.followers,
+            presentAt: chatter.presentAt,
+          };
+        })
+      );
+    }
+  }, [attendanceTemp]);
+
+  useEffect(() => {
+    if (attendance.length) {
+      setAttendance(attendance);
+    }
   }, [attendance]);
 
   const table = useReactTable({
@@ -94,7 +106,7 @@ export default function AttendancePage() {
   return (
     <div className="mt-8">
       <div className="mt-8">
-        <span className="text-sm">Attendees: {attendance.length}</span>
+        <span className="text-sm">Attendees: {attendanceTemp.length}</span>
 
         <Table>
           <TableHeader>

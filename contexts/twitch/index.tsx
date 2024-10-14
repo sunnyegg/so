@@ -43,6 +43,7 @@ type TwitchChatContextType = {
   removeFromShoutout: (id: string) => void;
   sendMessageSO: (token: string, login: string, ch: string) => Promise<string>;
   sendSO: (token: string, login: string, ch: string) => Promise<string>;
+  setAttendance: React.Dispatch<React.SetStateAction<Chatter[]>>;
 };
 
 type TwitchStreamContextType = {
@@ -73,6 +74,7 @@ export const TwitchContext = createContext<TwitchContextType>({
     },
     setIsConnectedChat: () => {},
     setIsConnectedEventSub: () => {},
+    setAttendance: () => {},
   },
   stream: {
     isLive: false,
@@ -488,6 +490,7 @@ export default function TwitchProvider({
           removeFromShoutout,
           sendMessageSO,
           sendSO,
+          setAttendance,
         },
         stream: {
           isLive: stream.isLive,

@@ -8,21 +8,17 @@ import ShoutoutManager from "@/app/dashboard/shoutout/components/manager";
 import { TwitchContext } from "@/contexts/twitch";
 import usePersistState from "@/hooks/use-persist-state";
 
-import { Stream } from "@/types/stream";
 import { Settings } from "@/types/settings";
-import { PersistSettings, PersistStream } from "@/types/persist";
+import { PersistSettings } from "@/types/persist";
 
 export default function ShoutoutPage() {
   const { isConnectedChat } = useContext(TwitchContext).chat;
+  const { isLive, setLive } = useContext(TwitchContext).stream;
 
   const [settings] = usePersistState(
     PersistSettings.name,
     PersistSettings.defaultValue
   ) as [Settings];
-  const [stream, setStream] = usePersistState(
-    PersistStream.name,
-    PersistStream.defaultValue
-  ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -36,7 +32,7 @@ export default function ShoutoutPage() {
         )}
 
         <div className={"" + (settings.autoSo && "blur")}>
-          {!isConnectedChat && stream.isLive && (
+          {!isConnectedChat && isLive && (
             <div className="animate-fade-in mt-8 text-center">
               Connecting to chat...
             </div>
@@ -44,7 +40,7 @@ export default function ShoutoutPage() {
 
           <ShoutoutManager />
 
-          {!stream.isLive && (
+          {!isLive && (
             <div className="mt-8 text-center">
               <div className="animate-fade-in">
                 It seems that you are not live right now...
@@ -52,12 +48,7 @@ export default function ShoutoutPage() {
 
               {/* dev */}
               {env === "dev" && (
-                <Button
-                  variant={"streamegg"}
-                  onClick={() =>
-                    setStream((prevStream) => ({ ...prevStream, isLive: true }))
-                  }
-                >
+                <Button variant={"streamegg"} onClick={() => setLive(true)}>
                   Live
                 </Button>
               )}

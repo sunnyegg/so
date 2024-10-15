@@ -46,3 +46,17 @@ export const NewAttendanceQueue = (id: string) => {
 
   return queue;
 };
+
+setInterval(
+  () => {
+    console.log(`Clearing ${NewAttendanceQueue.length} queues`);
+    Object.keys(attendanceQueues).forEach(async (key) => {
+      const queue = attendanceQueues.get(key);
+      if (queue?.isRunning()) {
+        await queue.close();
+      }
+      attendanceQueues.delete(key);
+    });
+  },
+  1000 * 60 * 60 * 12
+); // every 12 hours

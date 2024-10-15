@@ -106,3 +106,11 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ status: false });
   }
 }
+
+setInterval(
+  () => {
+    console.log(`Clearing ${NewAttendanceQueue.length} already presents`);
+    AlreadyPresent.clear();
+  },
+  1000 * 60 * 60 * 12
+); // every 12 hours

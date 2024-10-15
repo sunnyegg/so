@@ -3,7 +3,7 @@ import supabase from "@/db/supabase";
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 
-import { Stream } from "@/types/stream";
+import { Broadcast } from "@/types/broadcast";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -31,8 +31,9 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
 
-    let outputData: Stream = {
+    let outputData: Broadcast = {
       streamId: "",
+      broadcasterId: currentBroadcast.userId,
       gameName: "",
       title: "",
       startDate: "",
@@ -43,6 +44,7 @@ export default async function handler(req: any, res: any) {
     if (dbRes.status === 200 && dbRes.data?.length) {
       outputData = {
         streamId: dbRes.data[0].stream_id,
+        broadcasterId: dbRes.data[0].broadcaster_id,
         gameName: dbRes.data[0].game_name,
         title: dbRes.data[0].title,
         startDate: dbRes.data[0].start_date,
@@ -54,6 +56,7 @@ export default async function handler(req: any, res: any) {
     if (dbRes.status === 200 && !dbRes.data?.length) {
       outputData = {
         streamId: currentBroadcast.id,
+        broadcasterId: currentBroadcast.userId,
         gameName: currentBroadcast.gameName,
         title: currentBroadcast.title,
         startDate: currentBroadcast.startDate.toISOString(),

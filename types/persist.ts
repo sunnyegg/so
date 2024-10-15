@@ -1,6 +1,6 @@
 import { Auth } from "./auth";
 import { Chatter } from "./chat";
-import { Stream } from "./stream";
+import { Broadcast } from "./broadcast";
 import { Settings } from "./settings";
 import { SelectedChannel } from "./channel";
 
@@ -31,5 +31,5 @@ export const PersistSettings = {
 
 export const PersistStream = {
   name: "stream",
-  defaultValue: {} as Stream,
+  defaultValue: {} as Broadcast,
 };

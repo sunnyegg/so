@@ -11,8 +11,8 @@ import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { Chatter } from "@/types/chat";
-import { Stream } from "@/types/stream";
 import { Settings } from "@/types/settings";
+import { Broadcast } from "@/types/broadcast";
 import { Channel, SelectedChannel } from "@/types/channel";
 import { PersistAuth, PersistChannel, PersistStream } from "@/types/persist";
 
@@ -93,6 +93,7 @@ export default function TwitchProvider({
   const [attendance, setAttendance] = useState<Chatter[]>([]);
   const [isConnectedChat, setIsConnectedChat] = useState(false);
   const [isConnectedEventSub, setIsConnectedEventSub] = useState(false);
+  const [isStreamLive, setIsStreamLive] = useState(false);
 
   const alreadyPresent = new Map<string, Chatter>();
 
@@ -107,7 +108,7 @@ export default function TwitchProvider({
   const [stream, setStream] = usePersistState(
     PersistStream.name,
     PersistStream.defaultValue
-  ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
+  ) as [Broadcast, React.Dispatch<React.SetStateAction<Broadcast>>];
 
   const chatClient = useRef<ChatClient | undefined>(undefined);
   const eventSubWsClient = useRef<EventSubWsListener | undefined>(undefined);
@@ -233,6 +234,7 @@ export default function TwitchProvider({
       ...prevStream,
       isLive: live,
     }));
+    setIsStreamLive(live);
   };
 
   const handleConnectChat = async (token: string, channel: string) => {
@@ -259,7 +261,6 @@ export default function TwitchProvider({
 
     // events
     chatClient.current.onMessage(async (ch, user, text) => {
-      console.log(user, text);
       // skip own messages
       if (user === channel) {
         return;
@@ -368,7 +369,7 @@ export default function TwitchProvider({
     eventSubWsClient.current.onStreamOnline(userId, async (e) => {
       getOrCreateBroadcast(e.broadcasterName, auth.accessToken).then((res) => {
         if (res.status) {
-          const data = res.data as Stream;
+          const data = res.data as Broadcast;
           setStream(data);
           return;
         }
@@ -454,6 +455,27 @@ export default function TwitchProvider({
     });
   };
 
+  const intervalAttendance = useRef<NodeJS.Timeout | null>(null);
+  const saveAttendance = async (
+    token: string,
+    stream: Broadcast,
+    attendance: Chatter[]
+  ) => {
+    const body = {
+      streamId: stream.streamId,
+      broadcasterId: stream.broadcasterId,
+      chatters: attendance,
+    };
+
+    fetch("/api/broadcast/save-attendance", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+  };
+
   useEffect(() => {
     if (auth.accessToken && stream.isLive) {
       handleConnectChat(auth.accessToken, channel.login);
@@ -476,6 +498,26 @@ export default function TwitchProvider({
     };
   }, [auth]);
 
+  useEffect(() => {
+    if (!auth.accessToken) return;
+    if (!isStreamLive) return;
+    if (!attendance.length) return;
+    if (!stream.streamId) return;
+
+    intervalAttendance.current = setInterval(
+      () => {
+        saveAttendance(auth.accessToken, stream, attendance);
+      },
+      1000 * 60 * 5 // every 5 minutes
+    );
+
+    return () => {
+      if (intervalAttendance.current) {
+        clearInterval(intervalAttendance.current);
+      }
+    };
+  }, [auth, stream, isStreamLive, attendance]);
+
   return (
     <TwitchContext.Provider
       value={{
@@ -493,7 +535,7 @@ export default function TwitchProvider({
           setAttendance,
         },
         stream: {
-          isLive: stream.isLive,
+          isLive: isStreamLive,
           setLive,
         },
       }}

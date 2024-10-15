@@ -5,7 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
-import { Stream } from "@/types/stream";
+import { Broadcast } from "@/types/broadcast";
 import { PersistAuth, PersistStream } from "@/types/persist";
 
 type StreamCardProps = {
@@ -23,7 +23,7 @@ function StreamCard(props: StreamCardProps) {
   const [stream, setStream] = usePersistState(
     PersistStream.name,
     PersistStream.defaultValue
-  ) as [Stream, React.Dispatch<React.SetStateAction<Stream>>];
+  ) as [Broadcast, React.Dispatch<React.SetStateAction<Broadcast>>];
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -35,7 +35,7 @@ function StreamCard(props: StreamCardProps) {
     if (env === "dev") {
       getChannelInfo(channel, auth.accessToken).then((res) => {
         if (res.status) {
-          const data = res.data as Stream;
+          const data = res.data as Broadcast;
           setStream({ ...data, isLive: false, streamId: "" });
           return;
         }
@@ -45,7 +45,7 @@ function StreamCard(props: StreamCardProps) {
 
     getOrCreateBroadcast(channel, auth.accessToken).then((res) => {
       if (res.status) {
-        const data = res.data as Stream;
+        const data = res.data as Broadcast;
         setStream(data);
         return;
       }
@@ -53,7 +53,7 @@ function StreamCard(props: StreamCardProps) {
       if (res.code === 404) {
         getChannelInfo(channel, auth.accessToken).then((res) => {
           if (res.status) {
-            const data = res.data as Stream;
+            const data = res.data as Broadcast;
             setStream({ ...data, isLive: false, streamId: "" });
             return;
           }

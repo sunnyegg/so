@@ -78,7 +78,8 @@ export default function DashboardLayout({
     const data = (await res.json()) as RefreshTokenResponse;
     const user = auth.user;
     setAuth({ ...data.data, user });
-    router.refresh();
+
+    window.location.reload();
   };
 
   const handleLogout = () => {
@@ -89,6 +90,8 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
+    if (!auth.accessToken) return;
+
     const isExpired =
       auth.expiredAt && auth.expiredAt < new Date().toISOString();
 
@@ -105,11 +108,9 @@ export default function DashboardLayout({
       1000 * 60 * 5 // 5 minutes
     );
 
-    if (auth.accessToken) {
-      getModeratedChannels(auth.user.id, auth.accessToken).then((res) => {
-        setModeratedChannels(res);
-      });
-    }
+    getModeratedChannels(auth.user.id, auth.accessToken).then((res) => {
+      setModeratedChannels(res);
+    });
 
     return () => {
       if (interval.current) {

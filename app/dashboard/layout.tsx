@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import browserStorage from "store";
 import { useRouter } from "next/navigation";
 import { Fira_Mono } from "next/font/google";
@@ -16,11 +16,14 @@ import {
   PersistAttendance,
   PersistAuth,
   PersistChannel,
+  PersistVersion,
 } from "@/types/persist";
 
 import StoreProvider from "@/contexts/store";
 
 import usePersistState from "@/hooks/use-persist-state";
+
+import packageJson from "@/package.json";
 
 const firaMono = Fira_Mono({
   subsets: ["latin"],
@@ -56,6 +59,10 @@ export default function DashboardLayout({
     PersistChannel.name,
     PersistChannel.defaultValue
   ) as [SelectedChannel, React.Dispatch<React.SetStateAction<SelectedChannel>>];
+  const [_, setVersion] = usePersistState(
+    PersistVersion.name,
+    PersistVersion.defaultValue
+  ) as [string, React.Dispatch<React.SetStateAction<string>>];
 
   const interval = useRef<NodeJS.Timeout | null>(null);
 
@@ -118,6 +125,16 @@ export default function DashboardLayout({
       }
     };
   }, [auth]);
+
+  useEffect(() => {
+    const version =
+      browserStorage.get("version") &&
+      JSON.parse(browserStorage.get("version"));
+
+    if (!version || version !== packageJson.version) {
+      setVersion(packageJson.version);
+    }
+  }, []);
 
   return (
     <StoreProvider>

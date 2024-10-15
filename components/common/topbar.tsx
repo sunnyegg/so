@@ -27,7 +27,7 @@ import {
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
-import { PersistAuth } from "@/types/persist";
+import { PersistAuth, PersistVersion } from "@/types/persist";
 import { ModeratedChannel, SelectedChannel } from "@/types/channel";
 
 const coiny = Coiny({ subsets: ["latin"], weight: ["400"] });
@@ -55,6 +55,10 @@ function TopBar(props: TopBarProps) {
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
+  const [version] = usePersistState(
+    PersistVersion.name,
+    PersistVersion.defaultValue
+  ) as [string];
 
   const handleChangeChannel = (channel: SelectedChannel) => {
     setChannel && setChannel(channel);
@@ -198,6 +202,9 @@ function TopBar(props: TopBarProps) {
                 </DropdownMenuPortal>
               </DropdownMenuSub>
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Version: {version}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </>

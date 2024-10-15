@@ -33,3 +33,8 @@ export const PersistStream = {
   name: "stream",
   defaultValue: {} as Broadcast,
 };
+
+export const PersistVersion = {
+  name: "version",
+  defaultValue: "0",
+};

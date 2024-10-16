@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { memo, useEffect } from "react";
+import { memo, useContext, useEffect } from "react";
 
 import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
@@ -7,6 +7,8 @@ import usePersistState from "@/hooks/use-persist-state";
 import { Auth } from "@/types/auth";
 import { Broadcast } from "@/types/broadcast";
 import { PersistAuth, PersistStream } from "@/types/persist";
+
+import { TwitchContext } from "@/contexts/twitch";
 
 type StreamCardProps = {
   channel: string;
@@ -24,6 +26,8 @@ function StreamCard(props: StreamCardProps) {
     PersistStream.name,
     PersistStream.defaultValue
   ) as [Broadcast, React.Dispatch<React.SetStateAction<Broadcast>>];
+
+  const { setLive } = useContext(TwitchContext).stream;
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -47,6 +51,7 @@ function StreamCard(props: StreamCardProps) {
       if (res.status) {
         const data = res.data as Broadcast;
         setStream(data);
+        setLive(true);
         return;
       }
 

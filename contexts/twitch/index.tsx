@@ -218,7 +218,7 @@ export default function TwitchProvider({
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ from: login, to: ch }),
+        body: JSON.stringify({ from: ch, to: login }),
       });
       if (!res.ok) {
         return "Failed to send shoutout";

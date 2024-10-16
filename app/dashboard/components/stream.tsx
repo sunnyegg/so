@@ -22,12 +22,8 @@ function StreamCard(props: StreamCardProps) {
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
-  const [stream, setStream] = usePersistState(
-    PersistStream.name,
-    PersistStream.defaultValue
-  ) as [Broadcast, React.Dispatch<React.SetStateAction<Broadcast>>];
 
-  const { setLive } = useContext(TwitchContext).stream;
+  const { stream, setStream } = useContext(TwitchContext).stream;
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -51,7 +47,6 @@ function StreamCard(props: StreamCardProps) {
       if (res.status) {
         const data = res.data as Broadcast;
         setStream(data);
-        setLive(true);
         return;
       }
 

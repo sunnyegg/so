@@ -49,6 +49,8 @@ type TwitchChatContextType = {
 type TwitchStreamContextType = {
   isLive: boolean;
   setLive: (live: boolean) => void;
+  stream: Broadcast;
+  setStream: React.Dispatch<React.SetStateAction<Broadcast>>;
 };
 
 type TwitchContextType = {
@@ -79,6 +81,15 @@ export const TwitchContext = createContext<TwitchContextType>({
   stream: {
     isLive: false,
     setLive: () => {},
+    stream: {
+      streamId: "",
+      broadcasterId: "",
+      title: "",
+      gameName: "",
+      startDate: "",
+      isLive: false,
+    },
+    setStream: () => {},
   },
 });
 
@@ -537,6 +548,8 @@ export default function TwitchProvider({
         stream: {
           isLive: isStreamLive,
           setLive,
+          stream,
+          setStream,
         },
       }}
     >

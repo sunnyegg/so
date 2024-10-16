@@ -13,7 +13,7 @@ import { PersistSettings } from "@/types/persist";
 
 export default function ShoutoutPage() {
   const { isConnectedChat } = useContext(TwitchContext).chat;
-  const { isLive, setLive } = useContext(TwitchContext).stream;
+  const { stream, setLive } = useContext(TwitchContext).stream;
 
   const [settings] = usePersistState(
     PersistSettings.name,
@@ -32,7 +32,7 @@ export default function ShoutoutPage() {
         )}
 
         <div className={"" + (settings.autoSo && "blur")}>
-          {!isConnectedChat && isLive && (
+          {!isConnectedChat && stream.isLive && (
             <div className="animate-fade-in mt-8 text-center">
               Connecting to chat...
             </div>
@@ -40,7 +40,7 @@ export default function ShoutoutPage() {
 
           <ShoutoutManager />
 
-          {!isLive && (
+          {!stream.isLive && (
             <div className="mt-8 text-center">
               <div className="animate-fade-in">
                 It seems that you are not live right now...

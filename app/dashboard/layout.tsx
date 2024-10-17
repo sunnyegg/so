@@ -16,6 +16,7 @@ import {
   PersistAttendance,
   PersistAuth,
   PersistChannel,
+  PersistStream,
   PersistVersion,
 } from "@/types/persist";
 
@@ -93,6 +94,7 @@ export default function DashboardLayout({
     browserStorage.remove(PersistAuth.name);
     browserStorage.remove(PersistAttendance.name);
     browserStorage.remove(PersistChannel.name);
+    browserStorage.remove(PersistStream.name);
     router.replace("/");
   };
 

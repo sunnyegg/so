@@ -3,7 +3,7 @@ import { Channel } from "@/types/channel";
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 
-const Cache = new Map<string, Channel>();
+import { ChannelCache } from "@/db/in-memory";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -13,10 +13,10 @@ export default async function handler(req: any, res: any) {
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
-    if (Cache.has(login)) {
+    if (ChannelCache.has(login)) {
       return res.status(200).json({
         status: true,
-        data: Cache.get(login),
+        data: ChannelCache.get(login),
       });
     }
 
@@ -41,7 +41,7 @@ export default async function handler(req: any, res: any) {
       followers: followers.total,
     } as Channel;
 
-    Cache.set(login, data);
+    ChannelCache.set(login, data);
 
     return res.status(200).json({
       status: true,
@@ -55,8 +55,8 @@ export default async function handler(req: any, res: any) {
 
 setInterval(
   () => {
-    console.log(`Clearing ${Cache.size} cache entries`);
-    Cache.clear();
+    console.log(`Clearing ChannelCache of ${ChannelCache.size} entries`);
+    ChannelCache.clear();
   },
   1000 * 60 * 5
 ); // every 5 minutes

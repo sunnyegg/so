@@ -1,7 +1,6 @@
 import Queue from "bee-queue";
 import supabase from "@/db/supabase";
-
-const attendanceQueues = new Map<string, Queue>();
+import { AttendanceQueues } from "@/db/in-memory";
 
 export const NewAttendanceQueue = (id: string) => {
   const redisUrl = process.env.NEXT_REDIS_URL;
@@ -9,8 +8,8 @@ export const NewAttendanceQueue = (id: string) => {
     throw new Error("Redis URL is not set");
   }
 
-  if (attendanceQueues.has(id)) {
-    return attendanceQueues.get(id)!;
+  if (AttendanceQueues.has(id)) {
+    return AttendanceQueues.get(id)!;
   }
 
   const queue = new Queue("attendance-" + id, {
@@ -42,20 +41,22 @@ export const NewAttendanceQueue = (id: string) => {
     }
   );
 
-  attendanceQueues.set(id, queue);
+  AttendanceQueues.set(id, queue);
 
   return queue;
 };
 
 setInterval(
   () => {
-    console.log(`Clearing ${NewAttendanceQueue.length} queues`);
-    Object.keys(attendanceQueues).forEach(async (key) => {
-      const queue = attendanceQueues.get(key);
+    console.log(
+      `Clearing NewAttendanceQueue of ${NewAttendanceQueue.length} entries`
+    );
+    Object.keys(AttendanceQueues).forEach(async (key) => {
+      const queue = AttendanceQueues.get(key);
       if (queue?.isRunning()) {
         await queue.close();
       }
-      attendanceQueues.delete(key);
+      AttendanceQueues.delete(key);
     });
   },
   1000 * 60 * 60 * 12

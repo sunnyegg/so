@@ -109,7 +109,7 @@ export default async function handler(req: any, res: any) {
 
 setInterval(
   () => {
-    console.log(`Clearing ${NewAttendanceQueue.length} already presents`);
+    console.log(`Clearing AlreadyPresent of ${AlreadyPresent.size} entries`);
     AlreadyPresent.clear();
   },
   1000 * 60 * 60 * 12

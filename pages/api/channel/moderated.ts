@@ -1,10 +1,11 @@
+import { HelixModeratedChannel } from "@twurple/api";
+
 import { ModeratedChannel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
-import { HelixModeratedChannel } from "@twurple/api";
 
-const Cache = new Map<string, ModeratedChannel[]>();
+import { ModeratedChannelsCache } from "@/db/in-memory";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -14,10 +15,10 @@ export default async function handler(req: any, res: any) {
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
-    if (Cache.has(userId)) {
+    if (ModeratedChannelsCache.has(userId)) {
       return res.status(200).json({
         status: true,
-        data: Cache.get(userId),
+        data: ModeratedChannelsCache.get(userId),
       });
     }
 
@@ -39,7 +40,7 @@ export default async function handler(req: any, res: any) {
       })
     )) as ModeratedChannel[];
 
-    Cache.set(userId, data);
+    ModeratedChannelsCache.set(userId, data);
 
     return res.status(200).json({
       status: true,
@@ -53,8 +54,10 @@ export default async function handler(req: any, res: any) {
 
 setInterval(
   () => {
-    console.log(`Clearing moderated channels for ${Cache.size} cache entries`);
-    Cache.clear();
+    console.log(
+      `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
+    );
+    ModeratedChannelsCache.clear();
   },
   1000 * 60 * 5
 ); // every 5 minutes

@@ -519,7 +519,7 @@ export default function TwitchProvider({
 
   useEffect(() => {
     if (!auth.accessToken) return;
-    if (!isStreamLive) return;
+    if (!stream.isLive) return;
     if (!attendance.length) return;
     if (!stream.streamId) return;
 
@@ -535,7 +535,7 @@ export default function TwitchProvider({
         clearInterval(intervalAttendance.current);
       }
     };
-  }, [auth, stream, isStreamLive, attendance]);
+  }, [auth, stream, attendance]);
 
   return (
     <TwitchContext.Provider

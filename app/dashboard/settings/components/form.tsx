@@ -94,6 +94,7 @@ function SettingsForm(props: SettingsFormProps) {
         variant: "destructive",
         duration: 5000,
       });
+      setIsLoading(false);
       return;
     }
 

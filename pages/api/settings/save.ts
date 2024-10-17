@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
     });
 
     const createRes = await supabase().from("settings").upsert(dbData);
-    if (createRes.status !== 201) {
+    if (createRes.status !== 200 && createRes.status !== 201) {
       console.log(createRes);
       return res.status(500).json({ status: false });
     }

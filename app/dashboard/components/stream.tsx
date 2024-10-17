@@ -6,7 +6,7 @@ import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { Broadcast } from "@/types/broadcast";
-import { PersistAuth, PersistStream } from "@/types/persist";
+import { PersistAuth } from "@/types/persist";
 
 import { TwitchContext } from "@/contexts/twitch";
 
@@ -24,6 +24,7 @@ function StreamCard(props: StreamCardProps) {
   ) as [Auth];
 
   const { stream, setStream } = useContext(TwitchContext).stream;
+  const { setAttendance } = useContext(TwitchContext).chat;
 
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT as string;
 
@@ -55,6 +56,7 @@ function StreamCard(props: StreamCardProps) {
           if (res.status) {
             const data = res.data as Broadcast;
             setStream({ ...data, isLive: false, streamId: "" });
+            setAttendance([]);
             return;
           }
         });

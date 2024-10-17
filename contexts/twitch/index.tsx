@@ -464,6 +464,14 @@ export default function TwitchProvider({
         duration: 3000,
       });
     });
+
+    eventSubWsClient.current.onChannelUpdate(userId, async (e) => {
+      setStream((prevStream) => ({
+        ...prevStream,
+        title: e.streamTitle,
+        gameName: e.categoryName,
+      }));
+    });
   };
 
   const intervalAttendance = useRef<NodeJS.Timeout | null>(null);

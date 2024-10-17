@@ -10,16 +10,16 @@ import { SettingDBData } from "./save";
 
 export default async function handler(req: any, res: any) {
   try {
-    const { login } = req.query;
+    const { login, toLogin } = req.query;
     const { authorization } = req.headers;
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
-    if (SettingsCache.has(login)) {
+    if (SettingsCache.has(`${login}-${toLogin}`)) {
       return res.status(200).json({
         status: true,
-        data: SettingsCache.get(login),
+        data: SettingsCache.get(`${login}-${toLogin}`),
       });
     }
 
@@ -28,10 +28,16 @@ export default async function handler(req: any, res: any) {
       return res.status(404).json({ status: false });
     }
 
+    const toUser = await apiClient.users.getUserByName(toLogin);
+    if (!toUser) {
+      return res.status(404).json({ status: false });
+    }
+
     const dbRes = await supabase()
       .from("settings")
       .select("*")
-      .eq("user_id", user.id);
+      .eq("user_id", user.id)
+      .eq("to_user_id", toUser.id);
 
     if (dbRes.status !== 200) {
       console.log(dbRes);
@@ -54,7 +60,7 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    SettingsCache.set(login, outputData);
+    SettingsCache.set(`${login}-${toLogin}`, outputData);
 
     return res.status(200).json({
       status: true,

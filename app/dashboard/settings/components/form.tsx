@@ -20,6 +20,10 @@ import { toast } from "@/components/ui/use-toast";
 
 import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
+import { PersistChannel } from "@/types/persist";
+import { SelectedChannel } from "@/types/channel";
+
+import usePersistState from "@/hooks/use-persist-state";
 
 const FormSchema = z.object({
   autoSo: z.boolean().default(false),
@@ -36,6 +40,11 @@ type SettingsFormProps = {
 
 function SettingsForm(props: SettingsFormProps) {
   const { auth, data, updateSettings } = props;
+
+  const [channel] = usePersistState(
+    PersistChannel.name,
+    PersistChannel.defaultValue
+  ) as [SelectedChannel];
 
   const [isEdited, setIsEdited] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -85,7 +94,11 @@ function SettingsForm(props: SettingsFormProps) {
       headers: {
         Authorization: `Bearer ${auth.accessToken}`,
       },
-      body: JSON.stringify({ login: auth.user.login, settings: data }),
+      body: JSON.stringify({
+        login: auth.user.login,
+        toLogin: channel.login,
+        settings: data,
+      }),
     });
     if (!res.ok) {
       toast({

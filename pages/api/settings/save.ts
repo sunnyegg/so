@@ -9,14 +9,20 @@ import { SettingsCache } from "@/db/in-memory";
 export type SettingDBData = {
   user_id: string;
   key: string;
+  to_user_id: string;
   value: string;
   updated_at: string;
 };
 
 export default async function handler(req: any, res: any) {
   try {
-    const { login, settings }: { login: string; settings: Settings } =
-      JSON.parse(req.body);
+    const {
+      login,
+      toLogin,
+      settings,
+    }: { login: string; toLogin: string; settings: Settings } = JSON.parse(
+      req.body
+    );
     const { authorization } = req.headers;
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
@@ -27,11 +33,17 @@ export default async function handler(req: any, res: any) {
       return res.status(404).json({ status: false });
     }
 
+    const toUser = await apiClient.users.getUserByName(toLogin);
+    if (!toUser) {
+      return res.status(404).json({ status: false });
+    }
+
     const dbData: SettingDBData[] = [];
     Object.keys(settings).forEach((key) => {
       dbData.push({
         user_id: user.id,
         key,
+        to_user_id: toUser.id,
         // @ts-ignore
         value: JSON.stringify(settings[key]),
         updated_at: new Date().toISOString(),
@@ -44,7 +56,7 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
 
-    SettingsCache.set(login, settings);
+    SettingsCache.set(`${login}-${toLogin}`, settings);
 
     return res.status(200).json({
       status: true,

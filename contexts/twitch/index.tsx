@@ -35,11 +35,6 @@ type TwitchChatContextType = {
   setIsConnectedEventSub: React.Dispatch<React.SetStateAction<boolean>>;
   chatters: Chatter[];
   attendance: Chatter[];
-  addToShoutout: (
-    chatter: Chatter,
-    token: string,
-    login: string
-  ) => Promise<void>;
   removeFromShoutout: (id: string) => void;
   sendMessageSO: (token: string, login: string, ch: string) => Promise<string>;
   sendSO: (token: string, login: string, ch: string) => Promise<string>;
@@ -64,9 +59,6 @@ export const TwitchContext = createContext<TwitchContextType>({
     isConnectedEventSub: false,
     chatters: [],
     attendance: [],
-    addToShoutout: (chatter, token, login) => {
-      return Promise.resolve();
-    },
     removeFromShoutout: () => {},
     sendMessageSO: (token: string, login: string, ch: string) => {
       return Promise.resolve("");
@@ -125,7 +117,7 @@ export default function TwitchProvider({
   const eventSubWsClient = useRef<EventSubWsListener | undefined>(undefined);
 
   const addToShoutout = useCallback(
-    async (chatter: Chatter, token: string, login: string) => {
+    async (chatter: Chatter, token: string, login: string, channel: string) => {
       if (alreadyPresent.has(chatter.login)) {
         return;
       }
@@ -141,11 +133,14 @@ export default function TwitchProvider({
         { ...chatter },
       ]);
 
-      const settingsRes = await fetch(`/api/settings/list?login=${login}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const settingsRes = await fetch(
+        `/api/settings/list?login=${login}&toLogin=${channel}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!settingsRes.ok) {
         toast({
           title: "Failed to get settings",
@@ -248,7 +243,11 @@ export default function TwitchProvider({
     setIsStreamLive(live);
   };
 
-  const handleConnectChat = async (token: string, channel: string) => {
+  const handleConnectChat = async (
+    token: string,
+    login: string,
+    channel: string
+  ) => {
     if (isConnectedChat) return;
 
     const res = await fetch("/api/chat/connect", {
@@ -277,11 +276,14 @@ export default function TwitchProvider({
         return;
       }
 
-      const settingsRes = await fetch(`/api/settings/list?login=${channel}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const settingsRes = await fetch(
+        `/api/settings/list?login=${login}&toLogin=${channel}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!settingsRes.ok) {
         toast({
           title: "Failed to get settings",
@@ -331,6 +333,7 @@ export default function TwitchProvider({
           presentAt: new Date().toISOString(),
         },
         token,
+        login,
         channel
       );
     });
@@ -354,7 +357,11 @@ export default function TwitchProvider({
     });
   };
 
-  const handleEventSub = async (token: string, userId: string) => {
+  const handleEventSub = async (
+    token: string,
+    userId: string,
+    login: string
+  ) => {
     if (isConnectedEventSub) return;
 
     const res = await fetch("/api/eventsub/connect", {
@@ -378,7 +385,7 @@ export default function TwitchProvider({
 
     // events
     eventSubWsClient.current.onStreamOnline(userId, async (e) => {
-      getOrCreateBroadcast(e.broadcasterName, auth.accessToken).then((res) => {
+      getOrCreateBroadcast(e.broadcasterName, token).then((res) => {
         if (res.status) {
           const data = res.data as Broadcast;
           setStream(data);
@@ -441,6 +448,7 @@ export default function TwitchProvider({
             presentAt: new Date().toISOString(),
           },
           token,
+          login,
           e.broadcasterName
         );
       });
@@ -497,7 +505,7 @@ export default function TwitchProvider({
 
   useEffect(() => {
     if (auth.accessToken && stream.isLive) {
-      handleConnectChat(auth.accessToken, channel.login);
+      handleConnectChat(auth.accessToken, auth.user.login, channel.login);
     }
 
     return () => {
@@ -508,7 +516,7 @@ export default function TwitchProvider({
 
   useEffect(() => {
     if (auth.accessToken) {
-      handleEventSub(auth.accessToken, channel.id);
+      handleEventSub(auth.accessToken, channel.id, auth.user.login);
     }
 
     return () => {
@@ -547,7 +555,6 @@ export default function TwitchProvider({
           setIsConnectedEventSub,
           chatters,
           attendance,
-          addToShoutout,
           removeFromShoutout,
           sendMessageSO,
           sendSO,

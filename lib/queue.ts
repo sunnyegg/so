@@ -3,49 +3,54 @@ import supabase from "@/db/supabase";
 import { AttendanceQueues } from "@/db/in-memory";
 
 export const NewAttendanceQueue = (id: string) => {
-  const redisUrl = process.env.NEXT_REDIS_URL;
-  if (!redisUrl) {
-    throw new Error("Redis URL is not set");
-  }
-
-  if (AttendanceQueues.has(id)) {
-    return AttendanceQueues.get(id)!;
-  }
-
-  const queue = new Queue("attendance-" + id, {
-    redis: {
-      url: redisUrl,
-    },
-    isWorker: true,
-  });
-
-  queue.on("error", (err) => {
-    console.log(`Error: ${err.message}`);
-  });
-
-  queue.on("ready", () => {
-    console.log(`attendance-${id} is ready`);
-  });
-
-  queue.process(
-    1,
-    async (job: Queue.Job<any>, done: Queue.DoneCallback<any>) => {
-      console.log("Processing job: ", job.id, job.data);
-
-      const dbRes = await supabase().from("attendance").insert(job.data);
-
-      if (dbRes.status !== 201) {
-        console.log(dbRes);
-        return done(new Error("Failed to save attendance"), false);
-      }
-
-      return done(null, true);
+  try {
+    const redisUrl = process.env.NEXT_REDIS_URL;
+    if (!redisUrl) {
+      throw new Error("Redis URL is not set");
     }
-  );
 
-  AttendanceQueues.set(id, queue);
+    if (AttendanceQueues.has(id)) {
+      return AttendanceQueues.get(id)!;
+    }
 
-  return queue;
+    const queue = new Queue("attendance-" + id, {
+      redis: {
+        url: redisUrl,
+      },
+      isWorker: true,
+    });
+
+    queue.on("error", (err) => {
+      console.log(`Error: ${err.message}`);
+    });
+
+    queue.on("ready", () => {
+      console.log(`attendance-${id} is ready`);
+    });
+
+    queue.process(
+      1,
+      async (job: Queue.Job<any>, done: Queue.DoneCallback<any>) => {
+        console.log("Processing job: ", job.id, job.data);
+
+        const dbRes = await supabase().from("attendance").insert(job.data);
+
+        if (dbRes.status !== 201) {
+          console.log(dbRes);
+          return done(new Error("Failed to save attendance"), false);
+        }
+
+        return done(null, true);
+      }
+    );
+
+    AttendanceQueues.set(id, queue);
+
+    return queue;
+  } catch (error: any) {
+    console.log(error);
+    return null;
+  }
 };
 
 setInterval(

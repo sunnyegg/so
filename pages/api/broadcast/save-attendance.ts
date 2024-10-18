@@ -96,6 +96,9 @@ export default async function handler(req: any, res: any) {
     }
 
     const queue = NewAttendanceQueue(streamId);
+    if (!queue) {
+      return res.status(500).json({ status: false });
+    }
     queue.createJob(attendanceDBData).retries(1).save();
 
     return res.status(200).json({

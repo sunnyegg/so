@@ -13,7 +13,9 @@ export const NewAttendanceQueue = (id: string) => {
   }
 
   const queue = new Queue("attendance-" + id, {
-    redis: redisUrl,
+    redis: {
+      url: redisUrl,
+    },
     isWorker: true,
   });
 

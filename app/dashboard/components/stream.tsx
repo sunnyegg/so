@@ -8,7 +8,7 @@ import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { Broadcast } from "@/types/broadcast";
-import { PersistAuth } from "@/types/persist";
+import { PersistAttendance, PersistAuth } from "@/types/persist";
 
 import { TwitchContext } from "@/contexts/twitch";
 
@@ -24,6 +24,10 @@ function StreamCard(props: StreamCardProps) {
     PersistAuth.name,
     PersistAuth.defaultValue
   ) as [Auth];
+  const [_, setAttendancePersist] = usePersistState(
+    PersistAttendance.name,
+    PersistAttendance.defaultValue
+  );
 
   const { stream, setStream } = useContext(TwitchContext).stream;
   const { setAttendance } = useContext(TwitchContext).chat;
@@ -40,6 +44,8 @@ function StreamCard(props: StreamCardProps) {
         if (res.status) {
           const data = res.data as Broadcast;
           setStream({ ...data, isLive: false, streamId: "" });
+          setAttendance([]);
+          setAttendancePersist([]);
           return;
         }
       });
@@ -59,6 +65,7 @@ function StreamCard(props: StreamCardProps) {
             const data = res.data as Broadcast;
             setStream({ ...data, isLive: false, streamId: "" });
             setAttendance([]);
+            setAttendancePersist([]);
             return;
           }
         });

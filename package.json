@@ -26,6 +26,7 @@
     "@twurple/auth": "^7.1.0",
     "@twurple/chat": "^7.1.0",
     "@twurple/eventsub-ws": "^7.1.0",
+    "@uidotdev/usehooks": "^2.4.1",
     "bee-queue": "^1.7.1",
     "caniuse-lite": "^1.0.30001660",
     "class-variance-authority": "^0.7.0",

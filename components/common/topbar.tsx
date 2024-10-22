@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Coiny, Fira_Sans } from "next/font/google";
 import { usePathname } from "next/navigation";
 
-import { Check } from "lucide-react";
+import { Check, AlignJustify } from "lucide-react";
 
 import LoginButton from "./login-button";
 import { toast } from "@/components/ui/use-toast";
@@ -75,13 +75,12 @@ function TopBar(props: TopBarProps) {
 
   return (
     <section className={`flex items-center justify-between ${fira.className}`}>
-      <Link
-        href={auth.accessToken ? "/dashboard/shoutout" : "/"}
-        className={`mx-auto flex items-center justify-center text-[1.2rem] md:mx-0 ${coiny.className}`}
-      >
-        <div>STREAM</div>
-        <div className="text-so-accent-color">EGG</div>
-      </Link>
+      {isDashboardPath() && <DropdownMenuMobile />}
+
+      <div className={`mx-auto flex text-[1.2rem] md:mx-0 ${coiny.className}`}>
+        STREAM
+        <span className="text-so-accent-color">EGG</span>
+      </div>
 
       {!isDashboardPath() && (
         <div className="hidden items-center gap-4 md:flex">
@@ -212,6 +211,27 @@ function TopBar(props: TopBarProps) {
     </section>
   );
 }
+
+const DropdownMenuMobile = () => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild className="block cursor-pointer md:hidden">
+        <AlignJustify size={24} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="ml-4 mt-2 bg-so-secondary-color text-so-primary-text-color">
+        <DropdownMenuItem asChild>
+          <Link href={"/dashboard/shoutout"}>Shoutout</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={"/dashboard/attendance"}>Attendance</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={"/dashboard/settings"}>Settings</Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 const ChannelItem = ({
   current,

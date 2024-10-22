@@ -2,6 +2,8 @@
 
 import { useContext, useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { Eye } from "lucide-react";
+import { useMediaQuery } from "@uidotdev/usehooks";
 
 import {
   createColumnHelper,
@@ -96,6 +98,7 @@ export default function AttendancePage() {
   const [pastBroadcasts, setPastBroadcasts] = useState<Broadcast[]>([]);
   const [selectedBroadcast, setSelectedBroadcast] = useState<string>("");
   const [isTableLoading, setIsTableLoading] = useState(false);
+  const [isPastBroadcastLoading, setIsPastBroadcastLoading] = useState(true);
 
   const handleSelectBroadcast = (token: string, login: string, id: string) => {
     setIsTableLoading(true);
@@ -142,9 +145,14 @@ export default function AttendancePage() {
   useEffect(() => {
     if (!auth.accessToken) return;
 
-    getPastBroadcasts(auth.accessToken, channel.login).then((res) =>
-      setPastBroadcasts(res.data)
-    );
+    getPastBroadcasts(auth.accessToken, channel.login).then((res) => {
+      if (res.status) {
+        setPastBroadcasts(res.data);
+      } else {
+        setPastBroadcasts([]);
+      }
+      setIsPastBroadcastLoading(false);
+    });
   }, [auth]);
 
   const table = useReactTable({
@@ -217,7 +225,10 @@ export default function AttendancePage() {
           <h3>Past Broadcasts</h3>
 
           <div>
-            {!pastBroadcasts.length
+            {!isPastBroadcastLoading && !pastBroadcasts.length && (
+              <p>No past broadcasts found</p>
+            )}
+            {isPastBroadcastLoading
               ? new Array(3)
                   .fill(undefined)
                   .map((_, i) => (
@@ -230,33 +241,34 @@ export default function AttendancePage() {
                   return (
                     <div
                       key={broadcast.id}
-                      className="mt-4 flex items-center justify-between rounded-md bg-so-secondary-color p-4 text-sm"
+                      className="mt-4 flex items-center rounded-md bg-so-secondary-color p-4 text-sm md:justify-between"
                     >
-                      <div>
+                      <div className="mr-16">
                         <div className="flex gap-2">
                           <span className="text-so-secondary-text-color">
                             Title:
                           </span>
-                          {broadcast.title}
+                          <span>{broadcast.title}</span>
                         </div>
                         <div className="flex gap-2">
                           <span className="text-so-secondary-text-color">
                             Game:
                           </span>
-                          {broadcast.gameName}
+                          <span>{broadcast.gameName}</span>
                         </div>
                         <div className="flex gap-2">
                           <span className="text-so-secondary-text-color">
                             Started At:
                           </span>
-                          {dayjs(broadcast.startDate).format(
-                            "YYYY-MM-DD, HH:mm:ss"
-                          )}
+                          <span>
+                            {dayjs(broadcast.startDate).format(
+                              "YYYY-MM-DD, HH:mm:ss"
+                            )}
+                          </span>
                         </div>
                       </div>
                       <div>
-                        <Button
-                          variant={"streamegg"}
+                        <ButtonAttendance
                           onClick={() =>
                             handleSelectBroadcast(
                               auth.accessToken,
@@ -264,9 +276,7 @@ export default function AttendancePage() {
                               broadcast.streamId
                             )
                           }
-                        >
-                          See Attendance
-                        </Button>
+                        />
                       </div>
                     </div>
                   );
@@ -277,6 +287,20 @@ export default function AttendancePage() {
     </div>
   );
 }
+
+const ButtonAttendance = ({ onClick }: { onClick: () => void }) => {
+  const isMd = useMediaQuery("(min-width: 768px)");
+
+  return (
+    <Button variant={"streamegg"} onClick={onClick}>
+      {isMd ? (
+        "See Attendance"
+      ) : (
+        <Eye width={36} className="text-so-primary-color" />
+      )}
+    </Button>
+  );
+};
 
 const getPastBroadcasts = async (token: string, login: string) => {
   const res = await fetch(`/api/broadcast/past?login=${login}`, {

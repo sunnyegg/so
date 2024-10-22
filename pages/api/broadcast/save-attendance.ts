@@ -1,5 +1,5 @@
 import supabase from "@/db/supabase";
-import { AlreadyPresent } from "@/db/in-memory";
+import { AlreadyPresent, BroadcastAttendance } from "@/db/in-memory";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAttendanceQueue } from "@/lib/queue";
@@ -100,6 +100,10 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ status: false });
     }
     queue.createJob(attendanceDBData).retries(1).save();
+
+    if (BroadcastAttendance.has(streamId)) {
+      BroadcastAttendance.delete(streamId);
+    }
 
     return res.status(200).json({
       status: true,

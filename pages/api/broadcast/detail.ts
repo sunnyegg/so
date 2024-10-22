@@ -4,6 +4,7 @@ import { NewAPIClient } from "@/lib/twitch";
 import supabase from "@/db/supabase";
 
 import { Chatter } from "@/types/chat";
+import { BroadcastAttendance } from "@/db/in-memory";
 
 type AttendanceDBData = {
   id: string;
@@ -23,6 +24,13 @@ export default async function handler(req: any, res: any) {
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
+
+    if (BroadcastAttendance.has(id)) {
+      return res.status(200).json({
+        status: true,
+        data: BroadcastAttendance.get(id)!,
+      });
+    }
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
@@ -59,6 +67,8 @@ export default async function handler(req: any, res: any) {
         lastSeenPlaying: "",
       });
     }
+
+    BroadcastAttendance.set(id, outputData);
 
     return res.status(200).json({
       status: true,

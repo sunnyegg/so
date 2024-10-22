@@ -51,6 +51,7 @@ export default async function handler(req: any, res: any) {
       autoSoDelay: 0,
       blacklistUsernames: "",
       blacklistWords: "",
+      raidPriority: true,
     };
 
     if (dbRes.status === 200 && dbData.length) {

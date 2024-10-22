@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import SettingsForm from "./components/form";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
@@ -30,6 +31,7 @@ export default function SettingsPage() {
     autoSoDelay: 0,
     blacklistUsernames: "",
     blacklistWords: "",
+    raidPriority: true,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -55,6 +57,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mt-8">
+      {isLoading && <Skeleton className="mt-4 h-[100px] rounded-md p-4" />}
       {auth.accessToken && !isLoading && (
         <SettingsForm
           auth={auth}

@@ -3,4 +3,5 @@ export type Settings = {
   autoSoDelay: number;
   blacklistUsernames: string;
   blacklistWords: string;
+  raidPriority: boolean;
 };

@@ -133,15 +133,12 @@ export default function TwitchProvider({
         { ...chatter },
       ]);
 
-      const settingsRes = await fetch(
-        `/api/settings/list?login=${login}&toLogin=${channel}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!settingsRes.ok) {
+      const settingsData = (await getSettings(
+        token,
+        login,
+        channel
+      )) as SettingsResponse;
+      if (!settingsData.status) {
         toast({
           title: "Failed to get settings",
           description: "Please refresh the page",
@@ -150,8 +147,6 @@ export default function TwitchProvider({
         });
         return;
       }
-
-      const settingsData = (await settingsRes.json()) as SettingsResponse;
 
       if (settingsData.data.autoSo) {
         setTimeout(async () => {
@@ -276,15 +271,12 @@ export default function TwitchProvider({
         return;
       }
 
-      const settingsRes = await fetch(
-        `/api/settings/list?login=${login}&toLogin=${channel}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!settingsRes.ok) {
+      const settingsData = (await getSettings(
+        token,
+        login,
+        channel
+      )) as SettingsResponse;
+      if (!settingsData.status) {
         toast({
           title: "Failed to get settings",
           description: "Please refresh the page",
@@ -293,8 +285,6 @@ export default function TwitchProvider({
         });
         return;
       }
-
-      const settingsData = (await settingsRes.json()) as SettingsResponse;
 
       if (settingsData.data.blacklistUsernames.length > 0) {
         const blacklisted = settingsData.data.blacklistUsernames
@@ -480,6 +470,73 @@ export default function TwitchProvider({
         gameName: e.categoryName,
       }));
     });
+
+    eventSubWsClient.current.onChannelRaidTo(userId, async (e) => {
+      if (alreadyPresent.has(e.raidingBroadcasterName)) {
+        alreadyPresent.delete(e.raidingBroadcasterName);
+      }
+
+      const settingsData = (await getSettings(
+        token,
+        login,
+        login
+      )) as SettingsResponse;
+      if (!settingsData.status) {
+        return;
+      }
+
+      if (settingsData.data.autoSo && settingsData.data.raidPriority) {
+        // disable autoso temporary
+        // @ts-ignore
+        const saveRes = await saveSettings(token, login, login, {
+          autoSo: false,
+        });
+        if (!saveRes.status) {
+          return;
+        }
+
+        setTimeout(
+          () => {
+            // enable autoso again after 5 minutes
+            // @ts-ignore
+            saveSettings(token, login, login, {
+              autoSo: true,
+            });
+          },
+          1000 * 60 * 5
+        );
+      }
+
+      const chatterRes = await fetch(
+        `/api/channel/info?login=${e.raidingBroadcasterName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!chatterRes.ok) {
+        console.log("Failed to get chatter info", await chatterRes.json());
+        return;
+      }
+
+      const chatterData = (await chatterRes.json()) as ChannelResponse;
+
+      addToShoutout(
+        {
+          id: Date.now().toString(),
+          login: e.raidingBroadcasterName,
+          displayName: e.raidingBroadcasterDisplayName,
+          followers: chatterData.data.followers,
+          lastSeenPlaying: chatterData.data.gameName,
+          profileImageUrl: chatterData.data.profileImageUrl,
+          presentAt: new Date().toISOString(),
+        },
+        token,
+        login,
+        e.raidedBroadcasterName
+      );
+    });
   };
 
   const intervalAttendance = useRef<NodeJS.Timeout | null>(null);
@@ -588,4 +645,51 @@ const getOrCreateBroadcast = async (login: string, token: string) => {
 
   const data = await res.json();
   return data;
+};
+
+const getSettings = async (token: string, login: string, toLogin: string) => {
+  const res = await fetch(
+    `/api/settings/list?login=${login}&toLogin=${toLogin}`,
+    {
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  if (!res.ok) {
+    return {
+      code: res.status,
+      status: false,
+    };
+  }
+
+  const data = await res.json();
+  return data;
+};
+
+const saveSettings = async (
+  token: string,
+  login: string,
+  toLogin: string,
+  data: Settings
+) => {
+  const res = await fetch("/api/settings/save", {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      login: login,
+      toLogin: toLogin,
+      settings: data,
+    }),
+  });
+  if (!res.ok) {
+    return {
+      code: res.status,
+      status: false,
+    };
+  }
+
+  const output = await res.json();
+  return output;
 };

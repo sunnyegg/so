@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { Auth } from "@/types/auth";
 import { Settings } from "@/types/settings";
@@ -30,6 +31,7 @@ const FormSchema = z.object({
   autoSoDelay: z.number().default(0),
   blacklistUsernames: z.string().default(""),
   blacklistWords: z.string().default(""),
+  raidPriority: z.boolean().default(true),
 });
 
 type SettingsFormProps = {
@@ -160,59 +162,100 @@ function SettingsForm(props: SettingsFormProps) {
         className="mt-8 flex flex-col gap-4"
       >
         <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="autoSo"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg bg-so-secondary-color p-3">
-                <div className="space-y-0.5">
-                  <FormLabel className="font-bold text-so-primary-text-color">
-                    Auto Shoutout
-                  </FormLabel>
-                  <FormDescription className="text-so-secondary-text-color">
-                    No more clicking the shoutout button manually.
-                  </FormDescription>
-                  <FormMessage />
-                </div>
-                <FormControl>
-                  <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="autoSoDelay"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg bg-so-secondary-color p-3 shadow-sm">
-                <div className="space-y-0.5">
-                  <FormLabel className="font-bold text-so-primary-text-color">
-                    Auto Shoutout Delay (Seconds)
-                  </FormLabel>
-                  <FormDescription className="text-so-secondary-text-color">
-                    Add delay to auto shoutout, so people will not sus you from
-                    using bot.
-                  </FormDescription>
-                  <FormMessage />
-                </div>
-                <FormControl className="max-w-[4rem]">
-                  <Input
-                    {...field}
-                    type="number"
-                    min={0}
-                    max={10}
-                    className="text-so-primary-color"
-                    onChange={(e) => {
-                      form.setValue("autoSoDelay", Number(e.target.value));
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+          <div className="space-y-4 rounded-lg bg-so-secondary-color p-3 shadow-sm">
+            <FormField
+              control={form.control}
+              name="autoSo"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border-2 p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel className="font-bold text-so-primary-text-color">
+                      Auto Shoutout
+                    </FormLabel>
+                    <FormDescription className="text-so-secondary-text-color">
+                      No more clicking the shoutout button manually.
+                    </FormDescription>
+                    <FormMessage />
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="autoSoDelay"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border-2 p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel className="font-bold text-so-primary-text-color">
+                      Auto Shoutout Delay (Seconds)
+                    </FormLabel>
+                    <FormDescription className="text-so-secondary-text-color">
+                      Add delay to auto shoutout, so people will not sus you
+                      from using bot.
+                    </FormDescription>
+                    <FormMessage />
+                  </div>
+                  <FormControl className="max-w-[4rem]">
+                    <Input
+                      {...field}
+                      disabled={!form.getValues("autoSo")}
+                      type="number"
+                      min={0}
+                      max={10}
+                      className="text-so-primary-color"
+                      onChange={(e) => {
+                        form.setValue("autoSoDelay", Number(e.target.value));
+                      }}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div className="p-2">
+              <label className="text-sm font-bold text-so-primary-text-color">
+                Shoutout Priority (For now, mods cannot use this feature)
+              </label>
+              <p className="text-sm text-so-secondary-text-color">
+                Prioritize certain type of user to shoutout when something is
+                happening.
+              </p>
+
+              <FormField
+                control={form.control}
+                name="raidPriority"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <div className="mt-4 flex gap-4">
+                      <FormControl>
+                        <Checkbox
+                          disabled={!form.getValues("autoSo")}
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-bold text-so-primary-text-color">
+                          Raid
+                        </FormLabel>
+                        <FormDescription className="text-so-secondary-text-color">
+                          Prioritize streamer who raids you (raider will not be
+                          shoutouted).
+                        </FormDescription>
+                      </div>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+
           <FormField
             control={form.control}
             name="blacklistUsernames"

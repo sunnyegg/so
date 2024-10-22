@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import usePersistState from "@/hooks/use-persist-state";
@@ -94,9 +95,27 @@ export default function AttendancePage() {
   const [data, setData] = useState<ColumnAttendance[]>([]);
   const [pastBroadcasts, setPastBroadcasts] = useState<Broadcast[]>([]);
   const [selectedBroadcast, setSelectedBroadcast] = useState<string>("");
+  const [isTableLoading, setIsTableLoading] = useState(false);
 
-  const handleSelectBroadcast = (id: string) => {
+  const handleSelectBroadcast = (token: string, login: string, id: string) => {
+    setIsTableLoading(true);
     setSelectedBroadcast(id);
+    getBroadcastDetail(token, login, id).then((res) => {
+      if (res.status) {
+        const data = res.data as Chatter[];
+        setAttendance(data);
+      } else {
+        setAttendance([]);
+        setData([]);
+      }
+      setIsTableLoading(false);
+    });
+  };
+
+  const handleBack = () => {
+    setSelectedBroadcast("");
+    setAttendance([]);
+    setData([]);
   };
 
   useEffect(() => {
@@ -138,92 +157,120 @@ export default function AttendancePage() {
     <div className="mt-8">
       {isLive || selectedBroadcast !== "" ? (
         <div className="mt-8">
-          <span className="text-sm">Attendees: {attendanceTemp.length}</span>
+          <div className="flex items-center">
+            {!isLive && (
+              <Button
+                variant={"streamegg"}
+                className="mr-4"
+                onClick={handleBack}
+              >
+                Back
+              </Button>
+            )}
 
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      className="text-white"
-                      style={{ width: header.getSize() }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            <span className="text-sm">Attendees: {attendanceTemp.length}</span>
+          </div>
+
+          {isTableLoading ? (
+            <Skeleton className="mt-4 h-[300px] rounded-md p-4" />
+          ) : (
+            <Table className="mt-4">
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="text-white"
+                        style={{ width: header.getSize() }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       ) : (
         <div>
           <h3>Past Broadcasts</h3>
 
           <div>
-            {pastBroadcasts.length &&
-              pastBroadcasts.map((broadcast) => {
-                return (
-                  <div
-                    key={broadcast.id}
-                    className="mt-4 flex items-center justify-between rounded-md bg-so-secondary-color p-4 text-sm"
-                  >
-                    <div>
-                      <div className="flex gap-2">
-                        <span className="text-so-secondary-text-color">
-                          Title:
-                        </span>
-                        {broadcast.title}
+            {!pastBroadcasts.length
+              ? new Array(3)
+                  .fill(undefined)
+                  .map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      className="mt-4 h-[100px] rounded-md p-4"
+                    />
+                  ))
+              : pastBroadcasts.map((broadcast) => {
+                  return (
+                    <div
+                      key={broadcast.id}
+                      className="mt-4 flex items-center justify-between rounded-md bg-so-secondary-color p-4 text-sm"
+                    >
+                      <div>
+                        <div className="flex gap-2">
+                          <span className="text-so-secondary-text-color">
+                            Title:
+                          </span>
+                          {broadcast.title}
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-so-secondary-text-color">
+                            Game:
+                          </span>
+                          {broadcast.gameName}
+                        </div>
+                        <div className="flex gap-2">
+                          <span className="text-so-secondary-text-color">
+                            Started At:
+                          </span>
+                          {dayjs(broadcast.startDate).format(
+                            "YYYY-MM-DD, HH:mm:ss"
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <span className="text-so-secondary-text-color">
-                          Game:
-                        </span>
-                        {broadcast.gameName}
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-so-secondary-text-color">
-                          Started At:
-                        </span>
-                        {dayjs(broadcast.startDate).format(
-                          "YYYY-MM-DD, HH:mm:ss"
-                        )}
+                      <div>
+                        <Button
+                          variant={"streamegg"}
+                          onClick={() =>
+                            handleSelectBroadcast(
+                              auth.accessToken,
+                              channel.login,
+                              broadcast.streamId
+                            )
+                          }
+                        >
+                          See Attendance
+                        </Button>
                       </div>
                     </div>
-                    <div>
-                      <Button
-                        variant={"streamegg"}
-                        onClick={() =>
-                          handleSelectBroadcast(broadcast.streamId)
-                        }
-                      >
-                        See Attendance
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
           </div>
         </div>
       )}
@@ -233,6 +280,23 @@ export default function AttendancePage() {
 
 const getPastBroadcasts = async (token: string, login: string) => {
   const res = await fetch(`/api/broadcast/past?login=${login}`, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    return {
+      code: res.status,
+      status: false,
+    };
+  }
+
+  const data = await res.json();
+  return data;
+};
+
+const getBroadcastDetail = async (token: string, login: string, id: string) => {
+  const res = await fetch(`/api/broadcast/detail?login=${login}&id=${id}`, {
     headers: {
       authorization: `Bearer ${token}`,
     },

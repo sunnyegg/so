@@ -1,7 +1,9 @@
 import dayjs from "dayjs";
 import { memo, useContext, useEffect } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
@@ -73,28 +75,36 @@ function StreamCard(props: StreamCardProps) {
   }, [auth]);
 
   return (
-    <div className="mt-8 flex flex-col rounded-md bg-so-secondary-color p-4">
-      <div className="text-lg md:text-[1.5rem]">
-        {stream.isLive ? "Ongoing " : "Last "} Stream Info
-      </div>
-      <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
-        <span>Title:</span>
-        <span className="text-so-primary-text-color">{stream.title}</span>
-      </div>
-      <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
-        <span>Game:</span>
-        <span className="text-so-primary-text-color">{stream.gameName}</span>
-      </div>
+    <>
+      {!stream.title ? (
+        <Skeleton className="mt-4 h-[100px] rounded-md p-4" />
+      ) : (
+        <div className="mt-8 flex flex-col rounded-md bg-so-secondary-color p-4">
+          <div className="text-lg md:text-[1.5rem]">
+            {stream.isLive ? "Ongoing " : "Last "} Stream Info
+          </div>
+          <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
+            <span>Title:</span>
+            <span className="text-so-primary-text-color">{stream.title}</span>
+          </div>
+          <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
+            <span>Game:</span>
+            <span className="text-so-primary-text-color">
+              {stream.gameName}
+            </span>
+          </div>
 
-      {stream.startDate && (
-        <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
-          <span>Started At:</span>
-          <span className="text-so-primary-text-color">
-            {dayjs(stream.startDate).format("YYYY-MM-DD, HH:mm:ss")}
-          </span>
+          {stream.startDate && (
+            <div className="flex gap-2 text-[0.8rem] text-so-secondary-text-color md:text-sm">
+              <span>Started At:</span>
+              <span className="text-so-primary-text-color">
+                {dayjs(stream.startDate).format("YYYY-MM-DD, HH:mm:ss")}
+              </span>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 }
 

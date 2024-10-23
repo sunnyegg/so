@@ -60,7 +60,24 @@ function TopBar(props: TopBarProps) {
     PersistVersion.defaultValue
   ) as [string];
 
-  const handleChangeChannel = (channel: SelectedChannel) => {
+  const handleChangeChannel = async (
+    userId: string,
+    channel: SelectedChannel
+  ) => {
+    if (userId !== channel.id) {
+      if (
+        moderatedChannels &&
+        !moderatedChannels.find((ch) => ch.id === channel.id)
+      ) {
+        toast({
+          title: "You are not a moderator of this channel",
+          variant: "destructive",
+          duration: 3000,
+        });
+        return;
+      }
+    }
+
     setChannel && setChannel(channel);
     toast({
       title: "Channel changed",
@@ -159,7 +176,7 @@ function TopBar(props: TopBarProps) {
                   <DropdownMenuSubContent className="bg-so-secondary-color text-so-primary-text-color">
                     <DropdownMenuItem
                       onClick={() =>
-                        handleChangeChannel({
+                        handleChangeChannel(auth.user?.id, {
                           id: auth.user?.id,
                           login: auth.user?.login,
                           displayName: auth.user?.displayName,
@@ -181,7 +198,7 @@ function TopBar(props: TopBarProps) {
                           <DropdownMenuItem
                             key={ch.id}
                             onClick={() =>
-                              handleChangeChannel({
+                              handleChangeChannel(auth.user?.id, {
                                 id: ch.id,
                                 login: ch.login,
                                 displayName: ch.displayName,

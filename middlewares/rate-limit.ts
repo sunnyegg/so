@@ -10,7 +10,7 @@ const rateLimitClients = new Map<
 
 export default function rateLimitMiddleware(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for");
-  const limit = 50;
+  const limit = 200;
   const interval = 60 * 1000; // 1 minute
 
   if (!ip) {

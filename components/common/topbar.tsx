@@ -102,6 +102,12 @@ function TopBar(props: TopBarProps) {
       {!isDashboardPath() && (
         <div className="hidden items-center gap-4 md:flex">
           <Link
+            href={"/"}
+            className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/")}`}
+          >
+            HOME
+          </Link>
+          <Link
             href={"/support"}
             className={`p-2 transition-all hover:rounded-md hover:bg-so-secondary-color ${isActivePath("/support")}`}
           >

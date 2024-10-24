@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from "@/components/common/footer";
 import TopBar from "@/components/common/topbar";
 
 export default function SupportPage() {
@@ -8,6 +9,8 @@ export default function SupportPage() {
       <TopBar />
 
       <div>Support</div>
+
+      <Footer />
     </div>
   );
 }

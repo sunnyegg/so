@@ -4,6 +4,7 @@ import { Fira_Mono } from "next/font/google";
 
 import TopBar from "@/components/common/topbar";
 import LoginButton from "@/components/common/login-button";
+import Footer from "@/components/common/footer";
 
 const firaMono = Fira_Mono({
   subsets: ["latin"],
@@ -40,17 +41,7 @@ export default function Home() {
         />
       </section>
 
-      <section className="absolute bottom-8 left-0 flex w-full justify-center gap-4 text-[0.8rem] md:hidden">
-        <div className="p-2 transition-all hover:rounded-md hover:bg-so-secondary-color">
-          SUPPORT
-        </div>
-        <div className="p-2 transition-all hover:rounded-md hover:bg-so-secondary-color">
-          ABOUT
-        </div>
-        <div className="p-2 transition-all hover:rounded-md hover:bg-so-secondary-color">
-          HOW IT WORKS?
-        </div>
-      </section>
+      <Footer />
     </div>
   );
 }

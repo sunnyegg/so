@@ -17,7 +17,7 @@ export default function ModalAnnouncement() {
             <hr className="my-8 h-px border-0 bg-white" />
 
             <p className="text-sm">
-              Just kidding, I'm going to continue working on this app :D If you
+              Just kidding, I am going to continue working on this app :D If you
               have found any bugs or have any suggestions, please let me know!
             </p>
           </div>

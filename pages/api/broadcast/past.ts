@@ -4,6 +4,7 @@ import { NewAPIClient } from "@/lib/twitch";
 import { Broadcast } from "@/types/broadcast";
 
 import supabase from "@/db/supabase";
+import { log } from "@/lib/utils";
 
 type BroadcastDBData = {
   id: number;
@@ -36,7 +37,7 @@ export default async function handler(req: any, res: any) {
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      console.log(dbRes);
+      log("error", "pages.api.broadcast.past.handler", dbRes);
       return res.status(500).json({ status: false });
     }
 
@@ -65,7 +66,7 @@ export default async function handler(req: any, res: any) {
       data: outputData,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.broadcast.past.handler", error);
     return res.status(500).json({ status: false });
   }
 }

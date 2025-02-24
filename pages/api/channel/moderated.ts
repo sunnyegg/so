@@ -6,6 +6,7 @@ import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 
 import { ModeratedChannelsCache } from "@/db/in-memory";
+import { log } from "@/lib/utils";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -47,14 +48,16 @@ export default async function handler(req: any, res: any) {
       data,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.channel.moderated.handler", error);
     return res.status(500).json({ status: false });
   }
 }
 
 setInterval(
   () => {
-    console.log(
+    log(
+      "info",
+      "pages.api.channel.moderated.handler",
       `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
     );
     ModeratedChannelsCache.clear();

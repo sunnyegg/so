@@ -7,6 +7,7 @@ import { NewAPIClient } from "@/lib/twitch";
 
 import { Attendance } from "@/types/broadcast";
 import { Chatter } from "@/types/chat";
+import { log } from "@/lib/utils";
 
 type AttendanceDBData = {
   stream_id: string;
@@ -30,12 +31,18 @@ export default async function handler(req: any, res: any) {
     const currentBroadcast =
       await apiClient.streams.getStreamByUserId(broadcasterId);
     if (!currentBroadcast) {
-      console.log("no stream", broadcasterId);
+      log("info", "pages.api.broadcast.save-attendance.handler", {
+        message: "no stream",
+        broadcasterId,
+      });
       return res.status(404).json({ status: false });
     }
 
     if (currentBroadcast.id !== streamId) {
-      console.log(currentBroadcast, req.body);
+      log("error", "pages.api.broadcast.save-attendance.handler", {
+        currentBroadcast,
+        body: req.body,
+      });
       return res.status(400).json({ status: false });
     }
 
@@ -47,7 +54,7 @@ export default async function handler(req: any, res: any) {
         .eq("stream_id", streamId);
 
       if (dbRes.status !== 200) {
-        console.log(dbRes);
+        log("error", "pages.api.broadcast.save-attendance.handler", dbRes);
         return res.status(500).json({ status: false });
       }
 
@@ -109,14 +116,18 @@ export default async function handler(req: any, res: any) {
       status: true,
     });
   } catch (error: any) {
-    console.log(error);
+    log("error", "pages.api.broadcast.save-attendance.handler", error);
     return res.status(500).json({ status: false });
   }
 }
 
 setInterval(
   () => {
-    console.log(`Clearing AlreadyPresent of ${AlreadyPresent.size} entries`);
+    log(
+      "info",
+      "pages.api.broadcast.save-attendance.setInterval",
+      `Clearing AlreadyPresent of ${AlreadyPresent.size} entries`
+    );
     AlreadyPresent.clear();
   },
   1000 * 60 * 60 * 12

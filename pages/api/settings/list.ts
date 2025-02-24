@@ -7,6 +7,7 @@ import { SettingsCache } from "@/db/in-memory";
 import { Settings } from "@/types/settings";
 
 import { SettingDBData } from "./save";
+import { log } from "@/lib/utils";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -40,7 +41,7 @@ export default async function handler(req: any, res: any) {
       .eq("to_user_id", toUser.id);
 
     if (dbRes.status !== 200) {
-      console.log(dbRes);
+      log("error", "pages.api.settings.list.handler", dbRes);
       return res.status(500).json({ status: false });
     }
 
@@ -68,14 +69,18 @@ export default async function handler(req: any, res: any) {
       data: outputData,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.settings.list.handler", error);
     return res.status(500).json({ status: false });
   }
 }
 
 setInterval(
   () => {
-    console.log(`Clearing SettingsCache of ${SettingsCache.size} entries`);
+    log(
+      "info",
+      "pages.api.settings.list.setInterval",
+      `Clearing SettingsCache of ${SettingsCache.size} entries`
+    );
     SettingsCache.clear();
   },
   1000 * 60 * 60 * 24

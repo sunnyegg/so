@@ -1,5 +1,6 @@
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
+import { log } from "@/lib/utils";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -20,7 +21,7 @@ export default async function handler(req: any, res: any) {
       status: true,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.chat.send-message.handler", error);
     return res.status(500).json({ status: false });
   }
 }

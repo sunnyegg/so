@@ -4,6 +4,7 @@ import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 
 import { ChannelCache } from "@/db/in-memory";
+import { log } from "@/lib/utils";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -48,14 +49,18 @@ export default async function handler(req: any, res: any) {
       data,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.channel.info.handler", error);
     return res.status(500).json({ status: false });
   }
 }
 
 setInterval(
   () => {
-    console.log(`Clearing ChannelCache of ${ChannelCache.size} entries`);
+    log(
+      "info",
+      "pages.api.channel.info.setInterval",
+      `Clearing ChannelCache of ${ChannelCache.size} entries`
+    );
     ChannelCache.clear();
   },
   1000 * 60 * 5

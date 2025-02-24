@@ -1,4 +1,5 @@
 import { decrypt } from "@/lib/encryption";
+import { log } from "@/lib/utils";
 
 export default function handler(req: any, res: any) {
   try {
@@ -11,7 +12,7 @@ export default function handler(req: any, res: any) {
       data: decryptedToken,
     });
   } catch (error: any) {
-    console.log(error.message);
+    log("error", "pages.api.chat.connect.handler", error);
     return res.status(500).json({ status: false });
   }
 }

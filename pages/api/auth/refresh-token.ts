@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Auth, TokenResponse } from "@/types/auth";
 
 import { decrypt, encrypt } from "@/lib/encryption";
+import { log } from "@/lib/utils";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -29,7 +30,7 @@ export default async function handler(req: any, res: any) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.log(error);
+      log("error", "pages.api.auth.refresh-token.handler", error);
       throw new Error("Failed to refresh token");
     }
 
@@ -48,7 +49,7 @@ export default async function handler(req: any, res: any) {
       } as Auth,
     });
   } catch (error: any) {
-    console.log(error.message);
+    log("error", "pages.api.auth.refresh-token.handler", error);
     return res.status(500).json({ status: false });
   }
 }

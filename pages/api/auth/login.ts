@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Auth, TokenResponse, User } from "@/types/auth";
 
 import { encrypt } from "@/lib/encryption";
+import { log } from "@/lib/utils";
 
 type GetMeResponse = {
   status: boolean;
@@ -51,7 +52,7 @@ export default async function handler(req: any, res: any) {
       } as Auth,
     });
   } catch (error: any) {
-    console.log(error.message);
+    log("error", "pages.api.auth.login.handler", error);
     return res.status(500).json({ status: false });
   }
 }
@@ -81,7 +82,7 @@ const getMe = async (
 
   if (!res.ok) {
     const error = await res.json();
-    console.log(error);
+    log("error", "pages.api.auth.login.getMe", error);
     return output;
   }
 

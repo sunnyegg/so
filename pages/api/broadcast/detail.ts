@@ -5,6 +5,7 @@ import supabase from "@/db/supabase";
 
 import { Chatter } from "@/types/chat";
 import { BroadcastAttendance } from "@/db/in-memory";
+import { log } from "@/lib/utils";
 
 type AttendanceDBData = {
   id: string;
@@ -44,7 +45,7 @@ export default async function handler(req: any, res: any) {
       .order("present_at", { ascending: true });
 
     if (dbRes.status !== 200) {
-      console.log(dbRes);
+      log("error", "pages.api.broadcast.detail.handler", dbRes);
       return res.status(500).json({ status: false });
     }
 
@@ -75,14 +76,16 @@ export default async function handler(req: any, res: any) {
       data: outputData,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.broadcast.detail.handler", error);
     return res.status(500).json({ status: false });
   }
 }
 
 setInterval(
   () => {
-    console.log(
+    log(
+      "info",
+      "pages.api.broadcast.detail.setInterval",
       `Clearing BroadcastAttendance of ${BroadcastAttendance.size} entries`
     );
     BroadcastAttendance.clear();

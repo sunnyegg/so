@@ -2,6 +2,7 @@ import supabase from "@/db/supabase";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
+import { log } from "@/lib/utils";
 
 import { Broadcast } from "@/types/broadcast";
 
@@ -27,7 +28,7 @@ export default async function handler(req: any, res: any) {
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      console.log(dbRes);
+      log("error", "pages.api.broadcast.get-or-create.handler", dbRes);
       return res.status(500).json({ status: false });
     }
 
@@ -72,7 +73,7 @@ export default async function handler(req: any, res: any) {
         start_date: outputData.startDate,
       });
       if (createRes.status !== 201) {
-        console.log(createRes);
+        log("error", "pages.api.broadcast.get-or-create.handler", createRes);
         return res.status(500).json({ status: false });
       }
     }
@@ -82,7 +83,7 @@ export default async function handler(req: any, res: any) {
       data: outputData,
     });
   } catch (error: any) {
-    console.log(error);
+    log("error", "pages.api.broadcast.get-or-create.handler", error);
     return res.status(500).json({ status: false });
   }
 }

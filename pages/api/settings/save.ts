@@ -5,6 +5,7 @@ import { NewAPIClient } from "@/lib/twitch";
 
 import supabase from "@/db/supabase";
 import { SettingsCache } from "@/db/in-memory";
+import { log } from "@/lib/utils";
 
 export type SettingDBData = {
   user_id: string;
@@ -52,7 +53,7 @@ export default async function handler(req: any, res: any) {
 
     const createRes = await supabase().from("settings").upsert(dbData);
     if (createRes.status !== 200 && createRes.status !== 201) {
-      console.log(createRes);
+      log("error", "pages.api.settings.save.handler", createRes);
       return res.status(500).json({ status: false });
     }
 
@@ -62,7 +63,7 @@ export default async function handler(req: any, res: any) {
       status: true,
     });
   } catch (error) {
-    console.log(error);
+    log("error", "pages.api.settings.save.handler", error);
     return res.status(500).json({ status: false });
   }
 }

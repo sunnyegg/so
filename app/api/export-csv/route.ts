@@ -1,7 +1,4 @@
 import type { NextRequest } from "next/server";
-import { stringify } from "csv-stringify";
-import fs from "fs";
-import path from "path";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/utils/api";
 
 export const runtime = "edge";
@@ -10,32 +7,23 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
       data: { username: string; present_at: string }[];
-      filename: string;
     };
 
-    const filenameCSV = body.filename + ".csv";
-    const savedPath = path.join("public", filenameCSV);
     const columns = ["username", "present_at"];
-    const dataCSV = [];
+    const dataCSV = [columns];
+    let outputCSV = "";
 
     for (const val of body.data) {
       dataCSV.push([val.username, val.present_at]);
     }
 
-    stringify(dataCSV, { header: true, columns: columns }, (err, output) => {
-      if (err) throw err;
-      fs.writeFile(savedPath, output, (err) => {
-        if (err) throw err;
-      });
-    });
+    // csv to string
+    outputCSV = toCSV(dataCSV);
 
-    setTimeout(() => {
-      fs.rm(savedPath, (err) => {
-        if (err) throw err;
-      });
-    }, 60 * 1000); // 1 menit apus
+    // string to base64
+    const base64 = Buffer.from(outputCSV).toString("base64");
 
-    return CreateResponseApiSuccess({ data: filenameCSV });
+    return CreateResponseApiSuccess({ data: base64 });
   } catch (error) {
     if (error instanceof Error) {
       return CreateResponseApiError(error);
@@ -44,3 +32,8 @@ export async function POST(req: NextRequest) {
     }
   }
 }
+
+// array to csv
+const toCSV = (array: string[][]) => {
+  return array.map((row) => row.join(",")).join("\n");
+};

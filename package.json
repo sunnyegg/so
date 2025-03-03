@@ -17,7 +17,6 @@
     "@supabase/supabase-js": "^2.44.2",
     "@types/tmi.js": "^1.8.6",
     "animate.css": "^4.1.1",
-    "csv-stringify": "^6.5.0",
     "dayjs": "^1.11.10",
     "next": "14.1.0",
     "react": "^18",

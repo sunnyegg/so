@@ -5,10 +5,7 @@ import path from "path";
 
 export const runtime = "edge";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { data, filename }: any = JSON.parse(req.body);
 

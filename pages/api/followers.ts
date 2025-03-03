@@ -3,10 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 export const runtime = "edge";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function GET(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { token }: any = req.headers;
     const { broadcasterId }: any = req.query;

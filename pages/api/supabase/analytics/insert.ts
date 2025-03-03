@@ -3,10 +3,7 @@ import supabase from "@/configs/supabase";
 
 export const runtime = "edge";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { token }: any = req.headers;
     const { username, type }: any = JSON.parse(req.body);

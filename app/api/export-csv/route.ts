@@ -1,20 +1,24 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextRequest } from "next/server";
 import { stringify } from "csv-stringify";
 import fs from "fs";
 import path from "path";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/utils/api";
 
 export const runtime = "edge";
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: NextRequest) {
   try {
-    const { data, filename }: any = JSON.parse(req.body);
+    const body = (await req.json()) as {
+      data: { username: string; present_at: string }[];
+      filename: string;
+    };
 
-    const filenameCSV = filename + ".csv";
+    const filenameCSV = body.filename + ".csv";
     const savedPath = path.join("public", filenameCSV);
     const columns = ["username", "present_at"];
     const dataCSV = [];
 
-    for (const val of data) {
+    for (const val of body.data) {
       dataCSV.push([val.username, val.present_at]);
     }
 
@@ -31,13 +35,12 @@ export async function POST(req: NextApiRequest, res: NextApiResponse) {
       });
     }, 60 * 1000); // 1 menit apus
 
-    res.status(200).json({
-      data: filenameCSV
-    });
+    return CreateResponseApiSuccess({ data: filenameCSV });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({
-      error
-    });
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    } else {
+      return CreateResponseApiError(new Error("Internal Server Error"));
+    }
   }
 }

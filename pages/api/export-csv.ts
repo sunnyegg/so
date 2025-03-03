@@ -3,6 +3,8 @@ import { stringify } from "csv-stringify";
 import fs from "fs";
 import path from "path";
 
+export const runtime = "edge";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -33,12 +35,12 @@ export default async function handler(
     }, 60 * 1000); // 1 menit apus
 
     res.status(200).json({
-      data: filenameCSV,
+      data: filenameCSV
     });
   } catch (error) {
     console.log(error);
     res.status(400).json({
-      error,
+      error
     });
   }
 }

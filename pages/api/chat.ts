@@ -1,6 +1,8 @@
 import fetchHelix from "@/utils/helix";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+export const runtime = "edge";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -11,11 +13,11 @@ export default async function handler(
     const body = JSON.stringify({
       broadcaster_id: from,
       sender_id: by,
-      message: `!so @${to}`,
+      message: `!so @${to}`
     });
 
     const response = await fetchHelix(token, "chat/messages", "POST", body, {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     });
     if (!response.ok) {
       throw response.error;
@@ -28,12 +30,12 @@ export default async function handler(
     }
 
     res.status(200).json({
-      data: json,
+      data: json
     });
   } catch (error: any) {
     console.log(error);
     res.status(400).json({
-      error: error.message,
+      error: error.message
     });
   }
 }

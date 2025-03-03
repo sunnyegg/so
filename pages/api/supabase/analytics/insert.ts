@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import supabase from "@/configs/supabase";
 
+export const runtime = "edge";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -23,12 +25,12 @@ export default async function handler(
     }
 
     res.status(200).json({
-      data: "ok",
+      data: "ok"
     });
   } catch (error) {
     console.log(error);
     res.status(400).json({
-      error,
+      error
     });
   }
 }

@@ -1,6 +1,8 @@
 import fetchHelix from "@/utils/helix";
 import type { NextApiRequest, NextApiResponse } from "next";
 
+export const runtime = "edge";
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -19,12 +21,12 @@ export default async function handler(
     }
 
     res.status(200).json({
-      data: await response.response?.json(),
+      data: await response.response?.json()
     });
   } catch (error) {
     console.log(error);
     res.status(400).json({
-      error,
+      error
     });
   }
 }

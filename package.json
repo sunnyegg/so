@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write . --cache"
+    "format": "prettier --write . --cache",
+    "build:worker": "opennextjs-cloudflare",
+    "dev:worker": "wrangler dev --port 8771",
+    "preview:worker": "npm run build:worker && npm run dev:worker",
+    "deploy:worker": "npm run build:worker && wrangler deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.44.2",
@@ -22,6 +26,7 @@
     "tmi.js": "^1.8.5"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^0.5.8",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

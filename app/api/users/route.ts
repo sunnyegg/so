@@ -15,12 +15,12 @@ export async function GET(req: NextRequest) {
     const id = searchParams.get("id");
     const multiple = searchParams.get("multiple");
 
-    if (!id) {
-      return CreateResponseApiError(new Error("Bad Request"), 400);
-    }
-
     let queryFetch = "users";
     if (multiple) {
+      if (!id) {
+        return CreateResponseApiError(new Error("Bad Request"), 400);
+      }
+
       queryFetch += "?";
       // id = 1234,5678,91011
       const multipleId = id.split(",");

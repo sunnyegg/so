@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
     const data = await response.response?.json();
 
-    return CreateResponseApiSuccess({ data });
+    return CreateResponseApiSuccess(data);
   } catch (error) {
     if (error instanceof Error) {
       return CreateResponseApiError(error);

@@ -11,7 +11,9 @@ const nextConfig = {
         hostname: "static.twitchcdn.net",
       },
     ],
+    unoptimized: true,
   },
+  output: "standalone",
 };
 
 export default nextConfig;

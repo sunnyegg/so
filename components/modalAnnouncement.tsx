@@ -1,24 +1,4 @@
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
 export default function ModalAnnouncement() {
-  const router = useRouter();
-  const [countdown, setCountdown] = useState(5);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCountdown(countdown - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [countdown]);
-
-  useEffect(() => {
-    if (countdown === 0) {
-      router.push("https://so.adila.dev");
-    }
-  }, [countdown, router]);
-
   return (
     <dialog id="announcement_modal" className="modal">
       <div className="modal-box space-y-4">
@@ -39,10 +19,7 @@ export default function ModalAnnouncement() {
             <p className="text-sm">
               Starting from March 8th, 2025, this domain will not be available.
               Please use the new domain:
-              <a href="https://so.adila.dev" className="text-blue-500">
-                https://so.adila.dev
-              </a>
-              You will be redirected to the new domain in {countdown} seconds.
+              <a href="https://so.adila.dev">https://so.adila.dev</a>
             </p>
           </div>
         </div>

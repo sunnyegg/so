@@ -10,15 +10,18 @@ export default function ModalAnnouncement() {
 
         <h3 className="mb-4 text-xs font-bold md:text-lg">Announcement</h3>
 
-        <div className="rounded bg-green-600 p-4">
+        <div className="rounded bg-red-600 p-4">
           <div className="mb-4 space-y-2 text-xs text-white">
             <h1>IMPORTANT NOTICE</h1>
 
             <hr className="my-8 h-px border-0 bg-white" />
 
             <p className="text-sm">
-              Just kidding, I am going to continue working on this app :D If you
-              have found any bugs or have any suggestions, please let me know!
+              Starting from March 8th, 2025, this domain will not be available.
+              Please use the new domain:
+              <a href="https://so.adila.dev" className="text-blue-500">
+                https://so.adila.dev
+              </a>
             </p>
           </div>
         </div>

@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import corsMiddleware from "./middlewares/cors";
-import authenticationMiddleware from "./middlewares/authentication";
-import rateLimitMiddleware from "./middlewares/rate-limit";
 
-const availableMiddlewares = [
-  corsMiddleware,
-  authenticationMiddleware,
-  rateLimitMiddleware,
-];
+const availableMiddlewares = [corsMiddleware];
 
 export function middleware(request: NextRequest) {
   for (const m of availableMiddlewares) {
@@ -22,5 +16,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: "/api/:path*",
+  matcher: "/api/:path*"
 };

@@ -17,7 +17,7 @@ import {
   PersistAuth,
   PersistChannel,
   PersistStream,
-  PersistVersion,
+  PersistVersion
 } from "@/types/persist";
 
 import StoreProvider from "@/contexts/store";
@@ -28,7 +28,7 @@ import packageJson from "@/package.json";
 
 const firaMono = Fira_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "700"]
 });
 
 type RefreshTokenResponse = {
@@ -42,7 +42,7 @@ type ModeratedChannelResponse = {
 };
 
 export default function DashboardLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -70,12 +70,15 @@ export default function DashboardLayout({
   const handleRefreshToken = async (token: string) => {
     const res = await fetch(`/api/auth/refresh-token?token=${token}`, {
       method: "GET",
+      headers: {
+        "x-user-id": auth.user.id
+      }
     });
     if (!res.ok) {
       toast({
         title: "Failed to refresh token",
         variant: "destructive",
-        duration: 3000,
+        duration: 3000
       });
       setTimeout(() => {
         handleLogout();
@@ -117,7 +120,7 @@ export default function DashboardLayout({
       1000 * 60 * 5 // 5 minutes
     );
 
-    getModeratedChannels(auth.user.id, auth.accessToken).then((res) => {
+    getModeratedChannels(auth.user.id, auth).then((res) => {
       setModeratedChannels(res);
     });
 
@@ -158,18 +161,19 @@ export default function DashboardLayout({
   );
 }
 
-const getModeratedChannels = async (userId: string, token: string) => {
+const getModeratedChannels = async (userId: string, auth: Auth) => {
   const res = await fetch(`/api/channel/moderated?userId=${userId}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${token}`,
-    },
+      Authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     toast({
       title: "Failed to get moderated channels",
       variant: "destructive",
-      duration: 3000,
+      duration: 3000
     });
     return [];
   }

@@ -1,23 +1,48 @@
 import dayjs from "dayjs";
+import { nanoid } from "nanoid";
+import { NextRequest } from "next/server";
 
 import { Auth, TokenResponse, User } from "@/types/auth";
 
+import { logger } from "@/lib/logger";
 import { encrypt } from "@/lib/encryption";
-import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
-import { NextRequest } from "next/server";
+import {
+  CreateResponseApiError,
+  CreateResponseApiSuccess,
+  truncateString
+} from "@/lib/utils";
 
 export const runtime = "edge";
 
-export default async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const requestId = nanoid();
   try {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get("code");
     const scope = searchParams.get("scope");
 
+    if (!code || !scope) {
+      return CreateResponseApiError(new Error("Unauthorized"), 401);
+    }
+
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
     const REDIRECT_URI = (process.env.NEXT_PUBLIC_APP_URL +
       "/auth/login") as string;
+
+    // log the request
+    logger.info("Login request", {
+      requestId,
+      method: "GET",
+      path: "/api/auth/login",
+      params: {
+        code,
+        scope,
+        CLIENT_ID: truncateString(CLIENT_ID, 4),
+        CLIENT_SECRET: truncateString(CLIENT_SECRET, 4),
+        REDIRECT_URI
+      }
+    });
 
     const url = `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&scope=${scope}`;
 
@@ -27,22 +52,45 @@ export default async function GET(req: NextRequest) {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(JSON.stringify(error));
+      const errorMessage = JSON.stringify(error);
+      logger.error("Post request to twitch failed", new Error(errorMessage), {
+        requestId,
+        method: "POST",
+        path: "/api/auth/login",
+        params: {
+          url
+        }
+      });
+      throw new Error(errorMessage);
     }
 
     const data = (await response.json()) as TokenResponse;
 
     const getMeResponse = await getMe(data.access_token, CLIENT_ID);
     if (getMeResponse.isError) {
-      return CreateResponseApiError(
-        getMeResponse.error,
-        "app.api.auth.login.getMe"
-      );
+      const errorMessage = JSON.stringify(getMeResponse.error);
+      logger.error("Get me request failed", new Error(errorMessage), {
+        requestId,
+        method: "GET",
+        path: "/api/auth/login",
+        params: {
+          accessToken: truncateString(data.access_token, 4),
+          clientId: truncateString(CLIENT_ID, 4)
+        }
+      });
+      throw new Error(errorMessage);
     }
 
     // encrypt tokens
     const accessToken = encrypt(data.access_token);
     const refreshToken = encrypt(data.refresh_token);
+
+    // log success
+    logger.info("Login successful", {
+      requestId,
+      method: "GET",
+      path: "/api/auth/login"
+    });
 
     return CreateResponseApiSuccess({
       accessToken,
@@ -51,13 +99,21 @@ export default async function GET(req: NextRequest) {
       user: getMeResponse.data
     } as Auth);
   } catch (error) {
-    if (error instanceof Error) {
-      return CreateResponseApiError(error, "app.api.auth.login.handler");
-    }
-    return CreateResponseApiError(
-      new Error(JSON.stringify(error)),
-      "app.api.auth.login.handler"
+    // log error
+    logger.error(
+      "Login request failed",
+      error instanceof Error ? error : new Error(JSON.stringify(error)),
+      {
+        requestId,
+        method: "GET",
+        path: "/api/auth/login"
+      }
     );
+
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    }
+    return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }
 

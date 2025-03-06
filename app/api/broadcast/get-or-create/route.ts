@@ -4,31 +4,42 @@ import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
+import { nanoid } from "nanoid";
 
 import { Broadcast } from "@/types/broadcast";
+import { logger } from "@/lib/logger";
 
 export const runtime = "edge";
 
-export default async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const requestId = nanoid();
   try {
     const { searchParams } = new URL(req.url);
     const login = searchParams.get("login");
 
+    const userId = req.headers.get("x-user-id");
+    if (!userId) {
+      return CreateResponseApiError(new Error("Unauthorized"), 401);
+    }
+
+    // Log request
+    logger.info("Get or create broadcast request", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/get-or-create",
+      params: { login }
+    });
+
     if (!login) {
-      return CreateResponseApiError(
-        new Error("Missing login parameter"),
-        "app.api.broadcast.get-or-create.handler",
-        400
-      );
+      const error = new Error("Missing login parameter");
+      return CreateResponseApiError(error, 400);
     }
 
     const authorization = req.headers.get("authorization");
     if (!authorization) {
-      return CreateResponseApiError(
-        new Error("Unauthorized"),
-        "app.api.broadcast.get-or-create.handler",
-        401
-      );
+      const error = new Error("Unauthorized");
+      return CreateResponseApiError(error, 401);
     }
 
     const token = authorization.split(" ")[1];
@@ -37,11 +48,15 @@ export default async function GET(req: NextRequest) {
 
     const currentBroadcast = await apiClient.streams.getStreamByUserName(login);
     if (!currentBroadcast) {
-      return CreateResponseApiError(
-        new Error("Stream not found"),
-        "app.api.broadcast.get-or-create.handler",
-        404
-      );
+      const error = new Error("Stream not found");
+      logger.error("Get stream by user name failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/get-or-create",
+        params: { login }
+      });
+      return CreateResponseApiError(error, 404);
     }
 
     // check db
@@ -53,11 +68,15 @@ export default async function GET(req: NextRequest) {
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      return CreateResponseApiError(
-        new Error(JSON.stringify(dbRes)),
-        "app.api.broadcast.get-or-create.handler",
-        500
-      );
+      const error = new Error(JSON.stringify(dbRes));
+      logger.error("Get broadcast by stream id failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/get-or-create",
+        params: { currentBroadcastId: currentBroadcast.id, login }
+      });
+      return CreateResponseApiError(error, 500);
     }
 
     let outputData: Broadcast = {
@@ -100,25 +119,43 @@ export default async function GET(req: NextRequest) {
       });
 
       if (createRes.status !== 201) {
-        return CreateResponseApiError(
-          new Error(JSON.stringify(createRes)),
-          "app.api.broadcast.get-or-create.handler",
-          500
-        );
+        const error = new Error(JSON.stringify(createRes));
+        logger.error("Create broadcast failed", error, {
+          requestId,
+          userId,
+          method: "GET",
+          path: "/api/broadcast/get-or-create",
+          params: { login }
+        });
+        return CreateResponseApiError(error, 500);
       }
     }
 
+    // Log success
+    logger.info("Get or create broadcast request successful", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/get-or-create",
+      params: { login }
+    });
+
     return CreateResponseApiSuccess(outputData);
   } catch (error) {
-    if (error instanceof Error) {
-      return CreateResponseApiError(
-        error,
-        "app.api.broadcast.get-or-create.handler"
-      );
-    }
-    return CreateResponseApiError(
-      new Error(JSON.stringify(error)),
-      "app.api.broadcast.get-or-create.handler"
+    // Log error
+    logger.error(
+      "Get or create broadcast request failed",
+      error instanceof Error ? error : new Error(JSON.stringify(error)),
+      {
+        requestId,
+        method: "GET",
+        path: "/api/broadcast/get-or-create"
+      }
     );
+
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    }
+    return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }

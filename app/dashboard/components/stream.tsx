@@ -40,7 +40,7 @@ function StreamCard(props: StreamCardProps) {
     }
 
     if (env === "dev") {
-      getChannelInfo(channel, auth.accessToken).then((res) => {
+      getChannelInfo(channel, auth).then((res) => {
         if (res.status) {
           const data = res.data as Broadcast;
           setStream({ ...data, isLive: false, streamId: "" });
@@ -52,7 +52,7 @@ function StreamCard(props: StreamCardProps) {
       return;
     }
 
-    getOrCreateBroadcast(channel, auth.accessToken).then((res) => {
+    getOrCreateBroadcast(channel, auth).then((res) => {
       if (res.status) {
         const data = res.data as Broadcast;
         setStream(data);
@@ -60,7 +60,7 @@ function StreamCard(props: StreamCardProps) {
       }
 
       if (res.code === 404) {
-        getChannelInfo(channel, auth.accessToken).then((res) => {
+        getChannelInfo(channel, auth).then((res) => {
           if (res.status) {
             const data = res.data as Broadcast;
             setStream({ ...data, isLive: false, streamId: "" });
@@ -74,7 +74,7 @@ function StreamCard(props: StreamCardProps) {
           title: "Error",
           description: "Failed to get stream info",
           variant: "destructive",
-          duration: 5000,
+          duration: 5000
         });
         return;
       }
@@ -115,16 +115,17 @@ function StreamCard(props: StreamCardProps) {
   );
 }
 
-const getOrCreateBroadcast = async (login: string, token: string) => {
+const getOrCreateBroadcast = async (login: string, auth: Auth) => {
   const res = await fetch(`/api/broadcast/get-or-create?login=${login}`, {
     headers: {
-      authorization: `Bearer ${token}`,
-    },
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 
@@ -132,16 +133,17 @@ const getOrCreateBroadcast = async (login: string, token: string) => {
   return data;
 };
 
-const getChannelInfo = async (login: string, token: string) => {
+const getChannelInfo = async (login: string, auth: Auth) => {
   const res = await fetch(`/api/channel/info?login=${login}`, {
     headers: {
-      authorization: `Bearer ${token}`,
-    },
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 

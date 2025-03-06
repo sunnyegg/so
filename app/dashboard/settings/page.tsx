@@ -31,7 +31,7 @@ export default function SettingsPage() {
     autoSoDelay: 0,
     blacklistUsernames: "",
     blacklistWords: "",
-    raidPriority: true,
+    raidPriority: true
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -42,17 +42,15 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!auth.accessToken) return;
 
-    getSettings(auth.user.login, channel.login, auth.accessToken).then(
-      (res) => {
-        if (res.status) {
-          const data = res.data as Settings;
-          setSettings(data);
-          setSettingsTemp(data);
-          setIsLoading(false);
-          return;
-        }
+    getSettings(auth.user.login, channel.login, auth).then((res) => {
+      if (res.status) {
+        const data = res.data as Settings;
+        setSettings(data);
+        setSettingsTemp(data);
+        setIsLoading(false);
+        return;
       }
-    );
+    });
   }, [auth, channel]);
 
   return (
@@ -69,19 +67,20 @@ export default function SettingsPage() {
   );
 }
 
-const getSettings = async (login: string, toLogin: string, token: string) => {
+const getSettings = async (login: string, toLogin: string, auth: Auth) => {
   const res = await fetch(
     `/api/settings/list?login=${login}&toLogin=${toLogin}`,
     {
       headers: {
-        authorization: `Bearer ${token}`,
-      },
+        authorization: `Bearer ${auth.accessToken}`,
+        "x-user-id": auth.user.id
+      }
     }
   );
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 

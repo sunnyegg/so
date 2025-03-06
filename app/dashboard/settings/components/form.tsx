@@ -11,7 +11,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ const FormSchema = z.object({
   autoSoDelay: z.number().default(0),
   blacklistUsernames: z.string().default(""),
   blacklistWords: z.string().default(""),
-  raidPriority: z.boolean().default(true),
+  raidPriority: z.boolean().default(true)
 });
 
 type SettingsFormProps = {
@@ -52,12 +52,12 @@ function SettingsForm(props: SettingsFormProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const defaultValues = {
-    ...data,
+    ...data
   };
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues,
+    defaultValues
   });
   const watchForm = form.watch();
 
@@ -74,7 +74,7 @@ function SettingsForm(props: SettingsFormProps) {
       if (trimmed.length > 0) {
         if (!lettersAndNumbersOnly.test(trimmed)) {
           form.setError("blacklistUsernames", {
-            message: `Username "${trimmed}" contains invalid characters`,
+            message: `Username "${trimmed}" contains invalid characters`
           });
           return;
         }
@@ -95,19 +95,20 @@ function SettingsForm(props: SettingsFormProps) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${auth.accessToken}`,
+        "x-user-id": auth.user.id
       },
       body: JSON.stringify({
         login: auth.user.login,
         toLogin: channel.login,
-        settings: data,
-      }),
+        settings: data
+      })
     });
     if (!res.ok) {
       toast({
         title: "Failed to save settings",
         description: "Please refresh the page",
         variant: "destructive",
-        duration: 5000,
+        duration: 5000
       });
       setIsLoading(false);
       return;
@@ -121,7 +122,7 @@ function SettingsForm(props: SettingsFormProps) {
       title: "Settings saved",
       description: "Your settings have been saved",
       variant: "success",
-      duration: 3000,
+      duration: 3000
     });
   };
 

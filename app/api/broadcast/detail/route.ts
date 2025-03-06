@@ -1,13 +1,11 @@
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
-import {
-  CreateResponseApiError,
-  CreateResponseApiSuccess,
-  log
-} from "@/lib/utils";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
+import { nanoid } from "nanoid";
 
 import supabase from "@/db/supabase";
+import { logger } from "@/lib/logger";
 
 import { Chatter } from "@/types/chat";
 import { BroadcastAttendance } from "@/db/in-memory";
@@ -25,27 +23,36 @@ type AttendanceDBData = {
 
 export const runtime = "edge";
 
-export default async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const requestId = nanoid();
   try {
     const { searchParams } = new URL(req.url);
     const login = searchParams.get("login");
     const id = searchParams.get("id");
 
+    const userId = req.headers.get("x-user-id");
+    if (!userId) {
+      return CreateResponseApiError(new Error("Unauthorized"), 401);
+    }
+
+    // Log request
+    logger.info("Broadcast detail request", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/detail",
+      params: { login, id }
+    });
+
     if (!login || !id) {
-      return CreateResponseApiError(
-        new Error("Missing required parameters"),
-        "app.api.broadcast.detail.handler",
-        400
-      );
+      const error = new Error("Missing required parameters");
+      return CreateResponseApiError(error, 400);
     }
 
     const authorization = req.headers.get("authorization");
     if (!authorization) {
-      return CreateResponseApiError(
-        new Error("Unauthorized"),
-        "app.api.broadcast.detail.handler",
-        401
-      );
+      const error = new Error("Unauthorized");
+      return CreateResponseApiError(error, 401);
     }
 
     const token = authorization.split(" ")[1];
@@ -54,16 +61,27 @@ export default async function GET(req: NextRequest) {
 
     // check if data is already in cache
     if (BroadcastAttendance.has(id)) {
+      logger.info("Broadcast detail request successful (cached)", {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/detail",
+        params: { login, id }
+      });
       return CreateResponseApiSuccess(BroadcastAttendance.get(id)!);
     }
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
-      return CreateResponseApiError(
-        new Error("User not found"),
-        "app.api.broadcast.detail.handler",
-        404
-      );
+      const error = new Error("User not found");
+      logger.error("Get user by name failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/detail",
+        params: { login, id }
+      });
+      return CreateResponseApiError(error, 404);
     }
 
     const dbRes = await supabase()
@@ -73,21 +91,22 @@ export default async function GET(req: NextRequest) {
       .order("present_at", { ascending: true });
 
     if (dbRes.status !== 200) {
-      return CreateResponseApiError(
-        new Error(JSON.stringify(dbRes)),
-        "app.api.broadcast.detail.handler",
-        500
-      );
+      const error = new Error(JSON.stringify(dbRes));
+      logger.error("Get attendance by stream id failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/detail",
+        params: { login, id }
+      });
+      return CreateResponseApiError(error, 500);
     }
 
     const dbData: AttendanceDBData[] = dbRes.data || [];
 
     if (!dbData.length) {
-      return CreateResponseApiError(
-        new Error("No data found"),
-        "app.api.broadcast.detail.handler",
-        404
-      );
+      const error = new Error("No data found");
+      return CreateResponseApiError(error, 404);
     }
 
     const outputData: Chatter[] = dbData.map((d) => ({
@@ -103,25 +122,40 @@ export default async function GET(req: NextRequest) {
     // set cache
     BroadcastAttendance.set(id, outputData);
 
+    // Log success
+    logger.info("Broadcast detail request successful", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/detail",
+      params: { login, id }
+    });
+
     return CreateResponseApiSuccess(outputData);
   } catch (error) {
-    if (error instanceof Error) {
-      return CreateResponseApiError(error, "app.api.broadcast.detail.handler");
-    }
-    return CreateResponseApiError(
-      new Error(JSON.stringify(error)),
-      "app.api.broadcast.detail.handler"
+    // Log error
+    logger.error(
+      "Broadcast detail request failed",
+      error instanceof Error ? error : new Error(JSON.stringify(error)),
+      {
+        requestId,
+        method: "GET",
+        path: "/api/broadcast/detail"
+      }
     );
+
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    }
+    return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }
 
 setInterval(
   () => {
-    log(
-      "info",
-      "app.api.broadcast.detail.setInterval",
-      `Clearing BroadcastAttendance of ${BroadcastAttendance.size} entries`
-    );
+    logger.info("Clearing BroadcastAttendance cache", {
+      message: `Clearing BroadcastAttendance of ${BroadcastAttendance.size} entries`
+    });
     BroadcastAttendance.clear();
   },
   1000 * 60 * 60 * 12

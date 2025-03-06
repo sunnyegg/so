@@ -4,37 +4,44 @@ import { ModeratedChannel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
-import {
-  CreateResponseApiError,
-  CreateResponseApiSuccess,
-  log
-} from "@/lib/utils";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
+import { nanoid } from "nanoid";
 
 import { ModeratedChannelsCache } from "@/db/in-memory";
+import { logger } from "@/lib/logger";
 
 export const runtime = "edge";
 
-export default async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const requestId = nanoid();
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
+    const headerUserId = req.headers.get("x-user-id");
+    if (!headerUserId) {
+      return CreateResponseApiError(new Error("Unauthorized"), 401);
+    }
+
+    // Log request
+    logger.info("Get moderated channels request", {
+      requestId,
+      userId: headerUserId,
+      method: "GET",
+      path: "/api/channel/moderated",
+      params: { userId }
+    });
+
     if (!userId) {
-      return CreateResponseApiError(
-        new Error("Missing userId parameter"),
-        "app.api.channel.moderated.handler",
-        400
-      );
+      const error = new Error("Missing userId parameter");
+      return CreateResponseApiError(error, 400);
     }
 
     const authorization = req.headers.get("authorization");
     if (!authorization) {
-      return CreateResponseApiError(
-        new Error("Unauthorized"),
-        "app.api.channel.moderated.handler",
-        401
-      );
+      const error = new Error("Unauthorized");
+      return CreateResponseApiError(error, 401);
     }
 
     const token = authorization.split(" ")[1];
@@ -42,17 +49,28 @@ export default async function GET(req: NextRequest) {
     const apiClient = NewAPIClient(decryptedToken);
 
     if (ModeratedChannelsCache.has(userId)) {
+      logger.info("Get moderated channels request successful (cached)", {
+        requestId,
+        userId: headerUserId,
+        method: "GET",
+        path: "/api/channel/moderated",
+        params: { userId }
+      });
       return CreateResponseApiSuccess(ModeratedChannelsCache.get(userId));
     }
 
     const moderatedChannels =
       await apiClient.moderation.getModeratedChannels(userId);
     if (!moderatedChannels.data.length) {
-      return CreateResponseApiError(
-        new Error("No moderated channels found"),
-        "app.api.channel.moderated.handler",
-        404
-      );
+      const error = new Error("No moderated channels found");
+      logger.error("Get moderated channels request failed", error, {
+        requestId,
+        userId: headerUserId,
+        method: "GET",
+        path: "/api/channel/moderated",
+        params: { userId }
+      });
+      return CreateResponseApiError(error, 404);
     }
 
     const data = (await Promise.all(
@@ -69,25 +87,40 @@ export default async function GET(req: NextRequest) {
 
     ModeratedChannelsCache.set(userId, data);
 
+    // Log success
+    logger.info("Get moderated channels request successful", {
+      requestId,
+      userId: headerUserId,
+      method: "GET",
+      path: "/api/channel/moderated",
+      params: { userId }
+    });
+
     return CreateResponseApiSuccess(data);
   } catch (error) {
-    if (error instanceof Error) {
-      return CreateResponseApiError(error, "app.api.channel.moderated.handler");
-    }
-    return CreateResponseApiError(
-      new Error(JSON.stringify(error)),
-      "app.api.channel.moderated.handler"
+    // Log error
+    logger.error(
+      "Get moderated channels request failed",
+      error instanceof Error ? error : new Error(JSON.stringify(error)),
+      {
+        requestId,
+        method: "GET",
+        path: "/api/channel/moderated"
+      }
     );
+
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    }
+    return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }
 
 setInterval(
   () => {
-    log(
-      "info",
-      "app.api.channel.moderated.handler",
-      `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
-    );
+    logger.info("Clearing ModeratedChannelsCache", {
+      message: `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
+    });
     ModeratedChannelsCache.clear();
   },
   1000 * 60 * 5

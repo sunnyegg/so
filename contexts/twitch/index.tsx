@@ -68,7 +68,7 @@ export const TwitchContext = createContext<TwitchContextType>({
     },
     setIsConnectedChat: () => {},
     setIsConnectedEventSub: () => {},
-    setAttendance: () => {},
+    setAttendance: () => {}
   },
   stream: {
     isLive: false,
@@ -79,14 +79,14 @@ export const TwitchContext = createContext<TwitchContextType>({
       title: "",
       gameName: "",
       startDate: "",
-      isLive: false,
+      isLive: false
     },
-    setStream: () => {},
-  },
+    setStream: () => {}
+  }
 });
 
 export default function TwitchProvider({
-  children,
+  children
 }: {
   children: React.ReactNode;
 }) {
@@ -126,15 +126,15 @@ export default function TwitchProvider({
 
       setChatters((prevChatters: Chatter[]) => [
         ...prevChatters,
-        { ...chatter },
+        { ...chatter }
       ]);
       setAttendance((prevAttendance: Chatter[]) => [
         ...prevAttendance,
-        { ...chatter },
+        { ...chatter }
       ]);
 
       const settingsData = (await getSettings(
-        token,
+        auth,
         login,
         channel
       )) as SettingsResponse;
@@ -143,7 +143,7 @@ export default function TwitchProvider({
           title: "Failed to get settings",
           description: "Please refresh the page",
           variant: "destructive",
-          duration: 3000,
+          duration: 3000
         });
         return;
       }
@@ -158,7 +158,7 @@ export default function TwitchProvider({
               title: "Shoutout Error",
               description: smSORes,
               variant: "destructive",
-              duration: 2000,
+              duration: 2000
             });
             return;
           }
@@ -168,7 +168,7 @@ export default function TwitchProvider({
               title: "Shoutout Error",
               description: sSORes,
               variant: "destructive",
-              duration: 2000,
+              duration: 2000
             });
             return;
           }
@@ -196,8 +196,9 @@ export default function TwitchProvider({
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-id": auth.user.id
         },
-        body: JSON.stringify({ channel: ch, message }),
+        body: JSON.stringify({ channel: ch, message })
       });
       if (!res.ok) {
         return "Failed to send shoutout";
@@ -218,8 +219,9 @@ export default function TwitchProvider({
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "x-user-id": auth.user.id
         },
-        body: JSON.stringify({ from: ch, to: login }),
+        body: JSON.stringify({ from: ch, to: login })
       });
       if (!res.ok) {
         return "Failed to send shoutout";
@@ -233,7 +235,7 @@ export default function TwitchProvider({
   const setLive = (live: boolean) => {
     setStream((prevStream) => ({
       ...prevStream,
-      isLive: live,
+      isLive: live
     }));
     setIsStreamLive(live);
   };
@@ -248,14 +250,15 @@ export default function TwitchProvider({
     const res = await fetch("/api/chat/connect", {
       headers: {
         Authorization: `Bearer ${token}`,
-      },
+        "x-user-id": auth.user.id
+      }
     });
     if (!res.ok) {
       toast({
         title: "Failed to connect chat",
         description: "Please refresh the page",
         variant: "destructive",
-        duration: 5000,
+        duration: 5000
       });
       return;
     }
@@ -272,7 +275,7 @@ export default function TwitchProvider({
       }
 
       const settingsData = (await getSettings(
-        token,
+        auth,
         login,
         channel
       )) as SettingsResponse;
@@ -281,7 +284,7 @@ export default function TwitchProvider({
           title: "Failed to get settings",
           description: "Please refresh the page",
           variant: "destructive",
-          duration: 3000,
+          duration: 3000
         });
         return;
       }
@@ -303,7 +306,8 @@ export default function TwitchProvider({
       const chatterRes = await fetch(`/api/channel/info?login=${user}`, {
         headers: {
           Authorization: `Bearer ${token}`,
-        },
+          "x-user-id": auth.user.id
+        }
       });
       if (!chatterRes.ok) {
         console.log("Failed to get chatter info", await chatterRes.json());
@@ -320,7 +324,7 @@ export default function TwitchProvider({
           followers: chatterData.data.followers,
           lastSeenPlaying: chatterData.data.gameName,
           profileImageUrl: chatterData.data.profileImageUrl,
-          presentAt: new Date().toISOString(),
+          presentAt: new Date().toISOString()
         },
         token,
         login,
@@ -333,7 +337,7 @@ export default function TwitchProvider({
       toast({
         title: "Connected to chat",
         variant: "success",
-        duration: 3000,
+        duration: 3000
       });
     });
 
@@ -342,7 +346,7 @@ export default function TwitchProvider({
       toast({
         title: "Disconnected from chat",
         variant: "destructive",
-        duration: 3000,
+        duration: 3000
       });
     });
   };
@@ -357,14 +361,15 @@ export default function TwitchProvider({
     const res = await fetch("/api/eventsub/connect", {
       headers: {
         Authorization: `Bearer ${token}`,
-      },
+        "x-user-id": auth.user.id
+      }
     });
     if (!res.ok) {
       toast({
         title: "Failed to connect eventsub",
         description: "Please refresh the page",
         variant: "destructive",
-        duration: 5000,
+        duration: 5000
       });
       return;
     }
@@ -375,7 +380,7 @@ export default function TwitchProvider({
 
     // events
     eventSubWsClient.current.onStreamOnline(userId, async (e) => {
-      getOrCreateBroadcast(e.broadcasterName, token).then((res) => {
+      getOrCreateBroadcast(e.broadcasterName, auth).then((res) => {
         if (res.status) {
           const data = res.data as Broadcast;
           setStream(data);
@@ -387,7 +392,7 @@ export default function TwitchProvider({
         title: "Stream Online",
         description: "You are now live",
         variant: "success",
-        duration: 3000,
+        duration: 3000
       });
       router.refresh();
     });
@@ -395,13 +400,13 @@ export default function TwitchProvider({
     eventSubWsClient.current.onStreamOffline(userId, (e) => {
       setStream((prevStream) => ({
         ...prevStream,
-        isLive: false,
+        isLive: false
       }));
 
       toast({
         title: "Stream Offline",
         description: "You are offline",
-        duration: 3000,
+        duration: 3000
       });
       router.refresh();
     });
@@ -417,7 +422,8 @@ export default function TwitchProvider({
           {
             headers: {
               Authorization: `Bearer ${token}`,
-            },
+              "x-user-id": auth.user.id
+            }
           }
         );
         if (!chatterRes.ok) {
@@ -435,7 +441,7 @@ export default function TwitchProvider({
             followers: chatterData.data.followers,
             lastSeenPlaying: chatterData.data.gameName,
             profileImageUrl: chatterData.data.profileImageUrl,
-            presentAt: new Date().toISOString(),
+            presentAt: new Date().toISOString()
           },
           token,
           login,
@@ -449,7 +455,7 @@ export default function TwitchProvider({
       toast({
         title: "Connected to eventsub",
         variant: "success",
-        duration: 3000,
+        duration: 3000
       });
     });
 
@@ -459,7 +465,7 @@ export default function TwitchProvider({
       toast({
         title: "Disconnected from eventsub",
         variant: "destructive",
-        duration: 3000,
+        duration: 3000
       });
     });
 
@@ -467,7 +473,7 @@ export default function TwitchProvider({
       setStream((prevStream) => ({
         ...prevStream,
         title: e.streamTitle,
-        gameName: e.categoryName,
+        gameName: e.categoryName
       }));
     });
 
@@ -477,7 +483,7 @@ export default function TwitchProvider({
       }
 
       const settingsData = (await getSettings(
-        token,
+        auth,
         login,
         login
       )) as SettingsResponse;
@@ -489,7 +495,7 @@ export default function TwitchProvider({
         // disable autoso temporary
         // @ts-ignore
         const saveRes = await saveSettings(token, login, login, {
-          autoSo: false,
+          autoSo: false
         });
         if (!saveRes.status) {
           return;
@@ -500,7 +506,7 @@ export default function TwitchProvider({
             // enable autoso again after 5 minutes
             // @ts-ignore
             saveSettings(token, login, login, {
-              autoSo: true,
+              autoSo: true
             });
           },
           1000 * 60 * 5
@@ -512,7 +518,8 @@ export default function TwitchProvider({
         {
           headers: {
             Authorization: `Bearer ${token}`,
-          },
+            "x-user-id": auth.user.id
+          }
         }
       );
       if (!chatterRes.ok) {
@@ -530,7 +537,7 @@ export default function TwitchProvider({
           followers: chatterData.data.followers,
           lastSeenPlaying: chatterData.data.gameName,
           profileImageUrl: chatterData.data.profileImageUrl,
-          presentAt: new Date().toISOString(),
+          presentAt: new Date().toISOString()
         },
         token,
         login,
@@ -548,15 +555,16 @@ export default function TwitchProvider({
     const body = {
       streamId: stream.streamId,
       broadcasterId: stream.broadcasterId,
-      chatters: attendance,
+      chatters: attendance
     };
 
     fetch("/api/broadcast/save-attendance", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
+        "x-user-id": auth.user.id
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(body)
     });
   };
 
@@ -615,14 +623,14 @@ export default function TwitchProvider({
           removeFromShoutout,
           sendMessageSO,
           sendSO,
-          setAttendance,
+          setAttendance
         },
         stream: {
           isLive: isStreamLive,
           setLive,
           stream,
-          setStream,
-        },
+          setStream
+        }
       }}
     >
       {children}
@@ -630,16 +638,17 @@ export default function TwitchProvider({
   );
 }
 
-const getOrCreateBroadcast = async (login: string, token: string) => {
+const getOrCreateBroadcast = async (login: string, auth: Auth) => {
   const res = await fetch(`/api/broadcast/get-or-create?login=${login}`, {
     headers: {
-      authorization: `Bearer ${token}`,
-    },
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 
@@ -647,19 +656,20 @@ const getOrCreateBroadcast = async (login: string, token: string) => {
   return data;
 };
 
-const getSettings = async (token: string, login: string, toLogin: string) => {
+const getSettings = async (auth: Auth, login: string, toLogin: string) => {
   const res = await fetch(
     `/api/settings/list?login=${login}&toLogin=${toLogin}`,
     {
       headers: {
-        authorization: `Bearer ${token}`,
-      },
+        authorization: `Bearer ${auth.accessToken}`,
+        "x-user-id": auth.user.id
+      }
     }
   );
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 
@@ -668,25 +678,26 @@ const getSettings = async (token: string, login: string, toLogin: string) => {
 };
 
 const saveSettings = async (
-  token: string,
+  auth: Auth,
   login: string,
   toLogin: string,
   data: Settings
 ) => {
   const res = await fetch("/api/settings/save", {
     headers: {
-      authorization: `Bearer ${token}`,
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
     },
     body: JSON.stringify({
       login: login,
       toLogin: toLogin,
-      settings: data,
-    }),
+      settings: data
+    })
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 

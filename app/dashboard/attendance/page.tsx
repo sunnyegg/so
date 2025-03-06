@@ -9,7 +9,7 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  useReactTable
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -33,7 +33,7 @@ import { SelectedChannel } from "@/types/channel";
 import {
   PersistAttendance,
   PersistAuth,
-  PersistChannel,
+  PersistChannel
 } from "@/types/persist";
 
 import { TwitchContext } from "@/contexts/twitch";
@@ -61,20 +61,20 @@ export default function AttendancePage() {
             </Avatar>
           </div>
         );
-      },
+      }
     }),
     columnHelper.accessor("displayName", {
       header: "Name",
-      cell: (info) => info.getValue(),
+      cell: (info) => info.getValue()
     }),
     columnHelper.accessor("followers", {
       header: "Followers",
-      cell: (info) => info.getValue(),
+      cell: (info) => info.getValue()
     }),
     columnHelper.accessor("presentAt", {
       header: "Present At",
-      cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD, HH:mm:ss"),
-    }),
+      cell: (info) => dayjs(info.getValue()).format("YYYY-MM-DD, HH:mm:ss")
+    })
   ];
 
   const [attendance] = usePersistState(
@@ -100,10 +100,10 @@ export default function AttendancePage() {
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [isPastBroadcastLoading, setIsPastBroadcastLoading] = useState(true);
 
-  const handleSelectBroadcast = (token: string, login: string, id: string) => {
+  const handleSelectBroadcast = (auth: Auth, login: string, id: string) => {
     setIsTableLoading(true);
     setSelectedBroadcast(id);
-    getBroadcastDetail(token, login, id).then((res) => {
+    getBroadcastDetail(auth, login, id).then((res) => {
       if (res.status) {
         const data = res.data as Chatter[];
         setAttendance(data);
@@ -129,7 +129,7 @@ export default function AttendancePage() {
             displayName: chatter.displayName,
             profileImageUrl: chatter.profileImageUrl as string,
             followers: chatter.followers,
-            presentAt: chatter.presentAt,
+            presentAt: chatter.presentAt
           };
         })
       );
@@ -145,7 +145,7 @@ export default function AttendancePage() {
   useEffect(() => {
     if (!auth.accessToken) return;
 
-    getPastBroadcasts(auth.accessToken, channel.login).then((res) => {
+    getPastBroadcasts(auth, channel.login).then((res) => {
       if (res.status) {
         setPastBroadcasts(res.data);
       } else {
@@ -158,7 +158,7 @@ export default function AttendancePage() {
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
+    getCoreRowModel: getCoreRowModel()
   });
 
   return (
@@ -271,7 +271,7 @@ export default function AttendancePage() {
                         <ButtonAttendance
                           onClick={() =>
                             handleSelectBroadcast(
-                              auth.accessToken,
+                              auth,
                               channel.login,
                               broadcast.streamId
                             )
@@ -302,16 +302,17 @@ const ButtonAttendance = ({ onClick }: { onClick: () => void }) => {
   );
 };
 
-const getPastBroadcasts = async (token: string, login: string) => {
+const getPastBroadcasts = async (auth: Auth, login: string) => {
   const res = await fetch(`/api/broadcast/past?login=${login}`, {
     headers: {
-      authorization: `Bearer ${token}`,
-    },
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 
@@ -319,16 +320,17 @@ const getPastBroadcasts = async (token: string, login: string) => {
   return data;
 };
 
-const getBroadcastDetail = async (token: string, login: string, id: string) => {
+const getBroadcastDetail = async (auth: Auth, login: string, id: string) => {
   const res = await fetch(`/api/broadcast/detail?login=${login}&id=${id}`, {
     headers: {
-      authorization: `Bearer ${token}`,
-    },
+      authorization: `Bearer ${auth.accessToken}`,
+      "x-user-id": auth.user.id
+    }
   });
   if (!res.ok) {
     return {
       code: res.status,
-      status: false,
+      status: false
     };
   }
 

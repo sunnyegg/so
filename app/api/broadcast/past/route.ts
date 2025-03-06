@@ -2,8 +2,10 @@ import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
+import { nanoid } from "nanoid";
 
 import { Broadcast } from "@/types/broadcast";
+import { logger } from "@/lib/logger";
 
 import supabase from "@/db/supabase";
 
@@ -20,26 +22,35 @@ type BroadcastDBData = {
 
 export const runtime = "edge";
 
-export default async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const requestId = nanoid();
   try {
     const { searchParams } = new URL(req.url);
     const login = searchParams.get("login");
 
+    const userId = req.headers.get("x-user-id");
+    if (!userId) {
+      return CreateResponseApiError(new Error("Unauthorized"), 401);
+    }
+
+    // Log request
+    logger.info("Past broadcasts request", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/past",
+      params: { login }
+    });
+
     if (!login) {
-      return CreateResponseApiError(
-        new Error("Missing login parameter"),
-        "app.api.broadcast.past.handler",
-        400
-      );
+      const error = new Error("Missing login parameter");
+      return CreateResponseApiError(error, 400);
     }
 
     const authorization = req.headers.get("authorization");
     if (!authorization) {
-      return CreateResponseApiError(
-        new Error("Unauthorized"),
-        "app.api.broadcast.past.handler",
-        401
-      );
+      const error = new Error("Unauthorized");
+      return CreateResponseApiError(error, 401);
     }
 
     const token = authorization.split(" ")[1];
@@ -48,11 +59,15 @@ export default async function GET(req: NextRequest) {
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
-      return CreateResponseApiError(
-        new Error("User not found"),
-        "app.api.broadcast.past.handler",
-        404
-      );
+      const error = new Error("User not found");
+      logger.error("Get user by name failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/past",
+        params: { login }
+      });
+      return CreateResponseApiError(error, 404);
     }
 
     const dbRes = await supabase()
@@ -62,21 +77,22 @@ export default async function GET(req: NextRequest) {
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      return CreateResponseApiError(
-        new Error(JSON.stringify(dbRes)),
-        "app.api.broadcast.past.handler",
-        500
-      );
+      const error = new Error(JSON.stringify(dbRes));
+      logger.error("Get broadcasts by broadcaster id failed", error, {
+        requestId,
+        userId,
+        method: "GET",
+        path: "/api/broadcast/past",
+        params: { broadcasterId: user.id, login }
+      });
+      return CreateResponseApiError(error, 500);
     }
 
     const dbData: BroadcastDBData[] = dbRes.data || [];
 
     if (!dbData.length) {
-      return CreateResponseApiError(
-        new Error("No broadcasts found"),
-        "app.api.broadcast.past.handler",
-        404
-      );
+      const error = new Error("No broadcasts found");
+      return CreateResponseApiError(error, 404);
     }
 
     const outputData: Broadcast[] = dbData.map((d) => ({
@@ -89,14 +105,31 @@ export default async function GET(req: NextRequest) {
       isLive: false
     }));
 
+    // Log success
+    logger.info("Past broadcasts request successful", {
+      requestId,
+      userId,
+      method: "GET",
+      path: "/api/broadcast/past",
+      params: { login }
+    });
+
     return CreateResponseApiSuccess(outputData);
   } catch (error) {
-    if (error instanceof Error) {
-      return CreateResponseApiError(error, "app.api.broadcast.past.handler");
-    }
-    return CreateResponseApiError(
-      new Error(JSON.stringify(error)),
-      "app.api.broadcast.past.handler"
+    // Log error
+    logger.error(
+      "Past broadcasts request failed",
+      error instanceof Error ? error : new Error(JSON.stringify(error)),
+      {
+        requestId,
+        method: "GET",
+        path: "/api/broadcast/past"
+      }
     );
+
+    if (error instanceof Error) {
+      return CreateResponseApiError(error);
+    }
+    return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }

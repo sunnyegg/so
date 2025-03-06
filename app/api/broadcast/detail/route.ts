@@ -18,6 +18,8 @@ type AttendanceDBData = {
   created_at: string;
 };
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { login, id } = req.query;
@@ -29,7 +31,7 @@ export default async function handler(req: any, res: any) {
     if (BroadcastAttendance.has(id)) {
       return res.status(200).json({
         status: true,
-        data: BroadcastAttendance.get(id)!,
+        data: BroadcastAttendance.get(id)!
       });
     }
 
@@ -65,7 +67,7 @@ export default async function handler(req: any, res: any) {
         followers: d.followers,
         profileImageUrl: d.profile_image_url,
         presentAt: d.present_at,
-        lastSeenPlaying: "",
+        lastSeenPlaying: ""
       });
     }
 
@@ -73,7 +75,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       status: true,
-      data: outputData,
+      data: outputData
     });
   } catch (error) {
     log("error", "pages.api.broadcast.detail.handler", error);

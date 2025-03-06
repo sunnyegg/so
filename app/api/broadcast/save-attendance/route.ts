@@ -18,6 +18,8 @@ type AttendanceDBData = {
   present_at: string;
 };
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { authorization } = req.headers;
@@ -33,7 +35,7 @@ export default async function handler(req: any, res: any) {
     if (!currentBroadcast) {
       log("info", "pages.api.broadcast.save-attendance.handler", {
         message: "no stream",
-        broadcasterId,
+        broadcasterId
       });
       return res.status(404).json({ status: false });
     }
@@ -41,7 +43,7 @@ export default async function handler(req: any, res: any) {
     if (currentBroadcast.id !== streamId) {
       log("error", "pages.api.broadcast.save-attendance.handler", {
         currentBroadcast,
-        body: req.body,
+        body: req.body
       });
       return res.status(400).json({ status: false });
     }
@@ -64,7 +66,7 @@ export default async function handler(req: any, res: any) {
           return {
             ...item,
             id: "",
-            lastSeenPlaying: "",
+            lastSeenPlaying: ""
           } as Chatter;
         });
       }
@@ -94,7 +96,7 @@ export default async function handler(req: any, res: any) {
         display_name: chatter.displayName,
         followers: chatter.followers,
         profile_image_url: chatter.profileImageUrl || "",
-        present_at: chatter.presentAt,
+        present_at: chatter.presentAt
       });
     });
 
@@ -113,7 +115,7 @@ export default async function handler(req: any, res: any) {
     }
 
     return res.status(200).json({
-      status: true,
+      status: true
     });
   } catch (error: any) {
     log("error", "pages.api.broadcast.save-attendance.handler", error);

@@ -6,6 +6,8 @@ import { NewAPIClient } from "@/lib/twitch";
 import { ChannelCache } from "@/db/in-memory";
 import { log } from "@/lib/utils";
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { login } = req.query;
@@ -17,7 +19,7 @@ export default async function handler(req: any, res: any) {
     if (ChannelCache.has(login)) {
       return res.status(200).json({
         status: true,
-        data: ChannelCache.get(login),
+        data: ChannelCache.get(login)
       });
     }
 
@@ -39,14 +41,14 @@ export default async function handler(req: any, res: any) {
       gameName: channel.gameName,
       title: channel.title,
       profileImageUrl: user.profilePictureUrl,
-      followers: followers.total,
+      followers: followers.total
     } as Channel;
 
     ChannelCache.set(login, data);
 
     return res.status(200).json({
       status: true,
-      data,
+      data
     });
   } catch (error) {
     log("error", "pages.api.channel.info.handler", error);

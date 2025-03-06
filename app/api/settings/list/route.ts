@@ -9,6 +9,8 @@ import { Settings } from "@/types/settings";
 import { SettingDBData } from "./save";
 import { log } from "@/lib/utils";
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { login, toLogin } = req.query;
@@ -20,7 +22,7 @@ export default async function handler(req: any, res: any) {
     if (SettingsCache.has(`${login}-${toLogin}`)) {
       return res.status(200).json({
         status: true,
-        data: SettingsCache.get(`${login}-${toLogin}`),
+        data: SettingsCache.get(`${login}-${toLogin}`)
       });
     }
 
@@ -52,7 +54,7 @@ export default async function handler(req: any, res: any) {
       autoSoDelay: 0,
       blacklistUsernames: "",
       blacklistWords: "",
-      raidPriority: true,
+      raidPriority: true
     };
 
     if (dbRes.status === 200 && dbData.length) {
@@ -66,7 +68,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       status: true,
-      data: outputData,
+      data: outputData
     });
   } catch (error) {
     log("error", "pages.api.settings.list.handler", error);

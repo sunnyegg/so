@@ -17,6 +17,8 @@ type BroadcastDBData = {
   created_at: string;
 };
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { login } = req.query;
@@ -57,13 +59,13 @@ export default async function handler(req: any, res: any) {
         gameName: d.game_name,
         title: d.title,
         startDate: d.start_date,
-        isLive: false,
+        isLive: false
       });
     }
 
     return res.status(200).json({
       status: true,
-      data: outputData,
+      data: outputData
     });
   } catch (error) {
     log("error", "pages.api.broadcast.past.handler", error);

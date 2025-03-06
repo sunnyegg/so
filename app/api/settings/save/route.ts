@@ -15,12 +15,14 @@ export type SettingDBData = {
   updated_at: string;
 };
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const {
       login,
       toLogin,
-      settings,
+      settings
     }: { login: string; toLogin: string; settings: Settings } = JSON.parse(
       req.body
     );
@@ -47,7 +49,7 @@ export default async function handler(req: any, res: any) {
         to_user_id: toUser.id,
         // @ts-ignore
         value: JSON.stringify(settings[key]),
-        updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
     });
 
@@ -60,7 +62,7 @@ export default async function handler(req: any, res: any) {
     SettingsCache.set(`${login}-${toLogin}`, settings);
 
     return res.status(200).json({
-      status: true,
+      status: true
     });
   } catch (error) {
     log("error", "pages.api.settings.save.handler", error);

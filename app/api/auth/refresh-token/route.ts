@@ -5,6 +5,8 @@ import { Auth, TokenResponse } from "@/types/auth";
 import { decrypt, encrypt } from "@/lib/encryption";
 import { log } from "@/lib/utils";
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { token } = req.query;
@@ -23,9 +25,9 @@ export default async function handler(req: any, res: any) {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-      body: formData,
+      body: formData
     });
 
     if (!response.ok) {
@@ -45,8 +47,8 @@ export default async function handler(req: any, res: any) {
       data: {
         accessToken,
         refreshToken,
-        expiredAt: dayjs().add(30, "minutes").toISOString(),
-      } as Auth,
+        expiredAt: dayjs().add(30, "minutes").toISOString()
+      } as Auth
     });
   } catch (error: any) {
     log("error", "pages.api.auth.refresh-token.handler", error);

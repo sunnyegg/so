@@ -6,6 +6,8 @@ import { log } from "@/lib/utils";
 
 import { Broadcast } from "@/types/broadcast";
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { login } = req.query;
@@ -38,7 +40,7 @@ export default async function handler(req: any, res: any) {
       gameName: "",
       title: "",
       startDate: "",
-      isLive: false,
+      isLive: false
     };
 
     // if found, use db data
@@ -49,7 +51,7 @@ export default async function handler(req: any, res: any) {
         gameName: dbRes.data[0].game_name,
         title: dbRes.data[0].title,
         startDate: dbRes.data[0].start_date,
-        isLive: true,
+        isLive: true
       };
     }
 
@@ -61,7 +63,7 @@ export default async function handler(req: any, res: any) {
         gameName: currentBroadcast.gameName,
         title: currentBroadcast.title,
         startDate: currentBroadcast.startDate.toISOString(),
-        isLive: true,
+        isLive: true
       };
 
       const createRes = await supabase().from("broadcasts").insert({
@@ -70,7 +72,7 @@ export default async function handler(req: any, res: any) {
         broadcaster_name: currentBroadcast.userName,
         game_name: outputData.gameName,
         title: outputData.title,
-        start_date: outputData.startDate,
+        start_date: outputData.startDate
       });
       if (createRes.status !== 201) {
         log("error", "pages.api.broadcast.get-or-create.handler", createRes);
@@ -80,7 +82,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       status: true,
-      data: outputData,
+      data: outputData
     });
   } catch (error: any) {
     log("error", "pages.api.broadcast.get-or-create.handler", error);

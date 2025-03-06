@@ -8,6 +8,8 @@ import { NewAPIClient } from "@/lib/twitch";
 import { ModeratedChannelsCache } from "@/db/in-memory";
 import { log } from "@/lib/utils";
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { userId } = req.query;
@@ -19,7 +21,7 @@ export default async function handler(req: any, res: any) {
     if (ModeratedChannelsCache.has(userId)) {
       return res.status(200).json({
         status: true,
-        data: ModeratedChannelsCache.get(userId),
+        data: ModeratedChannelsCache.get(userId)
       });
     }
 
@@ -36,7 +38,7 @@ export default async function handler(req: any, res: any) {
           id: channel.id,
           login: channel.name,
           displayName: channel.displayName,
-          profileImageUrl: profile.profilePictureUrl,
+          profileImageUrl: profile.profilePictureUrl
         };
       })
     )) as ModeratedChannel[];
@@ -45,7 +47,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json({
       status: true,
-      data,
+      data
     });
   } catch (error) {
     log("error", "pages.api.channel.moderated.handler", error);

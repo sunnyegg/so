@@ -10,6 +10,8 @@ type GetMeResponse = {
   data: User;
 };
 
+export const runtime = "edge";
+
 export default async function handler(req: any, res: any) {
   try {
     const { code, scope } = req.query;
@@ -22,7 +24,7 @@ export default async function handler(req: any, res: any) {
     const url = `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&scope=${scope}`;
 
     const response = await fetch(url, {
-      method: "POST",
+      method: "POST"
     });
 
     if (!response.ok) {
@@ -48,8 +50,8 @@ export default async function handler(req: any, res: any) {
         accessToken,
         refreshToken,
         expiredAt: dayjs().add(30, "minutes").toISOString(),
-        user: getMeResponse.data,
-      } as Auth,
+        user: getMeResponse.data
+      } as Auth
     });
   } catch (error: any) {
     log("error", "pages.api.auth.login.handler", error);
@@ -67,8 +69,8 @@ const getMe = async (
       id: "",
       login: "",
       displayName: "",
-      profileImageUrl: "",
-    },
+      profileImageUrl: ""
+    }
   };
 
   const url = "https://api.twitch.tv/helix/users";
@@ -76,8 +78,8 @@ const getMe = async (
     method: "GET",
     headers: {
       "Client-ID": clientId,
-      Authorization: `Bearer ${token}`,
-    },
+      Authorization: `Bearer ${token}`
+    }
   });
 
   if (!res.ok) {
@@ -93,7 +95,7 @@ const getMe = async (
     id: data.data[0].id,
     login: data.data[0].login,
     displayName: data.data[0].display_name,
-    profileImageUrl: data.data[0].profile_image_url,
+    profileImageUrl: data.data[0].profile_image_url
   } as User;
 
   return output;

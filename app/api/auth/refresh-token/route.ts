@@ -3,13 +3,23 @@ import dayjs from "dayjs";
 import { Auth, TokenResponse } from "@/types/auth";
 
 import { decrypt, encrypt } from "@/lib/encryption";
-import { log } from "@/lib/utils";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function POST(req: NextRequest) {
   try {
-    const { token } = req.query;
+    const { searchParams } = new URL(req.url);
+    const token = searchParams.get("token");
+    if (!token) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.auth.refresh-token.handler",
+        401
+      );
+    }
+
     const decryptedToken = decrypt(token);
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
@@ -32,8 +42,7 @@ export default async function handler(req: any, res: any) {
 
     if (!response.ok) {
       const error = await response.json();
-      log("error", "pages.api.auth.refresh-token.handler", error);
-      throw new Error("Failed to refresh token");
+      throw new Error(JSON.stringify(error));
     }
 
     const data = (await response.json()) as TokenResponse;
@@ -42,16 +51,21 @@ export default async function handler(req: any, res: any) {
     const accessToken = encrypt(data.access_token);
     const refreshToken = encrypt(data.refresh_token);
 
-    return res.status(200).json({
-      status: true,
-      data: {
-        accessToken,
-        refreshToken,
-        expiredAt: dayjs().add(30, "minutes").toISOString()
-      } as Auth
-    });
-  } catch (error: any) {
-    log("error", "pages.api.auth.refresh-token.handler", error);
-    return res.status(500).json({ status: false });
+    return CreateResponseApiSuccess({
+      accessToken,
+      refreshToken,
+      expiredAt: dayjs().add(30, "minutes").toISOString()
+    } as Auth);
+  } catch (error) {
+    if (error instanceof Error) {
+      return CreateResponseApiError(
+        error,
+        "app.api.auth.refresh-token.handler"
+      );
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.auth.refresh-token.handler"
+    );
   }
 }

@@ -1,29 +1,55 @@
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
-import { log } from "@/lib/utils";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function POST(req: NextRequest) {
   try {
-    const { authorization } = req.headers;
-    const { channel, message } = JSON.parse(req.body);
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.chat.send-message.handler",
+        401
+      );
+    }
+
+    const body = await req.json();
+    const { channel, message } = body;
+
+    if (!channel || !message) {
+      return CreateResponseApiError(
+        new Error("Missing required parameters"),
+        "app.api.chat.send-message.handler",
+        400
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
     const broadcaster = await apiClient.users.getUserByName(channel);
     if (!broadcaster) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Channel not found"),
+        "app.api.chat.send-message.handler",
+        404
+      );
     }
 
     await apiClient.chat.sendChatMessage(broadcaster.id, message);
 
-    return res.status(200).json({
-      status: true
-    });
+    return CreateResponseApiSuccess(null);
   } catch (error) {
-    log("error", "pages.api.chat.send-message.handler", error);
-    return res.status(500).json({ status: false });
+    if (error instanceof Error) {
+      return CreateResponseApiError(error, "app.api.chat.send-message.handler");
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.chat.send-message.handler"
+    );
   }
 }

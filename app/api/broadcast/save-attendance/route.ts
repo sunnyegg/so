@@ -4,10 +4,15 @@ import { AlreadyPresent, BroadcastAttendance } from "@/db/in-memory";
 import { decrypt } from "@/lib/encryption";
 import { NewAttendanceQueue } from "@/lib/queue";
 import { NewAPIClient } from "@/lib/twitch";
+import {
+  CreateResponseApiError,
+  CreateResponseApiSuccess,
+  log
+} from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 import { Attendance } from "@/types/broadcast";
 import { Chatter } from "@/types/chat";
-import { log } from "@/lib/utils";
 
 type AttendanceDBData = {
   stream_id: string;
@@ -20,32 +25,56 @@ type AttendanceDBData = {
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function POST(req: NextRequest) {
   try {
-    const { authorization } = req.headers;
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.broadcast.save-attendance.handler",
+        401
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
-    const { streamId, broadcasterId, chatters } = JSON.parse(
-      req.body
-    ) as Attendance;
+
+    const body = await req.json();
+    const { streamId, broadcasterId, chatters } = body as Attendance;
+
+    if (!streamId || !broadcasterId || !chatters) {
+      return CreateResponseApiError(
+        new Error("Missing required parameters"),
+        "app.api.broadcast.save-attendance.handler",
+        400
+      );
+    }
 
     const currentBroadcast =
       await apiClient.streams.getStreamByUserId(broadcasterId);
     if (!currentBroadcast) {
-      log("info", "pages.api.broadcast.save-attendance.handler", {
+      log("info", "app.api.broadcast.save-attendance.handler", {
         message: "no stream",
         broadcasterId
       });
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Stream not found"),
+        "app.api.broadcast.save-attendance.handler",
+        404
+      );
     }
 
     if (currentBroadcast.id !== streamId) {
-      log("error", "pages.api.broadcast.save-attendance.handler", {
+      log("error", "app.api.broadcast.save-attendance.handler", {
         currentBroadcast,
-        body: req.body
+        body
       });
-      return res.status(400).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Stream ID mismatch"),
+        "app.api.broadcast.save-attendance.handler",
+        400
+      );
     }
 
     if (!AlreadyPresent.get(streamId)) {
@@ -56,12 +85,15 @@ export default async function handler(req: any, res: any) {
         .eq("stream_id", streamId);
 
       if (dbRes.status !== 200) {
-        log("error", "pages.api.broadcast.save-attendance.handler", dbRes);
-        return res.status(500).json({ status: false });
+        return CreateResponseApiError(
+          new Error(JSON.stringify(dbRes)),
+          "app.api.broadcast.save-attendance.handler",
+          500
+        );
       }
 
       let dbData: Chatter[] = [];
-      if (dbRes.status === 200 && dbRes.data?.length) {
+      if (dbRes.data?.length) {
         dbData = dbRes.data.map((item) => {
           return {
             ...item,
@@ -101,12 +133,16 @@ export default async function handler(req: any, res: any) {
     });
 
     if (attendanceDBData.length === 0) {
-      return res.status(200).json({ status: true });
+      return CreateResponseApiSuccess(null);
     }
 
     const queue = NewAttendanceQueue(streamId);
     if (!queue) {
-      return res.status(500).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Failed to create queue"),
+        "app.api.broadcast.save-attendance.handler",
+        500
+      );
     }
     queue.createJob(attendanceDBData).retries(1).save();
 
@@ -114,12 +150,18 @@ export default async function handler(req: any, res: any) {
       BroadcastAttendance.delete(streamId);
     }
 
-    return res.status(200).json({
-      status: true
-    });
-  } catch (error: any) {
-    log("error", "pages.api.broadcast.save-attendance.handler", error);
-    return res.status(500).json({ status: false });
+    return CreateResponseApiSuccess(null);
+  } catch (error) {
+    if (error instanceof Error) {
+      return CreateResponseApiError(
+        error,
+        "app.api.broadcast.save-attendance.handler"
+      );
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.broadcast.save-attendance.handler"
+    );
   }
 }
 
@@ -127,7 +169,7 @@ setInterval(
   () => {
     log(
       "info",
-      "pages.api.broadcast.save-attendance.setInterval",
+      "app.api.broadcast.save-attendance.setInterval",
       `Clearing AlreadyPresent of ${AlreadyPresent.size} entries`
     );
     AlreadyPresent.clear();

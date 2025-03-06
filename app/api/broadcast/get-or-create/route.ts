@@ -2,23 +2,46 @@ import supabase from "@/db/supabase";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
-import { log } from "@/lib/utils";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 import { Broadcast } from "@/types/broadcast";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function GET(req: NextRequest) {
   try {
-    const { login } = req.query;
-    const { authorization } = req.headers;
+    const { searchParams } = new URL(req.url);
+    const login = searchParams.get("login");
+
+    if (!login) {
+      return CreateResponseApiError(
+        new Error("Missing login parameter"),
+        "app.api.broadcast.get-or-create.handler",
+        400
+      );
+    }
+
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.broadcast.get-or-create.handler",
+        401
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
     const currentBroadcast = await apiClient.streams.getStreamByUserName(login);
     if (!currentBroadcast) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Stream not found"),
+        "app.api.broadcast.get-or-create.handler",
+        404
+      );
     }
 
     // check db
@@ -30,8 +53,11 @@ export default async function handler(req: any, res: any) {
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
-      log("error", "pages.api.broadcast.get-or-create.handler", dbRes);
-      return res.status(500).json({ status: false });
+      return CreateResponseApiError(
+        new Error(JSON.stringify(dbRes)),
+        "app.api.broadcast.get-or-create.handler",
+        500
+      );
     }
 
     let outputData: Broadcast = {
@@ -44,7 +70,7 @@ export default async function handler(req: any, res: any) {
     };
 
     // if found, use db data
-    if (dbRes.status === 200 && dbRes.data?.length) {
+    if (dbRes.data?.length) {
       outputData = {
         streamId: dbRes.data[0].stream_id,
         broadcasterId: dbRes.data[0].broadcaster_id,
@@ -53,10 +79,8 @@ export default async function handler(req: any, res: any) {
         startDate: dbRes.data[0].start_date,
         isLive: true
       };
-    }
-
-    // if not found, create
-    if (dbRes.status === 200 && !dbRes.data?.length) {
+    } else {
+      // if not found, create
       outputData = {
         streamId: currentBroadcast.id,
         broadcasterId: currentBroadcast.userId,
@@ -74,18 +98,27 @@ export default async function handler(req: any, res: any) {
         title: outputData.title,
         start_date: outputData.startDate
       });
+
       if (createRes.status !== 201) {
-        log("error", "pages.api.broadcast.get-or-create.handler", createRes);
-        return res.status(500).json({ status: false });
+        return CreateResponseApiError(
+          new Error(JSON.stringify(createRes)),
+          "app.api.broadcast.get-or-create.handler",
+          500
+        );
       }
     }
 
-    return res.status(200).json({
-      status: true,
-      data: outputData
-    });
-  } catch (error: any) {
-    log("error", "pages.api.broadcast.get-or-create.handler", error);
-    return res.status(500).json({ status: false });
+    return CreateResponseApiSuccess(outputData);
+  } catch (error) {
+    if (error instanceof Error) {
+      return CreateResponseApiError(
+        error,
+        "app.api.broadcast.get-or-create.handler"
+      );
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.broadcast.get-or-create.handler"
+    );
   }
 }

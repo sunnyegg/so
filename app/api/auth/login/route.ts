@@ -3,18 +3,16 @@ import dayjs from "dayjs";
 import { Auth, TokenResponse, User } from "@/types/auth";
 
 import { encrypt } from "@/lib/encryption";
-import { log } from "@/lib/utils";
-
-type GetMeResponse = {
-  status: boolean;
-  data: User;
-};
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function GET(req: NextRequest) {
   try {
-    const { code, scope } = req.query;
+    const { searchParams } = new URL(req.url);
+    const code = searchParams.get("code");
+    const scope = searchParams.get("scope");
 
     const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
     const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
@@ -29,50 +27,54 @@ export default async function handler(req: any, res: any) {
 
     if (!response.ok) {
       const error = await response.json();
-      console.log(error);
-      throw new Error("Failed to login");
+      throw new Error(JSON.stringify(error));
     }
 
     const data = (await response.json()) as TokenResponse;
 
     const getMeResponse = await getMe(data.access_token, CLIENT_ID);
-    if (!getMeResponse.status) {
-      return res.status(500).json({ status: false });
+    if (getMeResponse.isError) {
+      return CreateResponseApiError(
+        getMeResponse.error,
+        "app.api.auth.login.getMe"
+      );
     }
 
     // encrypt tokens
     const accessToken = encrypt(data.access_token);
     const refreshToken = encrypt(data.refresh_token);
 
-    return res.status(200).json({
-      status: true,
-      data: {
-        accessToken,
-        refreshToken,
-        expiredAt: dayjs().add(30, "minutes").toISOString(),
-        user: getMeResponse.data
-      } as Auth
-    });
-  } catch (error: any) {
-    log("error", "pages.api.auth.login.handler", error);
-    return res.status(500).json({ status: false });
+    return CreateResponseApiSuccess({
+      accessToken,
+      refreshToken,
+      expiredAt: dayjs().add(30, "minutes").toISOString(),
+      user: getMeResponse.data
+    } as Auth);
+  } catch (error) {
+    if (error instanceof Error) {
+      return CreateResponseApiError(error, "app.api.auth.login.handler");
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.auth.login.handler"
+    );
   }
 }
+
+type GetMeResponseSuccess = {
+  isError: false;
+  data: User;
+};
+
+type GetMeResponseError = {
+  isError: true;
+  error: Error;
+};
 
 const getMe = async (
   token: string,
   clientId: string
-): Promise<GetMeResponse> => {
-  const output = {
-    status: false,
-    data: {
-      id: "",
-      login: "",
-      displayName: "",
-      profileImageUrl: ""
-    }
-  };
-
+): Promise<GetMeResponseSuccess | GetMeResponseError> => {
   const url = "https://api.twitch.tv/helix/users";
   const res = await fetch(url, {
     method: "GET",
@@ -84,19 +86,21 @@ const getMe = async (
 
   if (!res.ok) {
     const error = await res.json();
-    log("error", "pages.api.auth.login.getMe", error);
-    return output;
+    return {
+      isError: true,
+      error: new Error(JSON.stringify(error))
+    };
   }
 
   const data = await res.json();
 
-  output.status = true;
-  output.data = {
-    id: data.data[0].id,
-    login: data.data[0].login,
-    displayName: data.data[0].display_name,
-    profileImageUrl: data.data[0].profile_image_url
-  } as User;
-
-  return output;
+  return {
+    isError: false,
+    data: {
+      id: data.data[0].id,
+      login: data.data[0].login,
+      displayName: data.data[0].display_name,
+      profileImageUrl: data.data[0].profile_image_url
+    } as User
+  };
 };

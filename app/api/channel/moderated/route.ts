@@ -4,31 +4,55 @@ import { ModeratedChannel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
+import {
+  CreateResponseApiError,
+  CreateResponseApiSuccess,
+  log
+} from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 import { ModeratedChannelsCache } from "@/db/in-memory";
-import { log } from "@/lib/utils";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function GET(req: NextRequest) {
   try {
-    const { userId } = req.query;
-    const { authorization } = req.headers;
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return CreateResponseApiError(
+        new Error("Missing userId parameter"),
+        "app.api.channel.moderated.handler",
+        400
+      );
+    }
+
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.channel.moderated.handler",
+        401
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
     if (ModeratedChannelsCache.has(userId)) {
-      return res.status(200).json({
-        status: true,
-        data: ModeratedChannelsCache.get(userId)
-      });
+      return CreateResponseApiSuccess(ModeratedChannelsCache.get(userId));
     }
 
     const moderatedChannels =
       await apiClient.moderation.getModeratedChannels(userId);
     if (!moderatedChannels.data.length) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("No moderated channels found"),
+        "app.api.channel.moderated.handler",
+        404
+      );
     }
 
     const data = (await Promise.all(
@@ -45,13 +69,15 @@ export default async function handler(req: any, res: any) {
 
     ModeratedChannelsCache.set(userId, data);
 
-    return res.status(200).json({
-      status: true,
-      data
-    });
+    return CreateResponseApiSuccess(data);
   } catch (error) {
-    log("error", "pages.api.channel.moderated.handler", error);
-    return res.status(500).json({ status: false });
+    if (error instanceof Error) {
+      return CreateResponseApiError(error, "app.api.channel.moderated.handler");
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.channel.moderated.handler"
+    );
   }
 }
 
@@ -59,7 +85,7 @@ setInterval(
   () => {
     log(
       "info",
-      "pages.api.channel.moderated.handler",
+      "app.api.channel.moderated.handler",
       `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
     );
     ModeratedChannelsCache.clear();

@@ -1,39 +1,68 @@
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
+import {
+  CreateResponseApiError,
+  CreateResponseApiSuccess,
+  log
+} from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 import supabase from "@/db/supabase";
 import { SettingsCache } from "@/db/in-memory";
 
 import { Settings } from "@/types/settings";
 
-import { SettingDBData } from "./save";
-import { log } from "@/lib/utils";
+import { SettingDBData } from "../save/route";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function GET(req: NextRequest) {
   try {
-    const { login, toLogin } = req.query;
-    const { authorization } = req.headers;
+    const { searchParams } = new URL(req.url);
+    const login = searchParams.get("login");
+    const toLogin = searchParams.get("toLogin");
+
+    if (!login || !toLogin) {
+      return CreateResponseApiError(
+        new Error("Missing required parameters"),
+        "app.api.settings.list.handler",
+        400
+      );
+    }
+
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.settings.list.handler",
+        401
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
     if (SettingsCache.has(`${login}-${toLogin}`)) {
-      return res.status(200).json({
-        status: true,
-        data: SettingsCache.get(`${login}-${toLogin}`)
-      });
+      return CreateResponseApiSuccess(SettingsCache.get(`${login}-${toLogin}`));
     }
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("User not found"),
+        "app.api.settings.list.handler",
+        404
+      );
     }
 
     const toUser = await apiClient.users.getUserByName(toLogin);
     if (!toUser) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Target user not found"),
+        "app.api.settings.list.handler",
+        404
+      );
     }
 
     const dbRes = await supabase()
@@ -43,8 +72,11 @@ export default async function handler(req: any, res: any) {
       .eq("to_user_id", toUser.id);
 
     if (dbRes.status !== 200) {
-      log("error", "pages.api.settings.list.handler", dbRes);
-      return res.status(500).json({ status: false });
+      return CreateResponseApiError(
+        new Error(JSON.stringify(dbRes)),
+        "app.api.settings.list.handler",
+        500
+      );
     }
 
     const dbData: SettingDBData[] = dbRes.data || [];
@@ -57,7 +89,7 @@ export default async function handler(req: any, res: any) {
       raidPriority: true
     };
 
-    if (dbRes.status === 200 && dbData.length) {
+    if (dbData.length) {
       for (const data of dbData) {
         // @ts-ignore
         outputData[data.key] = JSON.parse(data.value);
@@ -66,13 +98,15 @@ export default async function handler(req: any, res: any) {
 
     SettingsCache.set(`${login}-${toLogin}`, outputData);
 
-    return res.status(200).json({
-      status: true,
-      data: outputData
-    });
+    return CreateResponseApiSuccess(outputData);
   } catch (error) {
-    log("error", "pages.api.settings.list.handler", error);
-    return res.status(500).json({ status: false });
+    if (error instanceof Error) {
+      return CreateResponseApiError(error, "app.api.settings.list.handler");
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.settings.list.handler"
+    );
   }
 }
 
@@ -80,7 +114,7 @@ setInterval(
   () => {
     log(
       "info",
-      "pages.api.settings.list.setInterval",
+      "app.api.settings.list.setInterval",
       `Clearing SettingsCache of ${SettingsCache.size} entries`
     );
     SettingsCache.clear();

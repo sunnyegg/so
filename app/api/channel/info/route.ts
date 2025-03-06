@@ -2,35 +2,63 @@ import { Channel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAPIClient } from "@/lib/twitch";
+import {
+  CreateResponseApiError,
+  CreateResponseApiSuccess,
+  log
+} from "@/lib/utils";
+import { NextRequest } from "next/server";
 
 import { ChannelCache } from "@/db/in-memory";
-import { log } from "@/lib/utils";
 
 export const runtime = "edge";
 
-export default async function handler(req: any, res: any) {
+export default async function GET(req: NextRequest) {
   try {
-    const { login } = req.query;
-    const { authorization } = req.headers;
+    const { searchParams } = new URL(req.url);
+    const login = searchParams.get("login");
+
+    if (!login) {
+      return CreateResponseApiError(
+        new Error("Missing login parameter"),
+        "app.api.channel.info.handler",
+        400
+      );
+    }
+
+    const authorization = req.headers.get("authorization");
+    if (!authorization) {
+      return CreateResponseApiError(
+        new Error("Unauthorized"),
+        "app.api.channel.info.handler",
+        401
+      );
+    }
+
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
     const apiClient = NewAPIClient(decryptedToken);
 
     if (ChannelCache.has(login)) {
-      return res.status(200).json({
-        status: true,
-        data: ChannelCache.get(login)
-      });
+      return CreateResponseApiSuccess(ChannelCache.get(login));
     }
 
     const user = await apiClient.users.getUserByName(login);
     if (!user) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("User not found"),
+        "app.api.channel.info.handler",
+        404
+      );
     }
 
     const channel = await apiClient.channels.getChannelInfoById(user.id);
     if (!channel) {
-      return res.status(404).json({ status: false });
+      return CreateResponseApiError(
+        new Error("Channel not found"),
+        "app.api.channel.info.handler",
+        404
+      );
     }
     const followers = await user.getChannelFollowers();
 
@@ -46,13 +74,15 @@ export default async function handler(req: any, res: any) {
 
     ChannelCache.set(login, data);
 
-    return res.status(200).json({
-      status: true,
-      data
-    });
+    return CreateResponseApiSuccess(data);
   } catch (error) {
-    log("error", "pages.api.channel.info.handler", error);
-    return res.status(500).json({ status: false });
+    if (error instanceof Error) {
+      return CreateResponseApiError(error, "app.api.channel.info.handler");
+    }
+    return CreateResponseApiError(
+      new Error(JSON.stringify(error)),
+      "app.api.channel.info.handler"
+    );
   }
 }
 
@@ -60,7 +90,7 @@ setInterval(
   () => {
     log(
       "info",
-      "pages.api.channel.info.setInterval",
+      "app.api.channel.info.setInterval",
       `Clearing ChannelCache of ${ChannelCache.size} entries`
     );
     ChannelCache.clear();

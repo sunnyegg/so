@@ -1,11 +1,9 @@
-import { decrypt } from "@/lib/encryption";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 
 import { logger } from "@/lib/logger";
-
-export const runtime = "edge";
+import { createEventSubSubscriptionWithAppToken } from "@/lib/twitch";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -29,9 +27,6 @@ export async function GET(req: NextRequest) {
       return CreateResponseApiError(error, 401);
     }
 
-    const token = authorization.split(" ")[1];
-    const decryptedToken = decrypt(token);
-
     // Log success
     logger.info("Chat connect request successful", {
       requestId,
@@ -40,7 +35,12 @@ export async function GET(req: NextRequest) {
       path: "/api/chat/connect"
     });
 
-    return CreateResponseApiSuccess(decryptedToken);
+    await createEventSubSubscriptionWithAppToken("channel.chat.message", "1", {
+      broadcaster_user_id: userId,
+      user_id: userId
+    });
+
+    return CreateResponseApiSuccess(null);
   } catch (error) {
     // Log error
     logger.error(

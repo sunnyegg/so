@@ -1,18 +1,10 @@
-import dayjs from "dayjs";
-import { nanoid } from "nanoid";
 import { NextRequest } from "next/server";
-
-import { Auth, TokenResponse, User } from "@/types/auth";
-
+import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { encrypt } from "@/lib/encryption";
-import {
-  CreateResponseApiError,
-  CreateResponseApiSuccess,
-  truncateString
-} from "@/lib/utils";
-
-export const runtime = "edge";
+import { exchangeCode, getUserInfo } from "@/lib/twitch";
+import { Auth } from "@/types/auth";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -25,81 +17,53 @@ export async function GET(req: NextRequest) {
       return CreateResponseApiError(new Error("Unauthorized"), 401);
     }
 
-    const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
-    const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
-    const REDIRECT_URI = (process.env.NEXT_PUBLIC_APP_URL +
-      "/auth/login") as string;
-
-    // log the request
+    // Log the request
     logger.info("Login request", {
       requestId,
       method: "GET",
       path: "/api/auth/login",
       params: {
-        code,
-        scope,
-        CLIENT_ID: truncateString(CLIENT_ID, 4),
-        CLIENT_SECRET: truncateString(CLIENT_SECRET, 4),
-        REDIRECT_URI
+        code: code.substring(0, 4) + "...",
+        scope
       }
     });
 
-    const url = `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&scope=${scope}`;
+    // Exchange code for tokens using our new function
+    const tokens = await exchangeCode(code);
 
-    const response = await fetch(url, {
-      method: "POST"
-    });
+    // Get user information
+    const userInfo = await getUserInfo(tokens.access_token);
 
-    if (!response.ok) {
-      const error = await response.json();
-      const errorMessage = JSON.stringify(error);
-      logger.error("Post request to twitch failed", new Error(errorMessage), {
-        requestId,
-        method: "POST",
-        path: "/api/auth/login",
-        params: {
-          url
-        }
-      });
-      throw new Error(errorMessage);
+    if (!userInfo.data || userInfo.data.length === 0) {
+      throw new Error("Failed to get user information");
     }
 
-    const data = (await response.json()) as TokenResponse;
+    // Encrypt tokens for storage
+    const accessToken = encrypt(tokens.access_token);
+    const refreshToken = encrypt(tokens.refresh_token);
 
-    const getMeResponse = await getMe(data.access_token, CLIENT_ID);
-    if (getMeResponse.isError) {
-      const errorMessage = JSON.stringify(getMeResponse.error);
-      logger.error("Get me request failed", new Error(errorMessage), {
-        requestId,
-        method: "GET",
-        path: "/api/auth/login",
-        params: {
-          accessToken: truncateString(data.access_token, 4),
-          clientId: truncateString(CLIENT_ID, 4)
-        }
-      });
-      throw new Error(errorMessage);
-    }
-
-    // encrypt tokens
-    const accessToken = encrypt(data.access_token);
-    const refreshToken = encrypt(data.refresh_token);
-
-    // log success
+    // Log success
     logger.info("Login successful", {
       requestId,
       method: "GET",
-      path: "/api/auth/login"
+      path: "/api/auth/login",
+      userId: userInfo.data[0].id
     });
 
     return CreateResponseApiSuccess({
       accessToken,
       refreshToken,
-      expiredAt: dayjs().add(30, "minutes").toISOString(),
-      user: getMeResponse.data
+      expiredAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+      user: {
+        id: userInfo.data[0].id,
+        login: userInfo.data[0].login,
+        displayName: userInfo.data[0].display_name,
+        profileImageUrl: userInfo.data[0].profile_image_url,
+        broadcasterType: userInfo.data[0].broadcaster_type
+      }
     } as Auth);
   } catch (error) {
-    // log error
+    // Log error
     logger.error(
       "Login request failed",
       error instanceof Error ? error : new Error(JSON.stringify(error)),
@@ -116,47 +80,3 @@ export async function GET(req: NextRequest) {
     return CreateResponseApiError(new Error(JSON.stringify(error)));
   }
 }
-
-type GetMeResponseSuccess = {
-  isError: false;
-  data: User;
-};
-
-type GetMeResponseError = {
-  isError: true;
-  error: Error;
-};
-
-const getMe = async (
-  token: string,
-  clientId: string
-): Promise<GetMeResponseSuccess | GetMeResponseError> => {
-  const url = "https://api.twitch.tv/helix/users";
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Client-ID": clientId,
-      Authorization: `Bearer ${token}`
-    }
-  });
-
-  if (!res.ok) {
-    const error = await res.json();
-    return {
-      isError: true,
-      error: new Error(JSON.stringify(error))
-    };
-  }
-
-  const data = await res.json();
-
-  return {
-    isError: false,
-    data: {
-      id: data.data[0].id,
-      login: data.data[0].login,
-      displayName: data.data[0].display_name,
-      profileImageUrl: data.data[0].profile_image_url
-    } as User
-  };
-};

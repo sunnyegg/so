@@ -1,7 +1,7 @@
 import { Settings } from "@/types/settings";
 
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getUserInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
@@ -17,8 +17,6 @@ export type SettingDBData = {
   value: string;
   updated_at: string;
 };
-
-export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
@@ -57,9 +55,8 @@ export async function POST(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    const user = await apiClient.users.getUserByName(login);
+    const user = await getUserInfoByLogin(decryptedToken, login);
     if (!user) {
       const error = new Error("User not found");
       logger.error("Get user by name failed", error, {
@@ -72,7 +69,7 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 404);
     }
 
-    const toUser = await apiClient.users.getUserByName(toLogin);
+    const toUser = await getUserInfoByLogin(decryptedToken, toLogin);
     if (!toUser) {
       const error = new Error("Target user not found");
       logger.error("Get target user by name failed", error, {
@@ -88,9 +85,9 @@ export async function POST(req: NextRequest) {
     const dbData: SettingDBData[] = [];
     Object.keys(settings).forEach((key) => {
       dbData.push({
-        user_id: user.id,
+        user_id: user.data[0].id,
         key,
-        to_user_id: toUser.id,
+        to_user_id: toUser.data[0].id,
         // @ts-ignore
         value: JSON.stringify(settings[key]),
         updated_at: new Date().toISOString()
@@ -110,7 +107,12 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 500);
     }
 
-    SettingsCache.set(`${login}-${toLogin}`, settings);
+    // Delete cached settings
+    const key = `${login}-${toLogin}`;
+    await SettingsCache.delete(key);
+
+    // Cache settings
+    await SettingsCache.set(key, settings);
 
     // Log success
     logger.info("Save settings request successful", {

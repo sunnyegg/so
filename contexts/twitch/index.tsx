@@ -2,9 +2,6 @@ import { createContext, useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import { ChatClient } from "@twurple/chat";
-import { EventSubWsListener } from "@twurple/eventsub-ws";
-
 import { toast } from "@/components/ui/use-toast";
 
 import usePersistState from "@/hooks/use-persist-state";
@@ -15,8 +12,6 @@ import { Settings } from "@/types/settings";
 import { Broadcast } from "@/types/broadcast";
 import { Channel, SelectedChannel } from "@/types/channel";
 import { PersistAuth, PersistChannel, PersistStream } from "@/types/persist";
-
-import { NewChatClient, NewEventSubWsClient } from "@/lib/twitch";
 
 type ChannelResponse = {
   status: boolean;
@@ -112,9 +107,6 @@ export default function TwitchProvider({
     PersistStream.name,
     PersistStream.defaultValue
   ) as [Broadcast, React.Dispatch<React.SetStateAction<Broadcast>>];
-
-  const chatClient = useRef<ChatClient | undefined>(undefined);
-  const eventSubWsClient = useRef<EventSubWsListener | undefined>(undefined);
 
   const addToShoutout = useCallback(
     async (chatter: Chatter, token: string, login: string, channel: string) => {
@@ -240,311 +232,311 @@ export default function TwitchProvider({
     setIsStreamLive(live);
   };
 
-  const handleConnectChat = async (
-    token: string,
-    login: string,
-    channel: string
-  ) => {
-    if (isConnectedChat) return;
+  // const handleConnectChat = async (
+  //   token: string,
+  //   login: string,
+  //   channel: string
+  // ) => {
+  //   if (isConnectedChat) return;
 
-    const res = await fetch("/api/chat/connect", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-user-id": auth.user.id
-      }
-    });
-    if (!res.ok) {
-      toast({
-        title: "Failed to connect chat",
-        description: "Please refresh the page",
-        variant: "destructive",
-        duration: 5000
-      });
-      return;
-    }
+  //   const res = await fetch("/api/chat/connect", {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       "x-user-id": auth.user.id
+  //     }
+  //   });
+  //   if (!res.ok) {
+  //     toast({
+  //       title: "Failed to connect chat",
+  //       description: "Please refresh the page",
+  //       variant: "destructive",
+  //       duration: 5000
+  //     });
+  //     return;
+  //   }
 
-    const data = await res.json();
-    chatClient.current = NewChatClient(data.data, channel);
-    chatClient.current.connect();
+  //   const data = await res.json();
+  //   chatClient.current = NewChatClient(data.data, channel);
+  //   chatClient.current.connect();
 
-    // events
-    chatClient.current.onMessage(async (ch, user, text) => {
-      // skip own messages
-      if (user === channel) {
-        return;
-      }
+  //   // events
+  //   chatClient.current.onMessage(async (ch, user, text) => {
+  //     // skip own messages
+  //     if (user === channel) {
+  //       return;
+  //     }
 
-      const settingsData = (await getSettings(
-        auth,
-        login,
-        channel
-      )) as SettingsResponse;
-      if (!settingsData.status) {
-        toast({
-          title: "Failed to get settings",
-          description: "Please refresh the page",
-          variant: "destructive",
-          duration: 3000
-        });
-        return;
-      }
+  //     const settingsData = (await getSettings(
+  //       auth,
+  //       login,
+  //       channel
+  //     )) as SettingsResponse;
+  //     if (!settingsData.status) {
+  //       toast({
+  //         title: "Failed to get settings",
+  //         description: "Please refresh the page",
+  //         variant: "destructive",
+  //         duration: 3000
+  //       });
+  //       return;
+  //     }
 
-      if (settingsData.data.blacklistUsernames.length > 0) {
-        const blacklisted = settingsData.data.blacklistUsernames
-          .toLowerCase()
-          .includes(user.toLocaleLowerCase());
-        if (blacklisted) return;
-      }
+  //     if (settingsData.data.blacklistUsernames.length > 0) {
+  //       const blacklisted = settingsData.data.blacklistUsernames
+  //         .toLowerCase()
+  //         .includes(user.toLocaleLowerCase());
+  //       if (blacklisted) return;
+  //     }
 
-      if (settingsData.data.blacklistWords.length > 0) {
-        const blacklisted = settingsData.data.blacklistWords
-          .toLowerCase()
-          .includes(text.toLocaleLowerCase());
-        if (blacklisted) return;
-      }
+  //     if (settingsData.data.blacklistWords.length > 0) {
+  //       const blacklisted = settingsData.data.blacklistWords
+  //         .toLowerCase()
+  //         .includes(text.toLocaleLowerCase());
+  //       if (blacklisted) return;
+  //     }
 
-      const chatterRes = await fetch(`/api/channel/info?login=${user}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-user-id": auth.user.id
-        }
-      });
-      if (!chatterRes.ok) {
-        console.log("Failed to get chatter info", await chatterRes.json());
-        return;
-      }
+  //     const chatterRes = await fetch(`/api/channel/info?login=${user}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //         "x-user-id": auth.user.id
+  //       }
+  //     });
+  //     if (!chatterRes.ok) {
+  //       console.log("Failed to get chatter info", await chatterRes.json());
+  //       return;
+  //     }
 
-      const chatterData = (await chatterRes.json()) as ChannelResponse;
+  //     const chatterData = (await chatterRes.json()) as ChannelResponse;
 
-      addToShoutout(
-        {
-          id: Date.now().toString(),
-          login: user,
-          displayName: chatterData.data.displayName,
-          followers: chatterData.data.followers,
-          lastSeenPlaying: chatterData.data.gameName,
-          profileImageUrl: chatterData.data.profileImageUrl,
-          presentAt: new Date().toISOString()
-        },
-        token,
-        login,
-        channel
-      );
-    });
+  //     addToShoutout(
+  //       {
+  //         id: Date.now().toString(),
+  //         login: user,
+  //         displayName: chatterData.data.displayName,
+  //         followers: chatterData.data.followers,
+  //         lastSeenPlaying: chatterData.data.gameName,
+  //         profileImageUrl: chatterData.data.profileImageUrl,
+  //         presentAt: new Date().toISOString()
+  //       },
+  //       token,
+  //       login,
+  //       channel
+  //     );
+  //   });
 
-    chatClient.current.onConnect(() => {
-      setIsConnectedChat(true);
-      toast({
-        title: "Connected to chat",
-        variant: "success",
-        duration: 3000
-      });
-    });
+  //   chatClient.current.onConnect(() => {
+  //     setIsConnectedChat(true);
+  //     toast({
+  //       title: "Connected to chat",
+  //       variant: "success",
+  //       duration: 3000
+  //     });
+  //   });
 
-    chatClient.current.onDisconnect(() => {
-      setIsConnectedChat(false);
-      toast({
-        title: "Disconnected from chat",
-        variant: "destructive",
-        duration: 3000
-      });
-    });
-  };
+  //   chatClient.current.onDisconnect(() => {
+  //     setIsConnectedChat(false);
+  //     toast({
+  //       title: "Disconnected from chat",
+  //       variant: "destructive",
+  //       duration: 3000
+  //     });
+  //   });
+  // };
 
-  const handleEventSub = async (
-    token: string,
-    userId: string,
-    login: string
-  ) => {
-    if (isConnectedEventSub) return;
+  // const handleEventSub = async (
+  //   token: string,
+  //   userId: string,
+  //   login: string
+  // ) => {
+  //   if (isConnectedEventSub) return;
 
-    const res = await fetch("/api/eventsub/connect", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "x-user-id": auth.user.id
-      }
-    });
-    if (!res.ok) {
-      toast({
-        title: "Failed to connect eventsub",
-        description: "Please refresh the page",
-        variant: "destructive",
-        duration: 5000
-      });
-      return;
-    }
+  //   const res = await fetch("/api/eventsub/connect", {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       "x-user-id": auth.user.id
+  //     }
+  //   });
+  //   if (!res.ok) {
+  //     toast({
+  //       title: "Failed to connect eventsub",
+  //       description: "Please refresh the page",
+  //       variant: "destructive",
+  //       duration: 5000
+  //     });
+  //     return;
+  //   }
 
-    const data = await res.json();
-    eventSubWsClient.current = NewEventSubWsClient(data.data);
-    eventSubWsClient.current.start();
+  //   const data = await res.json();
+  //   eventSubWsClient.current = NewEventSubWsClient(data.data);
+  //   eventSubWsClient.current.start();
 
-    // events
-    eventSubWsClient.current.onStreamOnline(userId, async (e) => {
-      getOrCreateBroadcast(e.broadcasterName, auth).then((res) => {
-        if (res.status) {
-          const data = res.data as Broadcast;
-          setStream(data);
-          return;
-        }
-      });
+  //   // events
+  //   eventSubWsClient.current.onStreamOnline(userId, async (e) => {
+  //     getOrCreateBroadcast(e.broadcasterName, auth).then((res) => {
+  //       if (res.status) {
+  //         const data = res.data as Broadcast;
+  //         setStream(data);
+  //         return;
+  //       }
+  //     });
 
-      toast({
-        title: "Stream Online",
-        description: "You are now live",
-        variant: "success",
-        duration: 3000
-      });
-      router.refresh();
-    });
+  //     toast({
+  //       title: "Stream Online",
+  //       description: "You are now live",
+  //       variant: "success",
+  //       duration: 3000
+  //     });
+  //     router.refresh();
+  //   });
 
-    eventSubWsClient.current.onStreamOffline(userId, (e) => {
-      setStream((prevStream) => ({
-        ...prevStream,
-        isLive: false
-      }));
+  //   eventSubWsClient.current.onStreamOffline(userId, (e) => {
+  //     setStream((prevStream) => ({
+  //       ...prevStream,
+  //       isLive: false
+  //     }));
 
-      toast({
-        title: "Stream Offline",
-        description: "You are offline",
-        duration: 3000
-      });
-      router.refresh();
-    });
+  //     toast({
+  //       title: "Stream Offline",
+  //       description: "You are offline",
+  //       duration: 3000
+  //     });
+  //     router.refresh();
+  //   });
 
-    if (userId === auth.user.id) {
-      eventSubWsClient.current.onChannelRedemptionAdd(userId, async (e) => {
-        if (e.userId === userId) return;
+  //   if (userId === auth.user.id) {
+  //     eventSubWsClient.current.onChannelRedemptionAdd(userId, async (e) => {
+  //       if (e.userId === userId) return;
 
-        if (!stream.isLive) return;
+  //       if (!stream.isLive) return;
 
-        const chatterRes = await fetch(
-          `/api/channel/info?login=${e.userName}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "x-user-id": auth.user.id
-            }
-          }
-        );
-        if (!chatterRes.ok) {
-          console.log("Failed to get chatter info", await chatterRes.json());
-          return;
-        }
+  //       const chatterRes = await fetch(
+  //         `/api/channel/info?login=${e.userName}`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "x-user-id": auth.user.id
+  //           }
+  //         }
+  //       );
+  //       if (!chatterRes.ok) {
+  //         console.log("Failed to get chatter info", await chatterRes.json());
+  //         return;
+  //       }
 
-        const chatterData = (await chatterRes.json()) as ChannelResponse;
+  //       const chatterData = (await chatterRes.json()) as ChannelResponse;
 
-        addToShoutout(
-          {
-            id: Date.now().toString(),
-            login: e.userName,
-            displayName: chatterData.data.displayName,
-            followers: chatterData.data.followers,
-            lastSeenPlaying: chatterData.data.gameName,
-            profileImageUrl: chatterData.data.profileImageUrl,
-            presentAt: new Date().toISOString()
-          },
-          token,
-          login,
-          e.broadcasterName
-        );
-      });
-    }
+  //       addToShoutout(
+  //         {
+  //           id: Date.now().toString(),
+  //           login: e.userName,
+  //           displayName: chatterData.data.displayName,
+  //           followers: chatterData.data.followers,
+  //           lastSeenPlaying: chatterData.data.gameName,
+  //           profileImageUrl: chatterData.data.profileImageUrl,
+  //           presentAt: new Date().toISOString()
+  //         },
+  //         token,
+  //         login,
+  //         e.broadcasterName
+  //       );
+  //     });
+  //   }
 
-    eventSubWsClient.current.onUserSocketConnect(() => {
-      setIsConnectedEventSub(true);
-      toast({
-        title: "Connected to eventsub",
-        variant: "success",
-        duration: 3000
-      });
-    });
+  //   eventSubWsClient.current.onUserSocketConnect(() => {
+  //     setIsConnectedEventSub(true);
+  //     toast({
+  //       title: "Connected to eventsub",
+  //       variant: "success",
+  //       duration: 3000
+  //     });
+  //   });
 
-    eventSubWsClient.current.onUserSocketDisconnect((_, error) => {
-      console.log(error);
-      setIsConnectedEventSub(false);
-      toast({
-        title: "Disconnected from eventsub",
-        variant: "destructive",
-        duration: 3000
-      });
-    });
+  //   eventSubWsClient.current.onUserSocketDisconnect((_, error) => {
+  //     console.log(error);
+  //     setIsConnectedEventSub(false);
+  //     toast({
+  //       title: "Disconnected from eventsub",
+  //       variant: "destructive",
+  //       duration: 3000
+  //     });
+  //   });
 
-    eventSubWsClient.current.onChannelUpdate(userId, async (e) => {
-      setStream((prevStream) => ({
-        ...prevStream,
-        title: e.streamTitle,
-        gameName: e.categoryName
-      }));
-    });
+  //   eventSubWsClient.current.onChannelUpdate(userId, async (e) => {
+  //     setStream((prevStream) => ({
+  //       ...prevStream,
+  //       title: e.streamTitle,
+  //       gameName: e.categoryName
+  //     }));
+  //   });
 
-    eventSubWsClient.current.onChannelRaidTo(userId, async (e) => {
-      if (alreadyPresent.has(e.raidingBroadcasterName)) {
-        alreadyPresent.delete(e.raidingBroadcasterName);
-      }
+  //   eventSubWsClient.current.onChannelRaidTo(userId, async (e) => {
+  //     if (alreadyPresent.has(e.raidingBroadcasterName)) {
+  //       alreadyPresent.delete(e.raidingBroadcasterName);
+  //     }
 
-      const settingsData = (await getSettings(
-        auth,
-        login,
-        login
-      )) as SettingsResponse;
-      if (!settingsData.status) {
-        return;
-      }
+  //     const settingsData = (await getSettings(
+  //       auth,
+  //       login,
+  //       login
+  //     )) as SettingsResponse;
+  //     if (!settingsData.status) {
+  //       return;
+  //     }
 
-      if (settingsData.data.autoSo && settingsData.data.raidPriority) {
-        // disable autoso temporary
-        // @ts-ignore
-        const saveRes = await saveSettings(token, login, login, {
-          autoSo: false
-        });
-        if (!saveRes.status) {
-          return;
-        }
+  //     if (settingsData.data.autoSo && settingsData.data.raidPriority) {
+  //       // disable autoso temporary
+  //       // @ts-ignore
+  //       const saveRes = await saveSettings(token, login, login, {
+  //         autoSo: false
+  //       });
+  //       if (!saveRes.status) {
+  //         return;
+  //       }
 
-        setTimeout(
-          () => {
-            // enable autoso again after 5 minutes
-            // @ts-ignore
-            saveSettings(token, login, login, {
-              autoSo: true
-            });
-          },
-          1000 * 60 * 5
-        );
-      }
+  //       setTimeout(
+  //         () => {
+  //           // enable autoso again after 5 minutes
+  //           // @ts-ignore
+  //           saveSettings(token, login, login, {
+  //             autoSo: true
+  //           });
+  //         },
+  //         1000 * 60 * 5
+  //       );
+  //     }
 
-      const chatterRes = await fetch(
-        `/api/channel/info?login=${e.raidingBroadcasterName}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "x-user-id": auth.user.id
-          }
-        }
-      );
-      if (!chatterRes.ok) {
-        console.log("Failed to get chatter info", await chatterRes.json());
-        return;
-      }
+  //     const chatterRes = await fetch(
+  //       `/api/channel/info?login=${e.raidingBroadcasterName}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "x-user-id": auth.user.id
+  //         }
+  //       }
+  //     );
+  //     if (!chatterRes.ok) {
+  //       console.log("Failed to get chatter info", await chatterRes.json());
+  //       return;
+  //     }
 
-      const chatterData = (await chatterRes.json()) as ChannelResponse;
+  //     const chatterData = (await chatterRes.json()) as ChannelResponse;
 
-      addToShoutout(
-        {
-          id: Date.now().toString(),
-          login: e.raidingBroadcasterName,
-          displayName: e.raidingBroadcasterDisplayName,
-          followers: chatterData.data.followers,
-          lastSeenPlaying: chatterData.data.gameName,
-          profileImageUrl: chatterData.data.profileImageUrl,
-          presentAt: new Date().toISOString()
-        },
-        token,
-        login,
-        e.raidedBroadcasterName
-      );
-    });
-  };
+  //     addToShoutout(
+  //       {
+  //         id: Date.now().toString(),
+  //         login: e.raidingBroadcasterName,
+  //         displayName: e.raidingBroadcasterDisplayName,
+  //         followers: chatterData.data.followers,
+  //         lastSeenPlaying: chatterData.data.gameName,
+  //         profileImageUrl: chatterData.data.profileImageUrl,
+  //         presentAt: new Date().toISOString()
+  //       },
+  //       token,
+  //       login,
+  //       e.raidedBroadcasterName
+  //     );
+  //   });
+  // };
 
   const intervalAttendance = useRef<NodeJS.Timeout | null>(null);
   const saveAttendance = async (
@@ -570,24 +562,32 @@ export default function TwitchProvider({
 
   useEffect(() => {
     if (auth.accessToken && stream.isLive) {
-      handleConnectChat(auth.accessToken, auth.user.login, channel.login);
+      const connectChat = async () => {
+        const res = await fetch("/api/chat/connect", {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+            "x-user-id": auth.user.id
+          }
+        });
+        if (!res.ok) {
+          toast({
+            title: "Failed to connect chat",
+            description: "Please refresh the page",
+            variant: "destructive",
+            duration: 5000
+          });
+          return;
+        }
+      };
+      connectChat();
+      // handleConnectChat(auth.accessToken, auth.user.login, channel.login);
     }
-
-    return () => {
-      chatClient.current?.quit();
-      chatClient.current = undefined;
-    };
   }, [auth, stream.isLive]);
 
   useEffect(() => {
     if (auth.accessToken) {
-      handleEventSub(auth.accessToken, channel.id, auth.user.login);
+      // handleEventSub(auth.accessToken, channel.id, auth.user.login);
     }
-
-    return () => {
-      eventSubWsClient.current?.stop();
-      eventSubWsClient.current = undefined;
-    };
   }, [auth]);
 
   useEffect(() => {

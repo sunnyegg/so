@@ -1,5 +1,5 @@
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getUserInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
@@ -19,8 +19,6 @@ type BroadcastDBData = {
   start_date: string;
   created_at: string;
 };
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -55,9 +53,8 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    const user = await apiClient.users.getUserByName(login);
+    const user = await getUserInfoByLogin(decryptedToken, login);
     if (!user) {
       const error = new Error("User not found");
       logger.error("Get user by name failed", error, {
@@ -73,7 +70,7 @@ export async function GET(req: NextRequest) {
     const dbRes = await supabase()
       .from("broadcasts")
       .select("*")
-      .eq("broadcaster_id", user.id)
+      .eq("broadcaster_id", user.data[0].id)
       .order("start_date", { ascending: false });
 
     if (dbRes.status !== 200) {
@@ -83,7 +80,7 @@ export async function GET(req: NextRequest) {
         userId,
         method: "GET",
         path: "/api/broadcast/past",
-        params: { broadcasterId: user.id, login }
+        params: { broadcasterId: user.data[0].id, login }
       });
       return CreateResponseApiError(error, 500);
     }

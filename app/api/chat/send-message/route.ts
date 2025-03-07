@@ -1,12 +1,10 @@
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getUserInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 
 import { logger } from "@/lib/logger";
-
-export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
@@ -41,9 +39,8 @@ export async function POST(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    const broadcaster = await apiClient.users.getUserByName(channel);
+    const broadcaster = await getUserInfoByLogin(decryptedToken, channel);
     if (!broadcaster) {
       const error = new Error("Channel not found");
       logger.error("Get user by name failed", error, {
@@ -56,7 +53,7 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 404);
     }
 
-    await apiClient.chat.sendChatMessage(broadcaster.id, message);
+    // await apiClient.chat.sendChatMessage(broadcaster.id, message);
 
     // Log success
     logger.info("Send chat message request successful", {

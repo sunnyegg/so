@@ -1,5 +1,5 @@
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getUserInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
@@ -11,8 +11,6 @@ import { logger } from "@/lib/logger";
 import { Settings } from "@/types/settings";
 
 import { SettingDBData } from "../save/route";
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -48,9 +46,9 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    if (SettingsCache.has(`${login}-${toLogin}`)) {
+    const cachedSettings = await SettingsCache.get(`${login}-${toLogin}`);
+    if (cachedSettings) {
       logger.info("List settings request successful (cached)", {
         requestId,
         userId,
@@ -58,10 +56,10 @@ export async function GET(req: NextRequest) {
         path: "/api/settings/list",
         params: { login, toLogin }
       });
-      return CreateResponseApiSuccess(SettingsCache.get(`${login}-${toLogin}`));
+      return CreateResponseApiSuccess(cachedSettings);
     }
 
-    const user = await apiClient.users.getUserByName(login);
+    const user = await getUserInfoByLogin(decryptedToken, login);
     if (!user) {
       const error = new Error("User not found");
       logger.error("Get user by name failed", error, {
@@ -74,7 +72,7 @@ export async function GET(req: NextRequest) {
       return CreateResponseApiError(error, 404);
     }
 
-    const toUser = await apiClient.users.getUserByName(toLogin);
+    const toUser = await getUserInfoByLogin(decryptedToken, toLogin);
     if (!toUser) {
       const error = new Error("Target user not found");
       logger.error("Get target user by name failed", error, {
@@ -90,8 +88,8 @@ export async function GET(req: NextRequest) {
     const dbRes = await supabase()
       .from("settings")
       .select("*")
-      .eq("user_id", user.id)
-      .eq("to_user_id", toUser.id);
+      .eq("user_id", user.data[0].id)
+      .eq("to_user_id", toUser.data[0].id);
 
     if (dbRes.status !== 200) {
       const error = new Error(JSON.stringify(dbRes));
@@ -100,7 +98,7 @@ export async function GET(req: NextRequest) {
         userId,
         method: "GET",
         path: "/api/settings/list",
-        params: { userId: user.id, toUserId: toUser.id }
+        params: { userId: user.data[0].id, toUserId: toUser.data[0].id }
       });
       return CreateResponseApiError(error, 500);
     }
@@ -122,7 +120,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    SettingsCache.set(`${login}-${toLogin}`, outputData);
+    // Cache settings
+    const cacheKey = `${login}-${toLogin}`;
+    await SettingsCache.set(cacheKey, outputData);
 
     // Log success
     logger.info("List settings request successful", {
@@ -154,11 +154,11 @@ export async function GET(req: NextRequest) {
 }
 
 setInterval(
-  () => {
+  async () => {
     logger.info("Clearing SettingsCache", {
-      message: `Clearing SettingsCache of ${SettingsCache.size} entries`
+      message: `Clearing SettingsCache of ${await SettingsCache.size()} entries`
     });
-    SettingsCache.clear();
+    await SettingsCache.clear();
   },
   1000 * 60 * 60 * 24
 ); // every 24 hours

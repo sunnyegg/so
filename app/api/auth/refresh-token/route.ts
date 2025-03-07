@@ -1,18 +1,10 @@
-import dayjs from "dayjs";
-import { nanoid } from "nanoid";
 import { NextRequest } from "next/server";
-
-import { Auth, TokenResponse } from "@/types/auth";
-
+import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
+import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { decrypt, encrypt } from "@/lib/encryption";
-import {
-  CreateResponseApiError,
-  CreateResponseApiSuccess,
-  truncateString
-} from "@/lib/utils";
-
-export const runtime = "edge";
+import { refreshAccessToken } from "@/lib/twitch";
+import { Auth } from "@/types/auth";
 
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
@@ -29,68 +21,23 @@ export async function POST(req: NextRequest) {
     }
 
     const decryptedToken = decrypt(token);
-    const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID as string;
-    const CLIENT_SECRET = process.env.NEXT_TWITCH_CLIENT_SECRET as string;
-    const url = "https://id.twitch.tv/oauth2/token";
 
-    // log request
+    // Log request
     logger.info("Refresh token request", {
       requestId,
       userId,
       method: "POST",
-      path: "/api/auth/refresh-token",
-      params: {
-        token: truncateString(token, 4),
-        clientId: truncateString(CLIENT_ID, 4),
-        clientSecret: truncateString(CLIENT_SECRET, 4),
-        decryptedToken: truncateString(decryptedToken, 4)
-      }
+      path: "/api/auth/refresh-token"
     });
 
-    const formData = new URLSearchParams();
-    formData.append("client_id", CLIENT_ID);
-    formData.append("client_secret", CLIENT_SECRET);
-    formData.append("grant_type", "refresh_token");
-    formData.append("refresh_token", decryptedToken);
+    // Use our new refresh token function
+    const tokens = await refreshAccessToken(decryptedToken);
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: formData
-    });
+    // Encrypt new tokens
+    const accessToken = encrypt(tokens.access_token);
+    const refreshToken = encrypt(tokens.refresh_token);
 
-    if (!response.ok) {
-      const error = await response.json();
-
-      // log error
-      logger.error(
-        "Post request to twitch failed",
-        new Error(JSON.stringify(error)),
-        {
-          requestId,
-          userId,
-          method: "POST",
-          path: "/api/auth/refresh-token",
-          params: {
-            token: truncateString(token, 4),
-            clientId: truncateString(CLIENT_ID, 4),
-            clientSecret: truncateString(CLIENT_SECRET, 4),
-            decryptedToken: truncateString(decryptedToken, 4)
-          }
-        }
-      );
-      throw new Error(JSON.stringify(error));
-    }
-
-    const data = (await response.json()) as TokenResponse;
-
-    // encrypt tokens
-    const accessToken = encrypt(data.access_token);
-    const refreshToken = encrypt(data.refresh_token);
-
-    // log success
+    // Log success
     logger.info("Refresh token request successful", {
       requestId,
       userId,
@@ -101,10 +48,10 @@ export async function POST(req: NextRequest) {
     return CreateResponseApiSuccess({
       accessToken,
       refreshToken,
-      expiredAt: dayjs().add(30, "minutes").toISOString()
+      expiredAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString()
     } as Auth);
   } catch (error) {
-    // log error
+    // Log error
     logger.error(
       "Refresh token request failed",
       error instanceof Error ? error : new Error(JSON.stringify(error)),

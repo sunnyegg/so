@@ -3,7 +3,7 @@ import { AlreadyPresent, BroadcastAttendance } from "@/db/in-memory";
 
 import { decrypt } from "@/lib/encryption";
 import { NewAttendanceQueue } from "@/lib/queue";
-import { NewAPIClient } from "@/lib/twitch";
+import { getStreamInfoById } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
@@ -20,8 +20,6 @@ type AttendanceDBData = {
   profile_image_url: string;
   present_at: string;
 };
-
-export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
@@ -40,7 +38,6 @@ export async function POST(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
     const body = await req.json();
     const { streamId, broadcasterId, chatters } = body as Attendance;
@@ -59,8 +56,10 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 400);
     }
 
-    const currentBroadcast =
-      await apiClient.streams.getStreamByUserId(broadcasterId);
+    const currentBroadcast = await getStreamInfoById(
+      decryptedToken,
+      broadcasterId
+    );
     if (!currentBroadcast) {
       const error = new Error("Stream not found");
       logger.error("Get stream by broadcaster id failed", error, {
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 404);
     }
 
-    if (currentBroadcast.id !== streamId) {
+    if (currentBroadcast.data[0].id !== streamId) {
       const error = new Error("Stream ID mismatch");
       logger.error("Save attendance request failed", error, {
         requestId,
@@ -85,7 +84,8 @@ export async function POST(req: NextRequest) {
       return CreateResponseApiError(error, 400);
     }
 
-    if (!AlreadyPresent.get(streamId)) {
+    const alreadyPresent = await AlreadyPresent.get(streamId);
+    if (!alreadyPresent) {
       // check db
       const dbRes = await supabase()
         .from("attendance")
@@ -115,14 +115,14 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      AlreadyPresent.set(streamId, dbData);
+      await AlreadyPresent.set(streamId, dbData);
     }
 
-    let alreadyPresentData = AlreadyPresent.get(streamId)!;
+    const alreadyPresentData = await AlreadyPresent.get(streamId);
 
     // transform chatters to AttendanceDBData[]
     const attendanceDBData: AttendanceDBData[] = [];
-    chatters.forEach((chatter) => {
+    for (const chatter of chatters) {
       // if already exist, skip
       if (alreadyPresentData.length) {
         const isExist = alreadyPresentData.find(
@@ -131,8 +131,7 @@ export async function POST(req: NextRequest) {
         if (isExist) return;
       }
 
-      AlreadyPresent.set(streamId, [...alreadyPresentData, chatter]);
-      alreadyPresentData = AlreadyPresent.get(streamId)!;
+      await AlreadyPresent.set(streamId, [...alreadyPresentData, chatter]);
 
       attendanceDBData.push({
         stream_id: streamId,
@@ -142,13 +141,13 @@ export async function POST(req: NextRequest) {
         profile_image_url: chatter.profileImageUrl || "",
         present_at: chatter.presentAt
       });
-    });
+    }
 
     if (attendanceDBData.length === 0) {
       return CreateResponseApiSuccess(null);
     }
 
-    const queue = NewAttendanceQueue(streamId);
+    const queue = await NewAttendanceQueue(streamId);
     if (!queue) {
       const error = new Error("Failed to create queue");
       logger.error("Create attendance queue failed", error, {
@@ -160,10 +159,11 @@ export async function POST(req: NextRequest) {
       });
       return CreateResponseApiError(error, 500);
     }
-    queue.createJob(attendanceDBData).retries(1).save();
+    await queue.createJob(attendanceDBData).retries(1).save();
 
-    if (BroadcastAttendance.has(streamId)) {
-      BroadcastAttendance.delete(streamId);
+    const isExist = await BroadcastAttendance.get(streamId);
+    if (isExist) {
+      await BroadcastAttendance.delete(streamId);
     }
 
     // Log success
@@ -196,11 +196,11 @@ export async function POST(req: NextRequest) {
 }
 
 setInterval(
-  () => {
+  async () => {
     logger.info("Clearing AlreadyPresent cache", {
-      message: `Clearing AlreadyPresent of ${AlreadyPresent.size} entries`
+      message: `Clearing AlreadyPresent of ${await AlreadyPresent.size()} entries`
     });
-    AlreadyPresent.clear();
+    await AlreadyPresent.clear();
   },
   1000 * 60 * 60 * 12
 ); // every 12 hours

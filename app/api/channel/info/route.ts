@@ -1,15 +1,17 @@
 import { Channel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import {
+  getChannelFollowers,
+  getChannelInfoById,
+  getUserInfoByLogin
+} from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 
 import { ChannelCache } from "@/db/in-memory";
 import { logger } from "@/lib/logger";
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -44,9 +46,9 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    if (ChannelCache.has(login)) {
+    const cachedData = await ChannelCache.get(login);
+    if (cachedData) {
       logger.info("Get channel info request successful (cached)", {
         requestId,
         userId: userId || undefined,
@@ -54,10 +56,10 @@ export async function GET(req: NextRequest) {
         path: "/api/channel/info",
         params: { login }
       });
-      return CreateResponseApiSuccess(ChannelCache.get(login));
+      return CreateResponseApiSuccess(cachedData);
     }
 
-    const user = await apiClient.users.getUserByName(login);
+    const user = await getUserInfoByLogin(decryptedToken, login);
     if (!user) {
       const error = new Error("User not found");
       logger.error("Get user by name failed", error, {
@@ -70,7 +72,7 @@ export async function GET(req: NextRequest) {
       return CreateResponseApiError(error, 404);
     }
 
-    const channel = await apiClient.channels.getChannelInfoById(user.id);
+    const channel = await getChannelInfoById(decryptedToken, user.data[0].id);
     if (!channel) {
       const error = new Error("Channel not found");
       logger.error("Get channel info by id failed", error, {
@@ -78,23 +80,26 @@ export async function GET(req: NextRequest) {
         userId: userId || undefined,
         method: "GET",
         path: "/api/channel/info",
-        params: { login, userId: user.id }
+        params: { login, userId: user.data[0].id }
       });
       return CreateResponseApiError(error, 404);
     }
-    const followers = await user.getChannelFollowers();
+    const followers = await getChannelFollowers(
+      decryptedToken,
+      user.data[0].id
+    );
 
     const data = {
-      id: channel.id,
-      login: channel.name,
-      displayName: channel.displayName,
-      gameName: channel.gameName,
-      title: channel.title,
-      profileImageUrl: user.profilePictureUrl,
+      id: channel.data[0].broadcaster_id,
+      login: channel.data[0].broadcaster_login,
+      displayName: channel.data[0].broadcaster_name,
+      gameName: channel.data[0].game_name,
+      title: channel.data[0].title,
+      profileImageUrl: user.data[0].profile_image_url,
       followers: followers.total
     } as Channel;
 
-    ChannelCache.set(login, data);
+    await ChannelCache.set(login, data);
 
     // Log success
     logger.info("Get channel info request successful", {
@@ -126,11 +131,11 @@ export async function GET(req: NextRequest) {
 }
 
 setInterval(
-  () => {
+  async () => {
     logger.info("Clearing ChannelCache", {
-      message: `Clearing ChannelCache of ${ChannelCache.size} entries`
+      message: `Clearing ChannelCache of ${await ChannelCache.size()} entries`
     });
-    ChannelCache.clear();
+    await ChannelCache.clear();
   },
   1000 * 60 * 5
 ); // every 5 minutes

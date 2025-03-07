@@ -1,15 +1,13 @@
 import supabase from "@/db/supabase";
 
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getStreamInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 
 import { Broadcast } from "@/types/broadcast";
 import { logger } from "@/lib/logger";
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -44,9 +42,8 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    const currentBroadcast = await apiClient.streams.getStreamByUserName(login);
+    const currentBroadcast = await getStreamInfoByLogin(decryptedToken, login);
     if (!currentBroadcast) {
       const error = new Error("Stream not found");
       logger.error("Get stream by user name failed", error, {
@@ -63,7 +60,7 @@ export async function GET(req: NextRequest) {
     const dbRes = await supabase()
       .from("broadcasts")
       .select("*")
-      .eq("stream_id", currentBroadcast.id)
+      .eq("stream_id", currentBroadcast.data[0].id)
       .limit(1)
       .order("start_date", { ascending: false });
 
@@ -74,14 +71,17 @@ export async function GET(req: NextRequest) {
         userId,
         method: "GET",
         path: "/api/broadcast/get-or-create",
-        params: { currentBroadcastId: currentBroadcast.id, login }
+        params: {
+          currentBroadcastId: currentBroadcast.data[0].id,
+          login
+        }
       });
       return CreateResponseApiError(error, 500);
     }
 
     let outputData: Broadcast = {
       streamId: "",
-      broadcasterId: currentBroadcast.userId,
+      broadcasterId: currentBroadcast.data[0].user_id,
       gameName: "",
       title: "",
       startDate: "",
@@ -101,18 +101,18 @@ export async function GET(req: NextRequest) {
     } else {
       // if not found, create
       outputData = {
-        streamId: currentBroadcast.id,
-        broadcasterId: currentBroadcast.userId,
-        gameName: currentBroadcast.gameName,
-        title: currentBroadcast.title,
-        startDate: currentBroadcast.startDate.toISOString(),
+        streamId: currentBroadcast.data[0].id,
+        broadcasterId: currentBroadcast.data[0].user_id,
+        gameName: currentBroadcast.data[0].game_name,
+        title: currentBroadcast.data[0].title,
+        startDate: currentBroadcast.data[0].started_at,
         isLive: true
       };
 
       const createRes = await supabase().from("broadcasts").insert({
         stream_id: outputData.streamId,
-        broadcaster_id: currentBroadcast.userId,
-        broadcaster_name: currentBroadcast.userName,
+        broadcaster_id: currentBroadcast.data[0].user_id,
+        broadcaster_name: currentBroadcast.data[0].user_name,
         game_name: outputData.gameName,
         title: outputData.title,
         start_date: outputData.startDate

@@ -1,17 +1,13 @@
-import { HelixModeratedChannel } from "@twurple/api";
-
 import { ModeratedChannel } from "@/types/channel";
 
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getModeratedChannels, getUserInfoById } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 
 import { ModeratedChannelsCache } from "@/db/in-memory";
 import { logger } from "@/lib/logger";
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -46,9 +42,9 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
-    if (ModeratedChannelsCache.has(userId)) {
+    const cachedData = await ModeratedChannelsCache.get(userId);
+    if (cachedData) {
       logger.info("Get moderated channels request successful (cached)", {
         requestId,
         userId: headerUserId,
@@ -56,11 +52,13 @@ export async function GET(req: NextRequest) {
         path: "/api/channel/moderated",
         params: { userId }
       });
-      return CreateResponseApiSuccess(ModeratedChannelsCache.get(userId));
+      return CreateResponseApiSuccess(cachedData);
     }
 
-    const moderatedChannels =
-      await apiClient.moderation.getModeratedChannels(userId);
+    const moderatedChannels = await getModeratedChannels(
+      decryptedToken,
+      userId
+    );
     if (!moderatedChannels.data.length) {
       const error = new Error("No moderated channels found");
       logger.error("Get moderated channels request failed", error, {
@@ -74,18 +72,21 @@ export async function GET(req: NextRequest) {
     }
 
     const data = (await Promise.all(
-      moderatedChannels.data.map(async (channel: HelixModeratedChannel) => {
-        const profile = await channel.getBroadcaster();
+      moderatedChannels.data.map(async (channel) => {
+        const profile = await getUserInfoById(
+          decryptedToken,
+          channel.broadcaster_id
+        );
         return {
-          id: channel.id,
-          login: channel.name,
-          displayName: channel.displayName,
-          profileImageUrl: profile.profilePictureUrl
+          id: channel.broadcaster_id,
+          login: channel.broadcaster_login,
+          displayName: channel.broadcaster_name,
+          profileImageUrl: profile.data[0].profile_image_url
         };
       })
     )) as ModeratedChannel[];
 
-    ModeratedChannelsCache.set(userId, data);
+    await ModeratedChannelsCache.set(userId, data);
 
     // Log success
     logger.info("Get moderated channels request successful", {
@@ -117,11 +118,11 @@ export async function GET(req: NextRequest) {
 }
 
 setInterval(
-  () => {
+  async () => {
     logger.info("Clearing ModeratedChannelsCache", {
-      message: `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache.size} entries`
+      message: `Clearing ModeratedChannelsCache of ${await ModeratedChannelsCache.size()} entries`
     });
-    ModeratedChannelsCache.clear();
+    await ModeratedChannelsCache.clear();
   },
   1000 * 60 * 5
 ); // every 5 minutes

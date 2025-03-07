@@ -7,13 +7,14 @@ import { useToast } from "@/components/ui/use-toast";
 import usePersistState from "@/hooks/use-persist-state";
 
 import { PersistAuth } from "@/types/persist";
+import { getAuthorizationUrl } from "@/lib/twitch";
 
 type LoginButtonVariant = "streamegg" | "streamegg-outline" | null | undefined;
 
 export default function LoginButton({
   text,
   className,
-  variant,
+  variant
 }: Readonly<{
   text: string;
   className?: string;
@@ -32,18 +33,15 @@ export default function LoginButton({
       setIsLoading(false);
       toast({
         description: "You are already logged in",
-        duration: 3000,
+        duration: 3000
       });
       router.push("/dashboard/shoutout");
       return;
     }
 
-    const CLIENT_ID = process.env.NEXT_PUBLIC_TWITCH_CLIENT_ID;
-    const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + "/auth/login";
-    const SCOPE = process.env.NEXT_PUBLIC_SCOPES;
-
-    const url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPE}`;
-    router.push(url);
+    // Generate authorization URL using our new function
+    const authUrl = getAuthorizationUrl();
+    router.push(authUrl);
 
     setIsLoading(false);
   };

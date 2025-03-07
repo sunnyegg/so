@@ -1,5 +1,5 @@
 import { decrypt } from "@/lib/encryption";
-import { NewAPIClient } from "@/lib/twitch";
+import { getUserInfoByLogin } from "@/lib/twitch";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
 import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
@@ -20,8 +20,6 @@ type AttendanceDBData = {
   present_at: string;
   created_at: string;
 };
-
-export const runtime = "edge";
 
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
@@ -57,10 +55,10 @@ export async function GET(req: NextRequest) {
 
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
-    const apiClient = NewAPIClient(decryptedToken);
 
     // check if data is already in cache
-    if (BroadcastAttendance.has(id)) {
+    const cachedData = await BroadcastAttendance.get(id);
+    if (cachedData) {
       logger.info("Broadcast detail request successful (cached)", {
         requestId,
         userId,
@@ -68,10 +66,10 @@ export async function GET(req: NextRequest) {
         path: "/api/broadcast/detail",
         params: { login, id }
       });
-      return CreateResponseApiSuccess(BroadcastAttendance.get(id)!);
+      return CreateResponseApiSuccess(cachedData);
     }
 
-    const user = await apiClient.users.getUserByName(login);
+    const user = await getUserInfoByLogin(decryptedToken, login);
     if (!user) {
       const error = new Error("User not found");
       logger.error("Get user by name failed", error, {
@@ -120,7 +118,7 @@ export async function GET(req: NextRequest) {
     }));
 
     // set cache
-    BroadcastAttendance.set(id, outputData);
+    await BroadcastAttendance.set(id, outputData);
 
     // Log success
     logger.info("Broadcast detail request successful", {
@@ -152,11 +150,11 @@ export async function GET(req: NextRequest) {
 }
 
 setInterval(
-  () => {
+  async () => {
     logger.info("Clearing BroadcastAttendance cache", {
-      message: `Clearing BroadcastAttendance of ${BroadcastAttendance.size} entries`
+      message: `Clearing BroadcastAttendance of ${await BroadcastAttendance.size()} entries`
     });
-    BroadcastAttendance.clear();
+    await BroadcastAttendance.clear();
   },
   1000 * 60 * 60 * 12
 ); // every 12 hours

@@ -2,21 +2,18 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-
 import { useToast } from "@/components/ui/use-toast";
-
 import usePersistState from "@/hooks/use-persist-state";
 
 import { Auth } from "@/types/auth";
 import { PersistAuth, PersistChannel } from "@/types/persist";
 import { SelectedChannel } from "@/types/channel";
+import { loginAction } from "./actions";
 
 type LoginResponse = {
   status: boolean;
   data: Auth;
 };
-
-export const runtime = "edge";
 
 export default function Login() {
   const { toast } = useToast();
@@ -24,7 +21,6 @@ export default function Login() {
   const searchParams = useSearchParams();
   const code = searchParams && searchParams.get("code");
   const scope = searchParams && searchParams.get("scope");
-  const state = searchParams && searchParams.get("state");
 
   const [, setAuth] = usePersistState(
     PersistAuth.name,
@@ -42,17 +38,27 @@ export default function Login() {
       return;
     }
 
-    const fetchLogin = async () => {
+    const performLogin = async () => {
+      if (!code || !scope) {
+        toast({
+          description: "Missing authentication parameters",
+          duration: 5000,
+          variant: "destructive"
+        });
+        setTimeout(() => {
+          router.push("/");
+        }, 5100);
+        return;
+      }
+
       isLoggedIn.current = true;
 
-      const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/login?code=${code}&scope=${scope}&state=${state}`;
-      const res = await fetch(url, {
-        method: "GET"
-      });
+      // Call the server action
+      const result = await loginAction(code, scope);
 
-      if (!res.ok) {
+      if (!result.success) {
         toast({
-          description: "Failed to login",
+          description: result.message,
           duration: 5000,
           variant: "destructive"
         });
@@ -62,25 +68,12 @@ export default function Login() {
         return;
       }
 
-      const data = (await res.json()) as LoginResponse;
-      if (!data.status) {
-        toast({
-          description: "Failed to login",
-          duration: 5000,
-          variant: "destructive"
-        });
-        setTimeout(() => {
-          router.push("/");
-        }, 5100);
-        return;
-      }
-
-      setAuth({ ...data.data });
+      setAuth({ ...result.data });
       setChannel({
-        id: data.data.user.id,
-        login: data.data.user.login,
-        displayName: data.data.user.displayName,
-        profileImageUrl: data.data.user.profileImageUrl
+        id: result.data!.user.id,
+        login: result.data!.user.login,
+        displayName: result.data!.user.displayName,
+        profileImageUrl: result.data!.user.profileImageUrl
       });
 
       toast({
@@ -93,8 +86,8 @@ export default function Login() {
       }, 1000);
     };
 
-    fetchLogin();
-  }, [code, scope, state, isLoggedIn]);
+    performLogin();
+  }, [code, scope]);
 
   return (
     <div className="mx-4 my-8 md:mx-32">

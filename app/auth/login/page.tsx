@@ -16,6 +16,8 @@ type LoginResponse = {
   data: Auth;
 };
 
+export const runtime = "edge";
+
 export default function Login() {
   const { toast } = useToast();
   const router = useRouter();
@@ -45,14 +47,14 @@ export default function Login() {
 
       const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/login?code=${code}&scope=${scope}&state=${state}`;
       const res = await fetch(url, {
-        method: "GET",
+        method: "GET"
       });
 
       if (!res.ok) {
         toast({
           description: "Failed to login",
           duration: 5000,
-          variant: "destructive",
+          variant: "destructive"
         });
         setTimeout(() => {
           router.push("/");
@@ -65,7 +67,7 @@ export default function Login() {
         toast({
           description: "Failed to login",
           duration: 5000,
-          variant: "destructive",
+          variant: "destructive"
         });
         setTimeout(() => {
           router.push("/");
@@ -78,12 +80,12 @@ export default function Login() {
         id: data.data.user.id,
         login: data.data.user.login,
         displayName: data.data.user.displayName,
-        profileImageUrl: data.data.user.profileImageUrl,
+        profileImageUrl: data.data.user.profileImageUrl
       });
 
       toast({
         description: "Successfully logged in",
-        duration: 1000,
+        duration: 1000
       });
 
       setTimeout(() => {

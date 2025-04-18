@@ -20,6 +20,8 @@ type BroadcastDBData = {
   created_at: string;
 };
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {

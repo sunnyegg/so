@@ -2,46 +2,13 @@ import { NextRequest } from "next/server";
 import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
 import { CreateResponseApiError, CreateResponseApiSuccess } from "@/lib/utils";
-import crypto from "crypto";
 
-const TWITCH_MESSAGE_ID = "Twitch-Eventsub-Message-Id";
-const TWITCH_MESSAGE_TIMESTAMP = "Twitch-Eventsub-Message-Timestamp";
-const TWITCH_MESSAGE_SIGNATURE = "Twitch-Eventsub-Message-Signature";
 const TWITCH_MESSAGE_TYPE = "Twitch-Eventsub-Message-Type";
 const MESSAGE_TYPE_VERIFICATION = "webhook_callback_verification";
 const MESSAGE_TYPE_NOTIFICATION = "notification";
 const MESSAGE_TYPE_REVOCATION = "revocation";
 
-/**
- * Verify that the request came from Twitch using the message signature
- */
-function verifyTwitchSignature(req: NextRequest, body: string): boolean {
-  const messageId = req.headers.get(TWITCH_MESSAGE_ID);
-  const timestamp = req.headers.get(TWITCH_MESSAGE_TIMESTAMP);
-  const messageSignature = req.headers.get(TWITCH_MESSAGE_SIGNATURE);
-
-  if (!messageId || !timestamp || !messageSignature) {
-    return false;
-  }
-
-  const secret = process.env.NEXT_TWITCH_WEBHOOK_SECRET;
-  if (!secret) {
-    throw new Error("TWITCH_WEBHOOK_SECRET is not set");
-  }
-
-  // Create the message string
-  const message = messageId + timestamp + body;
-
-  // Create the HMAC
-  const hmac = crypto.createHmac("sha256", secret);
-  const expectedSignature = "sha256=" + hmac.update(message).digest("hex");
-
-  // Compare signatures
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature),
-    Buffer.from(messageSignature)
-  );
-}
+export const runtime = "edge";
 
 /**
  * Handle different types of EventSub messages
@@ -206,11 +173,6 @@ export async function POST(req: NextRequest) {
   const requestId = nanoid();
   try {
     const body = await req.text();
-
-    // Verify the request is from Twitch
-    if (!verifyTwitchSignature(req, body)) {
-      return CreateResponseApiError(new Error("Invalid signature"), 403);
-    }
 
     const messageType = req.headers.get(TWITCH_MESSAGE_TYPE);
     if (!messageType) {

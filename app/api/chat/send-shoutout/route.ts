@@ -6,6 +6,8 @@ import { nanoid } from "nanoid";
 
 import { logger } from "@/lib/logger";
 
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
   try {

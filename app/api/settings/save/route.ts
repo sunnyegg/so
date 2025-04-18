@@ -18,6 +18,8 @@ export type SettingDBData = {
   updated_at: string;
 };
 
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
   try {

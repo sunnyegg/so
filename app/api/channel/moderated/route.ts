@@ -9,6 +9,8 @@ import { nanoid } from "nanoid";
 import { ModeratedChannelsCache } from "@/db/in-memory";
 import { logger } from "@/lib/logger";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {
@@ -120,7 +122,7 @@ export async function GET(req: NextRequest) {
 setInterval(
   async () => {
     logger.info("Clearing ModeratedChannelsCache", {
-      message: `Clearing ModeratedChannelsCache of ${await ModeratedChannelsCache.size()} entries`
+      message: `Clearing ModeratedChannelsCache of ${ModeratedChannelsCache} entries`
     });
     await ModeratedChannelsCache.clear();
   },

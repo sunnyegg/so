@@ -9,6 +9,8 @@ import { nanoid } from "nanoid";
 import { Broadcast } from "@/types/broadcast";
 import { logger } from "@/lib/logger";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {

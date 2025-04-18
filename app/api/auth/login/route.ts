@@ -6,6 +6,8 @@ import { encrypt } from "@/lib/encryption";
 import { exchangeCode, getUserInfo } from "@/lib/twitch";
 import { Auth } from "@/types/auth";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {

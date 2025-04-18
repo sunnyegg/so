@@ -13,6 +13,8 @@ import { nanoid } from "nanoid";
 import { ChannelCache } from "@/db/in-memory";
 import { logger } from "@/lib/logger";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {
@@ -47,7 +49,7 @@ export async function GET(req: NextRequest) {
     const token = authorization.split(" ")[1];
     const decryptedToken = decrypt(token);
 
-    const cachedData = await ChannelCache.get(login);
+    const cachedData = ChannelCache.get(login);
     if (cachedData) {
       logger.info("Get channel info request successful (cached)", {
         requestId,
@@ -99,7 +101,7 @@ export async function GET(req: NextRequest) {
       followers: followers.total
     } as Channel;
 
-    await ChannelCache.set(login, data);
+    ChannelCache.set(login, data);
 
     // Log success
     logger.info("Get channel info request successful", {
@@ -133,7 +135,7 @@ export async function GET(req: NextRequest) {
 setInterval(
   async () => {
     logger.info("Clearing ChannelCache", {
-      message: `Clearing ChannelCache of ${await ChannelCache.size()} entries`
+      message: `Clearing ChannelCache of ${ChannelCache} entries`
     });
     await ChannelCache.clear();
   },

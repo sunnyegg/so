@@ -12,6 +12,8 @@ import { Settings } from "@/types/settings";
 
 import { SettingDBData } from "../save/route";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {
@@ -156,7 +158,7 @@ export async function GET(req: NextRequest) {
 setInterval(
   async () => {
     logger.info("Clearing SettingsCache", {
-      message: `Clearing SettingsCache of ${await SettingsCache.size()} entries`
+      message: `Clearing SettingsCache of ${SettingsCache} entries`
     });
     await SettingsCache.clear();
   },

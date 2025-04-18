@@ -6,6 +6,8 @@ import { decrypt, encrypt } from "@/lib/encryption";
 import { refreshAccessToken } from "@/lib/twitch";
 import { Auth } from "@/types/auth";
 
+export const runtime = "edge";
+
 export async function POST(req: NextRequest) {
   const requestId = nanoid();
   try {

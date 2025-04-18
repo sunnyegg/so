@@ -21,6 +21,8 @@ type AttendanceDBData = {
   created_at: string;
 };
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {
@@ -152,7 +154,7 @@ export async function GET(req: NextRequest) {
 setInterval(
   async () => {
     logger.info("Clearing BroadcastAttendance cache", {
-      message: `Clearing BroadcastAttendance of ${await BroadcastAttendance.size()} entries`
+      message: `Clearing BroadcastAttendance of ${BroadcastAttendance.size} entries`
     });
     await BroadcastAttendance.clear();
   },

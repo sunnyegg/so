@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
 import { createEventSubSubscriptionWithAppToken } from "@/lib/twitch";
 
+export const runtime = "edge";
+
 export async function GET(req: NextRequest) {
   const requestId = nanoid();
   try {
